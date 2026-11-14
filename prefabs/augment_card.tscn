@@ -1,0 +1,140 @@
+[gd_scene format=3 uid="uid://3lycqebihhgn"]
+
+[ext_resource type="Script" uid="uid://m0wcjfgjre6a" path="res://prefabs/augment_card.gd" id="1_fpuot"]
+[ext_resource type="Theme" uid="uid://dwi8du326v0y2" path="res://assets/theme.tres" id="1_g57v7"]
+[ext_resource type="Texture2D" uid="uid://dj2m7f1lxoya1" path="res://icon.svg" id="2_xxf6o"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_p75in"]
+bg_color = Color(0.08274146, 0.08274145, 0.0827414, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+corner_radius_top_left = 16
+corner_radius_top_right = 16
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+
+[node name="AugmentCard" type="Control" unique_id=1654792827]
+layout_mode = 3
+anchor_right = 0.29635417
+anchor_bottom = 0.61944443
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_g57v7")
+script = ExtResource("1_fpuot")
+
+[node name="AspectRatioContainer" type="AspectRatioContainer" parent="." unique_id=1687212011]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+ratio = 0.71
+
+[node name="MarginContainer" type="MarginContainer" parent="AspectRatioContainer" unique_id=877967917]
+layout_mode = 2
+mouse_filter = 0
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="Card" type="Panel" parent="AspectRatioContainer/MarginContainer" unique_id=2039272492]
+unique_name_in_owner = true
+layout_mode = 2
+offset_transform_enabled = true
+mouse_default_cursor_shape = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_p75in")
+
+[node name="MarginContainer" type="MarginContainer" parent="AspectRatioContainer/MarginContainer/Card" unique_id=561313201]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBoxContainer" type="VBoxContainer" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer" unique_id=1220679978]
+layout_mode = 2
+mouse_filter = 0
+
+[node name="HBoxContainer" type="HBoxContainer" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer" unique_id=42426499]
+layout_mode = 2
+mouse_filter = 0
+alignment = 1
+
+[node name="FamilyImage" type="TextureRect" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer/HBoxContainer" unique_id=286642096]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("2_xxf6o")
+expand_mode = 2
+
+[node name="NameLabel" type="Label" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer/HBoxContainer" unique_id=674233995]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+mouse_filter = 0
+theme_override_font_sizes/font_size = 53
+text = "Augment Name"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="CountryImage" type="TextureRect" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1196229325]
+unique_name_in_owner = true
+layout_mode = 2
+texture = ExtResource("2_xxf6o")
+expand_mode = 2
+
+[node name="RarityLabel" type="Label" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer" unique_id=225160561]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+theme_override_font_sizes/font_size = 24
+text = "Rarity Name"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Spacer" type="Control" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer" unique_id=1346730530]
+custom_minimum_size = Vector2(0, 22.03)
+layout_mode = 2
+
+[node name="AugmentImage" type="TextureRect" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer" unique_id=1789236103]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 0
+texture = ExtResource("2_xxf6o")
+stretch_mode = 3
+
+[node name="Spacer2" type="Control" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer" unique_id=266707760]
+custom_minimum_size = Vector2(0, 22.03)
+layout_mode = 2
+
+[node name="AugmentDescription" type="RichTextLabel" parent="AspectRatioContainer/MarginContainer/Card/MarginContainer/VBoxContainer" unique_id=688634097]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/normal_font_size = 28
+bbcode_enabled = true
+text = "Augment description"
+scroll_active = false
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Button" type="Button" parent="AspectRatioContainer/MarginContainer" unique_id=989692136]
+layout_mode = 2
+mouse_default_cursor_shape = 2
+flat = true
+
+[connection signal="mouse_entered" from="AspectRatioContainer/MarginContainer/Button" to="." method="_on_button_mouse_entered"]
+[connection signal="mouse_exited" from="AspectRatioContainer/MarginContainer/Button" to="." method="_on_button_mouse_exited"]
+[connection signal="pressed" from="AspectRatioContainer/MarginContainer/Button" to="." method="_on_button_pressed"]

@@ -1,0 +1,7 @@
+[gd_resource type="Theme" format=3 uid="uid://dwi8du326v0y2"]
+
+[ext_resource type="FontFile" uid="uid://diofu2r7xyvo" path="res://assets/fonts/Winds 7.ttf" id="1_5x3i2"]
+
+[resource]
+Control/fonts/font = ExtResource("1_5x3i2")
+Control/fonts/normal_font = ExtResource("1_5x3i2")
