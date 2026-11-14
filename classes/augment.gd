@@ -12,6 +12,12 @@ enum Rarity {
     MYTHIC
 }
 
+static var RARITY_CARDS: Dictionary[Rarity, CompressedTexture2D] = {
+    Rarity.COMMON: preload("res://assets/textures/card_common.png"),
+    Rarity.EPIC: preload("res://assets/textures/card_epic.png"),
+    Rarity.MYTHIC: preload("res://assets/textures/card_mythic.png")
+}
+
 static var RARITY_SLOTS: Dictionary[Rarity, int] = {
     Rarity.COMMON: 1,
     Rarity.EPIC: 2,

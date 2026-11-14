@@ -31,68 +31,79 @@ theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
 
-[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer" unique_id=718227007]
+[node name="HBoxContainer" type="HBoxContainer" parent="MarginContainer" unique_id=1787371422]
 layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/HBoxContainer" unique_id=718227007]
+layout_mode = 2
+size_flags_horizontal = 3
 theme_override_constants/separation = 128
 
-[node name="Label" type="Label" parent="MarginContainer/VBoxContainer" unique_id=1729778124]
+[node name="Label" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1729778124]
 layout_mode = 2
-theme_override_font_sizes/font_size = 54
+theme_override_font_sizes/font_size = 64
 text = "Choose wisely:"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/VBoxContainer" unique_id=1415673608]
+[node name="MarginContainer" type="MarginContainer" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1415673608]
 layout_mode = 2
 size_flags_vertical = 3
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_top = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 32
+
+[node name="CardsHolder" type="HBoxContainer" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer" unique_id=1279215475]
+unique_name_in_owner = true
+layout_mode = 2
+alignment = 1
+
+[node name="AugmentCard" type="Control" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/CardsHolder" unique_id=1654792827 instance=ExtResource("3_qn8d1")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_l3v5p")
+script = ExtResource("4_secnn")
+augment = ExtResource("5_f5sic")
+
+[node name="@Control@344149" type="Control" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/CardsHolder" unique_id=1665576250 instance=ExtResource("3_qn8d1")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_l3v5p")
+script = ExtResource("4_secnn")
+augment = ExtResource("5_f5sic")
+
+[node name="@Control@344152" type="Control" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer/CardsHolder" unique_id=279337054 instance=ExtResource("3_qn8d1")]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme = ExtResource("1_l3v5p")
+script = ExtResource("4_secnn")
+augment = ExtResource("5_f5sic")
+
+[node name="MarginContainer2" type="MarginContainer" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1993785862]
+layout_mode = 2
 theme_override_constants/margin_left = 16
 theme_override_constants/margin_top = 16
 theme_override_constants/margin_right = 16
 theme_override_constants/margin_bottom = 16
 
-[node name="CardsHolder" type="HBoxContainer" parent="MarginContainer/VBoxContainer/MarginContainer" unique_id=1279215475]
-unique_name_in_owner = true
-layout_mode = 2
-alignment = 1
-
-[node name="@Control@235396" type="Control" parent="MarginContainer/VBoxContainer/MarginContainer/CardsHolder" unique_id=1654792827 instance=ExtResource("3_qn8d1")]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme = ExtResource("1_l3v5p")
-script = ExtResource("4_secnn")
-augment = ExtResource("5_f5sic")
-
-[node name="@Control@235399" type="Control" parent="MarginContainer/VBoxContainer/MarginContainer/CardsHolder" unique_id=2076541662 instance=ExtResource("3_qn8d1")]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme = ExtResource("1_l3v5p")
-script = ExtResource("4_secnn")
-augment = ExtResource("5_f5sic")
-
-[node name="@Control@235402" type="Control" parent="MarginContainer/VBoxContainer/MarginContainer/CardsHolder" unique_id=347879699 instance=ExtResource("3_qn8d1")]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 3
-theme = ExtResource("1_l3v5p")
-script = ExtResource("4_secnn")
-augment = ExtResource("5_f5sic")
-
-[node name="Slots" type="Control" parent="MarginContainer/VBoxContainer" unique_id=1246249850]
+[node name="Slots" type="Control" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2" unique_id=1246249850]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(0, 64)
 layout_mode = 2
 script = ExtResource("6_b27o0")
 
-[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1992565295 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344153" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1992565295 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_right = 64.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236652" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=413915487 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344154" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1081984014 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 32.0
@@ -100,7 +111,7 @@ offset_right = 96.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236653" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=134988724 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344155" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1680624182 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 64.0
@@ -108,7 +119,7 @@ offset_right = 128.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236654" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=849228962 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344156" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=935949183 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 96.0
@@ -116,7 +127,7 @@ offset_right = 160.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236655" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1134366659 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344157" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1609708422 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 128.0
@@ -124,7 +135,7 @@ offset_right = 192.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236656" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1454212419 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344158" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1096605164 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 160.0
@@ -132,7 +143,7 @@ offset_right = 224.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236657" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=76988320 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344159" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=2122220418 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 192.0
@@ -140,7 +151,7 @@ offset_right = 256.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236658" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1189431120 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344160" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=333857107 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 224.0
@@ -148,7 +159,7 @@ offset_right = 288.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236659" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1761968096 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344161" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=366038869 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 256.0
@@ -156,7 +167,7 @@ offset_right = 320.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236660" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=107098888 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344162" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=420131324 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 288.0
@@ -164,7 +175,7 @@ offset_right = 352.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236661" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=862437189 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344163" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=955580778 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 320.0
@@ -172,7 +183,7 @@ offset_right = 384.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236662" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1433095422 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344164" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1543626033 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 352.0
@@ -180,7 +191,7 @@ offset_right = 416.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236663" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1093436335 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344165" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=698438797 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 384.0
@@ -188,7 +199,7 @@ offset_right = 448.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236664" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=148591218 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344166" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=91055285 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 416.0
@@ -196,7 +207,7 @@ offset_right = 480.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236665" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=2034485470 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344167" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=273821897 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 448.0
@@ -204,7 +215,7 @@ offset_right = 512.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236666" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1947758932 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344168" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1639500869 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 480.0
@@ -212,7 +223,7 @@ offset_right = 544.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236667" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1138549324 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344169" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1982277702 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 512.0
@@ -220,7 +231,7 @@ offset_right = 576.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236668" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=428492144 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344170" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1541446342 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 544.0
@@ -228,7 +239,7 @@ offset_right = 608.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236669" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=653178290 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344171" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1067783609 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 576.0
@@ -236,7 +247,7 @@ offset_right = 640.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236670" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=850947344 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344172" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1273246369 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 608.0
@@ -244,7 +255,7 @@ offset_right = 672.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236671" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1531404776 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344173" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=549323686 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 640.0
@@ -252,7 +263,7 @@ offset_right = 704.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236672" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=2074471770 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344174" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=889005574 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 672.0
@@ -260,7 +271,7 @@ offset_right = 736.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236673" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=19375027 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344175" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=182682378 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 704.0
@@ -268,7 +279,7 @@ offset_right = 768.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236674" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1582133170 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344176" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=2069429134 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 736.0
@@ -276,7 +287,7 @@ offset_right = 800.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236675" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=215002870 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344177" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=2080545821 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 768.0
@@ -284,7 +295,7 @@ offset_right = 832.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236676" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=665368698 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344178" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=651666291 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 800.0
@@ -292,7 +303,7 @@ offset_right = 864.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236677" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=251399185 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344179" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1733682987 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 832.0
@@ -300,7 +311,7 @@ offset_right = 896.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236678" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=92391141 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344180" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=296676194 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 864.0
@@ -308,7 +319,7 @@ offset_right = 928.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236679" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=746856140 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344181" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1647817880 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 896.0
@@ -316,10 +327,22 @@ offset_right = 960.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="@TextureRect@236680" type="TextureRect" parent="MarginContainer/VBoxContainer/Slots" unique_id=1400177274 instance=ExtResource("7_b27o0")]
+[node name="@TextureRect@344182" type="TextureRect" parent="MarginContainer/HBoxContainer/VBoxContainer/MarginContainer2/Slots" unique_id=1585571798 instance=ExtResource("7_b27o0")]
 custom_maximum_size = Vector2(64, 64)
 layout_mode = 0
 offset_left = 928.0
 offset_right = 992.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
+
+[node name="Control" type="Control" parent="MarginContainer/HBoxContainer" unique_id=715348961]
+custom_minimum_size = Vector2(480, 0)
+layout_mode = 2
+
+[node name="ColorRect" type="ColorRect" parent="MarginContainer/HBoxContainer/Control" unique_id=1885695251]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2

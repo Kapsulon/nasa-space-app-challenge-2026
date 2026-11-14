@@ -12,7 +12,10 @@ func update_display() -> void:
     if augment == null:
         return
     %NameLabel.text = augment.display_name
-    %RarityLabel.text = str(augment.rarity)
+
+    var sb := %Card.get_theme_stylebox("panel").duplicate() as StyleBoxTexture
+    sb.texture = Augment.RARITY_CARDS[augment.rarity]
+    %Card.add_theme_stylebox_override("panel", sb)
 
     var desc: String = augment.description
     for stat in augment.upgrades.keys():
