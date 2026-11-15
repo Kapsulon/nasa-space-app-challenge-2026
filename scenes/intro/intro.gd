@@ -34,7 +34,7 @@ const C_LINE := Color("334155")
 const BEATS: Array[Dictionary] = [
     {"kicker": "INCOMING TRANSMISSION // NASA SPACE APPS", "main": "YEAR 2026.", "size": 84,
         "warp": 0.6, "sound": "tick"},
-    {"kicker": "COORDINATES LOCKED", "main": "LOW ORBIT — [color=#ff7a1a]MARS SECTOR.[/color]", "size": 64,
+    {"kicker": "COORDINATES LOCKED", "main": "LOW EARTH ORBIT — [color=#63b1ff]NEXT STOP: ISS.[/color]", "size": 64,
         "warp": 1.2, "sound": "bass"},
     {"kicker": "SURVIVAL REPORT", "main": "SPACE FORGIVES [color=#63b1ff]NO MISTAKES.[/color]", "size": 56,
         "warp": 1.8, "sound": "bass"},
@@ -42,7 +42,7 @@ const BEATS: Array[Dictionary] = [
         "warp": 2.5, "sound": ""},
     {"kicker": "⚠ SYSTEM FAILURE IMMINENT", "main": "ONE GAUGE DROPS TO [color=#ff3a55]0%[/color]",
         "sub": "AND THE STATION IS LOST.", "size": 64, "warp": 4.2, "sound": "alert", "shake": true, "flash": true},
-    {"kicker": "CONTROL ROOM • EMERGENCY PROTOCOL", "main": "[color=#ffb800]5 MINUTES[/color] MISSION.",
+    {"kicker": "CONTROL ROOM • EMERGENCY PROTOCOL", "main": "[color=#ffb800]4 ASTRONAUTS.[/color] ONE ROCKET.",
         "sub": "TO DEFY THE CHAOS.", "size": 84, "warp": 5.5, "sound": "alert", "shake": true},
     {"kicker": "ENGINEERING PHASE", "main": "DRAFT YOUR [color=#63b1ff]CARDS.[/color]",
         "sub": "ASSEMBLE YOUR MODULES.", "size": 64, "warp": 3.5, "sound": "bass"},
@@ -256,7 +256,7 @@ func _show_title() -> void:
     title.add_theme_constant_override("shadow_offset_x", 0)
     title.add_theme_constant_override("shadow_offset_y", 5)
     box.add_child(title)
-    box.add_child(_label("5 MINUTES TO ASSEMBLE YOUR STATION", 48, C_AMBER))
+    box.add_child(_label("PACK THE ROCKET. BRING EVERYONE HOME.", 48, C_AMBER))
 
     var buttons := HBoxContainer.new()
     buttons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -265,7 +265,7 @@ func _show_title() -> void:
     spacer.custom_minimum_size.y = 12
     box.add_child(spacer)
     box.add_child(buttons)
-    _start_button = _arcade_button("▶  START MISSION (5 MIN)", Color("059669"), Color("6ee7b7"), Color.WHITE)
+    _start_button = _arcade_button("▶  START MISSION", Color("059669"), Color("6ee7b7"), Color.WHITE)
     _start_button.pressed.connect(_start_mission)
     buttons.add_child(_start_button)
     var replay := _arcade_button("↺  REPLAY TEASER", Color("1e293b"), Color("475569"), Color("e2e8f0"))
