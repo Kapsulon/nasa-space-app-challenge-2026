@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bd8jmi2gv5624"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
-[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+[ext_resource type="Texture2D" uid="uid://x7jq8rkoadkf" path="res://assets/textures/cards/quartermaster.png" id="2_img"]
 
 [resource]
 script = ExtResource("1_aug")

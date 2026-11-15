@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://chfw4kqpykkaq"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
-[ext_resource type="Texture2D" uid="uid://1n7p1xwbluqv" path="res://assets/textures/ASSETS/rover.jpeg" id="2_img"]
+[ext_resource type="Texture2D" uid="uid://dme3h6hm45kto" path="res://assets/textures/cards/star_tracker.png" id="2_img"]
 [ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
 
 [sub_resource type="Resource" id="Risk_0"]

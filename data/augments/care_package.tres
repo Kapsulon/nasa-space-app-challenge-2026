@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://b6cceuwqxrorq"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
-[ext_resource type="Texture2D" uid="uid://gncbjard0kld" path="res://assets/textures/ASSETS/nourriture.jpeg" id="2_img"]
+[ext_resource type="Texture2D" uid="uid://dycurieawwe3i" path="res://assets/textures/cards/care_package.png" id="2_img"]
 [ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
 
 [sub_resource type="Resource" id="Risk_0"]
