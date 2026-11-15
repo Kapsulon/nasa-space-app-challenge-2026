@@ -381,3 +381,39 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.23031491, 0.23031494, 0.23031494, 1)
+
+[node name="ManifestMargin" type="MarginContainer" parent="MarginContainer/HBoxContainer/Control"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Control/ManifestMargin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="ManifestTitle" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "Cargo manifest"
+
+[node name="SlotsLabel" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
+theme_override_font_sizes/font_size = 30
+text = "0 / 30 slots filled"
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+layout_mode = 2
+
+[node name="ManifestList" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8

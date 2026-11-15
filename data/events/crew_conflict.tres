@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Resource_choice0"]
+script = ExtResource("2_choice")
+label = "Hold a crew meeting"
+cost = Dictionary[String, int]({})
+success_chance = 0.7
+success_effects = Dictionary[String, int]({"crew_health": 5})
+success_text = "The meeting cleared the air. Spirits are higher."
+failure_effects = Dictionary[String, int]({"crew_health": -5})
+failure_text = "The meeting turned into a shouting match. Everyone slept badly."
+
+[sub_resource type="Resource" id="Resource_choice1"]
+script = ExtResource("2_choice")
+label = "Let them sort it out"
+cost = Dictionary[String, int]({})
+success_chance = 0.5
+success_effects = Dictionary[String, int]({})
+success_text = "Things calmed down on their own."
+failure_effects = Dictionary[String, int]({"random_crew_health": -15})
+failure_text = "The argument got physical. Someone was hurt."
+
+[resource]
+script = ExtResource("1_event")
+title = "Tension in the cabin"
+description = "Weeks in a cramped capsule are taking their toll. Two crew members are no longer speaking to each other."
+min_day = 3
+weight = 0.8
+choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

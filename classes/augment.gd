@@ -30,6 +30,20 @@ static var RARITY_SLOTS: Dictionary[Rarity, int] = {
     Rarity.MYTHIC: 5
 }
 
+static var RARITY_COLORS: Dictionary[Rarity, Color] = {
+    Rarity.COMMON: Color("b8c2cc"),
+    Rarity.EPIC: Color("b46cff"),
+    Rarity.MYTHIC: Color("ffb800")
+}
+
+
+func slot_cost() -> int:
+    return RARITY_SLOTS[rarity]
+
+
+func rarity_name() -> String:
+    return Rarity.keys()[rarity].capitalize()
+
 @export var display_name: String = ""
 @export_multiline var description: String = ""
 @export var upgrades: Dictionary[String, String] = {}

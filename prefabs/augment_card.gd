@@ -37,10 +37,14 @@ func _on_button_pressed() -> void:
 
 
 func _on_button_mouse_entered() -> void:
+    if not is_inside_tree() or is_queued_for_deletion():
+        return
     var tween: Tween = create_tween()
     tween.tween_property(%Card, "offset_transform_scale", Vector2(1.1, 1.1), 0.5).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 
 
 func _on_button_mouse_exited() -> void:
+    if not is_inside_tree() or is_queued_for_deletion():
+        return
     var tween: Tween = create_tween()
     tween.tween_property(%Card, "offset_transform_scale", Vector2(1, 1), 0.5).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)

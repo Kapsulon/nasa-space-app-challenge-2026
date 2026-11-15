@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Resource_choice0"]
+script = ExtResource("2_choice")
+label = "Throw the whole batch away"
+cost = Dictionary[String, int]({})
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"food": -4})
+success_text = "You discarded the contaminated batch. Better safe than sorry."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Resource_choice1"]
+script = ExtResource("2_choice")
+label = "Scrape it off and eat it anyway"
+cost = Dictionary[String, int]({})
+success_chance = 0.5
+success_effects = Dictionary[String, int]({})
+success_text = "Nobody got sick. Lucky."
+failure_effects = Dictionary[String, int]({"random_crew_sick": 1})
+failure_text = "Someone got food poisoning."
+
+[resource]
+script = ExtResource("1_event")
+title = "Mold in the pantry"
+description = "Fuzzy green mold has been found in one of the food containers. Several meals look affected."
+min_day = 3
+weight = 0.8
+choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

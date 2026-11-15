@@ -1,0 +1,131 @@
+{
+  "origine": "coordonnées dans la carte native 820x340",
+  "sprites": [
+    {
+      "name": "propulsion_saturn_v_f0",
+      "x": 15,
+      "y": 112,
+      "w": 143,
+      "h": 114
+    },
+    {
+      "name": "propulsion_saturn_v_f1",
+      "x": 13,
+      "y": 112,
+      "w": 145,
+      "h": 114
+    },
+    {
+      "name": "tunnel_liaison",
+      "x": 158,
+      "y": 153,
+      "w": 42,
+      "h": 32
+    },
+    {
+      "name": "habitat_eau_equipage",
+      "x": 200,
+      "y": 106,
+      "w": 174,
+      "h": 79
+    },
+    {
+      "name": "reserve_nourriture",
+      "x": 204,
+      "y": 183,
+      "w": 106,
+      "h": 63
+    },
+    {
+      "name": "tunnel_central",
+      "x": 374,
+      "y": 153,
+      "w": 34,
+      "h": 32
+    },
+    {
+      "name": "coeur_energetique",
+      "x": 408,
+      "y": 100,
+      "w": 89,
+      "h": 132
+    },
+    {
+      "name": "tunnel_voyager",
+      "x": 496,
+      "y": 153,
+      "w": 132,
+      "h": 32
+    },
+    {
+      "name": "tour_acces",
+      "x": 544,
+      "y": 128,
+      "w": 28,
+      "h": 28
+    },
+    {
+      "name": "module_voyager",
+      "x": 522,
+      "y": 14,
+      "w": 72,
+      "h": 114
+    },
+    {
+      "name": "module_o2",
+      "x": 516,
+      "y": 183,
+      "w": 100,
+      "h": 63
+    },
+    {
+      "name": "serre_hydroponique",
+      "x": 628,
+      "y": 108,
+      "w": 84,
+      "h": 122
+    },
+    {
+      "name": "cupola",
+      "x": 712,
+      "y": 116,
+      "w": 38,
+      "h": 106
+    },
+    {
+      "name": "cables_externes",
+      "x": 156,
+      "y": 134,
+      "w": 46,
+      "h": 72
+    },
+    {
+      "name": "feux_navigation",
+      "x": 82,
+      "y": 108,
+      "w": 643,
+      "h": 7
+    },
+    {
+      "name": "poutrelle_radiateurs_canadarm2",
+      "x": 212,
+      "y": 41,
+      "w": 384,
+      "h": 261
+    },
+    {
+      "name": "aile_solaire",
+      "x": 407,
+      "y": 2,
+      "w": 70,
+      "h": 84
+    },
+    {
+      "name": "vaisseau_complet",
+      "x": 11,
+      "y": 2,
+      "w": 739,
+      "h": 334
+    }
+  ]
+}
