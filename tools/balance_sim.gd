@@ -16,7 +16,7 @@ extends SceneTree
 const AUGMENTS: Registry = preload("res://data/augments/augments.tres")
 
 ## Same as the scenario (select_scenario.gd). Can be overridden: 4th argument.
-const SLOTS: int = 27
+const SLOTS: int = 40
 const MISSION_DAYS: int = 10
 const STEP_HOURS: float = 0.25
 ## Walking between rooms (plus the radio chatter before they move).
@@ -136,7 +136,7 @@ func plan() -> Array[AugmentInstance]:
                 if v > best:
                     best = v
                     pick = augment
-        var instance := AugmentInstance.new(pick, "")
+        var instance := AugmentInstance.new(pick, Country.random_id())
         if pick.is_consumed():
             overhead += pick.slot_cost()
         else:
@@ -205,7 +205,7 @@ func _plan_action(augment: Augment, cargo: Array[AugmentInstance], room: int) ->
                         best_v = v
                         best = instance
             if best:
-                var copy := AugmentInstance.new(best.augment, "")
+                var copy := AugmentInstance.new(best.augment, best.country)
                 copy.roll()
                 cargo.insert(cargo.find(best) + 1, copy)
         Augment.PlanAction.TRADE_UP:
@@ -260,7 +260,7 @@ func _random_card(rarity: int, exclude: Augment = null) -> AugmentInstance:
         if augment.domain != Augment.Domain.LOGISTICS and augment != exclude and (rarity < 0 or augment.rarity == rarity):
             pool.append(augment)
     var picked: Augment = pool.pick_random() if rarity >= 0 else draw_offers(pool, 1)[0]
-    var instance := AugmentInstance.new(picked, "")
+    var instance := AugmentInstance.new(picked, Country.random_id())
     instance.roll()
     return instance
 

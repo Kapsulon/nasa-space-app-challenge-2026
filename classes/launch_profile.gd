@@ -8,7 +8,8 @@ class_name LaunchProfile extends RefCounted
 ##     must hold enough for all of them. Tank cards add "fuel" (some lose a
 ##     bit before take-off: "fuel_leak").
 ##   - Reliability: a small chance of a glitch. More thrust helps a little,
-##     some cards change it directly ("reliability", in %).
+##     some cards change it directly ("reliability", in %), and so does
+##     Ferrovia's country bonus (see Country).
 ## Every card adds its `weight` to the rocket.
 
 ## Crew capsule with the crew inside, always on board.
@@ -51,15 +52,28 @@ var fuel: float = BASE_FUEL
 var fuel_leak: float = 0.0
 ## Extra reliability from cards (0.03 = +3%).
 var reliability_bonus: float = 0.0
+## Extra reliability from the countries backing the cargo (Ferrovia).
+var country_reliability: float = 0.0
 
 var _augments: Array[Augment] = []
+## Country of each card in `_augments` (empty when built from bare augments).
+var _countries: Array[String] = []
 
 
 static func from_instances(instances: Array[AugmentInstance]) -> LaunchProfile:
     var augments: Array[Augment] = []
+    var countries: Array[String] = []
     for instance in instances:
         augments.append(instance.augment)
-    return from_augments(augments)
+        countries.append(instance.country)
+    var profile := from_augments(augments)
+    profile._set_countries(countries)
+    return profile
+
+
+func _set_countries(countries: Array[String]) -> void:
+    _countries = countries
+    country_reliability = Country.bonuses(Country.count_ids(countries)).get("reliability", 0) / 100.0
 
 
 static func from_augments(augments: Array[Augment]) -> LaunchProfile:
@@ -82,10 +96,14 @@ func _add_keys(keys: Dictionary[String, String]) -> void:
 
 
 ## A copy of this profile with one more card loaded, for previews.
-func with_augment(augment: Augment) -> LaunchProfile:
+func with_augment(augment: Augment, country: String = "") -> LaunchProfile:
     var augments := _augments.duplicate()
     augments.append(augment)
-    return from_augments(augments)
+    var profile := from_augments(augments)
+    var countries := _countries.duplicate()
+    countries.append(country)
+    profile._set_countries(countries)
+    return profile
 
 
 func total_weight() -> float:
@@ -128,7 +146,7 @@ func fuel_factor() -> float:
 
 
 func reliability() -> float:
-    return clampf(BASE_RELIABILITY + (thrust - BASE_THRUST) * RELIABILITY_PER_THRUST + reliability_bonus, 0.0, MAX_RELIABILITY)
+    return clampf(BASE_RELIABILITY + (thrust - BASE_THRUST) * RELIABILITY_PER_THRUST + reliability_bonus + country_reliability, 0.0, MAX_RELIABILITY)
 
 
 ## Chance from 0.0 to 1.0 that the rocket reaches orbit.

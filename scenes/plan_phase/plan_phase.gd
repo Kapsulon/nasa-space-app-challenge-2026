@@ -34,7 +34,7 @@ static func _make_odds_gradient() -> Gradient:
     gradient.colors = PackedColorArray([Color("ff3a55"), Color("ff8a2a"), Color("ffb800"), Color("39ff6a")])
     return gradient
 
-@export var available_augment_slots: int = 30:
+@export var available_augment_slots: int = 40:
     set(n_available_augment_slots):
         available_augment_slots = n_available_augment_slots
         if is_node_ready():
@@ -43,6 +43,8 @@ static func _make_odds_gradient() -> Gradient:
 var selected_augments: Array[AugmentInstance] = []
 ## Slots taken by crates and gambles themselves (their cards ride inside).
 var overhead_slots: int = 0
+## Rarity of each overhead slot, to color it in the slot bar.
+var _overhead_rarities: Array[int] = []
 ## Weight, thrust and fuel of everything picked so far.
 var launch: LaunchProfile = LaunchProfile.new()
 var finished: bool = false
@@ -68,6 +70,10 @@ var _last_pick: AugmentInstance = null
 var _last_pick_slot: int = -1
 var _highlight: Augment = null
 
+# --- Countries ---
+var _country_chips: Dictionary[String, PanelContainer] = {}
+var _country_labels: Dictionary[String, Label] = {}
+
 # --- Target hand ---
 ## While a Logistics card waits for targets, the cards it can pick are dealt
 ## as a fanned hand where the offers usually sit.
@@ -92,6 +98,7 @@ func _ready() -> void:
     if not Engine.is_editor_hint():
         Music.play(&"phase_1")
         _build_fx()
+        _build_countries()
     if not Engine.is_editor_hint() and TransitionData.scenario_base_slot_count > 0:
         available_augment_slots = TransitionData.scenario_base_slot_count
     gen_cards()
@@ -171,11 +178,12 @@ func gen_cards() -> void:
     var offers := draw_offers(available_augments(), 3)
     for i in offers.size():
         var card: AugmentCard = AUGMENT_CARD_PACKED_SCENE.instantiate()
-        card.augment_instance = AugmentInstance.new(offers[i], "")
+        card.augment_instance = AugmentInstance.new(offers[i], Country.random_id())
         card.connect("picked", func(): card_picked(card.augment_instance))
         card.hover_changed.connect(func(hovering: bool):
-            update_launch_odds(card.augment_instance.augment if hovering else null)
-            show_details(card.augment_instance.augment if hovering else null))
+            update_launch_odds(card.augment_instance if hovering else null)
+            show_details(card.augment_instance.augment if hovering else null, card.augment_instance.country if hovering else "", true)
+            _highlight_country(card.augment_instance.country if hovering else ""))
         %CardsHolder.add_child(card)
         card.owner = get_tree().edited_scene_root
         if not Engine.is_editor_hint():
@@ -244,16 +252,15 @@ func gen_slots() -> void:
     update_slots()
 
 
-## Tints filled slots with the domain color of the card occupying them, so
-## neighbours in the cargo are easy to spot. Crates and gambles show in the
-## Logistics color at the end.
+## Tints filled slots with the rarity color of the card occupying them.
+## Crates and gambles sit at the end, in their own rarity color.
 func update_slots() -> void:
     var colors: Array[Color] = []
     for instance in selected_augments:
         for i in instance.slots_taken():
-            colors.append(Augment.DOMAIN_COLORS[instance.augment.domain])
-    for i in overhead_slots:
-        colors.append(Augment.DOMAIN_COLORS[Augment.Domain.LOGISTICS])
+            colors.append(Augment.RARITY_COLORS[instance.augment.rarity])
+    for rarity in _overhead_rarities:
+        colors.append(Augment.RARITY_COLORS[rarity])
     var slots := %Slots.get_children().filter(func(c: Node): return not c.is_queued_for_deletion())
     for i in slots.size():
         var slot: Control = slots[i]
@@ -448,10 +455,13 @@ func update_balance() -> void:
         t += "[color=#ffb800]%s[/color]\n" % note
     %SupplyNotes.text = t.strip_edges()
     %SupplyNotes.visible = t != ""
+    _update_countries()
 
 
 ## Fills the details panel with everything about the hovered card.
-func show_details(augment: Augment) -> void:
+## `country` is the card's country; `offered` says it isn't in the cargo
+## yet (picking it would add one card to that country).
+func show_details(augment: Augment, country: String = "", offered: bool = false) -> void:
     if Engine.is_editor_hint():
         return
     if augment == null:
@@ -461,6 +471,8 @@ func show_details(augment: Augment) -> void:
     t += "[color=#%s]%s[/color] [color=#8a94a6]-  %s  -  %s  -  %.1f t  -  %d slot%s[/color]\n" % [
         Augment.DOMAIN_COLORS[augment.domain].to_html(false), augment.domain_name(), augment.card_type_name(),
         augment.rarity_name(), augment.weight, augment.slot_cost(), "" if augment.slot_cost() == 1 else "s"]
+    if country != "":
+        t += _country_line(country, offered and not augment.is_consumed()) + "\n"
     var rows := [["Gives", augment.gives_text, "7be38b"], ["Costs", augment.costs_text, "ff5a6e"],
         ["Risks", augment.risks_text, "ffb35c"], ["Synergy", augment.synergy_text, "63b1ff"]]
     for row in rows:
@@ -477,9 +489,9 @@ func show_details(augment: Augment) -> void:
             label.text = t
 
 
-## Refreshes the launch odds bar. While a card is hovered, `preview` is its
-## augment and the hint shows how picking it would change the odds.
-func update_launch_odds(preview: Augment = null) -> void:
+## Refreshes the launch odds bar. While a card is hovered, `preview` is that
+## card and the hint shows how picking it would change the odds.
+func update_launch_odds(preview: AugmentInstance = null) -> void:
     if Engine.is_editor_hint():
         return
     var chance := launch.success_chance()
@@ -498,8 +510,8 @@ func update_launch_odds(preview: Augment = null) -> void:
 
     var hint: Label = %OddsHint
     var shown := launch
-    if preview != null and not preview.is_consumed():
-        shown = launch.with_augment(preview)
+    if preview != null and not preview.augment.is_consumed():
+        shown = launch.with_augment(preview.augment, preview.country)
         var after := shown.success_chance()
         var delta := roundi(after * 100.0) - roundi(chance * 100.0)
         hint.text = "If picked: %d%% (%s)" % [roundi(after * 100.0), "no change" if delta == 0 else "%+d" % delta]
@@ -652,6 +664,8 @@ func _apply_card(instance: AugmentInstance, targets: Array) -> void:
     _impact(augment)
     if augment.is_consumed():
         overhead_slots += augment.slot_cost()
+        for i in augment.slot_cost():
+            _overhead_rarities.append(augment.rarity)
     else:
         instance.roll()
         selected_augments.append(instance)
@@ -680,7 +694,7 @@ func _apply_card(instance: AugmentInstance, targets: Array) -> void:
                 reveal_title = "SWAPPED!"
         Augment.PlanAction.DUPLICATE:
             var target: AugmentInstance = targets[0]
-            var copy := AugmentInstance.new(target.augment, "")
+            var copy := AugmentInstance.new(target.augment, target.country)
             copy.roll()
             selected_augments.insert(selected_augments.find(target) + 1, copy)
             message = "Printed a second %s!" % target.augment.card_name()
@@ -779,7 +793,7 @@ func _random_card(rarity: int, exclude: Augment = null) -> AugmentInstance:
     if pool.is_empty():
         return null
     var picked: Augment = pool.pick_random() if rarity >= 0 else draw_offers(pool, 1)[0]
-    var instance := AugmentInstance.new(picked, "")
+    var instance := AugmentInstance.new(picked, Country.random_id())
     instance.roll()
     return instance
 
@@ -815,6 +829,114 @@ func finish() -> void:
     TransitionData.cargo_overhead_slots = overhead_slots
     await get_tree().create_timer(1.0).timeout
     get_tree().change_scene_to_file(LAUNCH_REPORT_SCENE)
+
+
+# --- Countries ------------------------------------------------------------------
+
+## One chip per country under the supplies: flag and "cards / next tier".
+## Lit in the country color while its bonus is active. Hovering a chip shows
+## the country's bonus tiers in the details panel.
+func _build_countries() -> void:
+    var row := HBoxContainer.new()
+    row.add_theme_constant_override("separation", 8)
+    var vbox := %SupplyNotes.get_parent()
+    vbox.add_child(row)
+    vbox.move_child(row, %SupplyNotes.get_index() + 1)
+    for id in Country.ids():
+        var chip := PanelContainer.new()
+        chip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        chip.mouse_filter = Control.MOUSE_FILTER_STOP
+        chip.mouse_entered.connect(_show_country_details.bind(id))
+        chip.mouse_exited.connect(show_details.bind(null))
+        var line := HBoxContainer.new()
+        line.add_theme_constant_override("separation", 8)
+        line.alignment = BoxContainer.ALIGNMENT_CENTER
+        line.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        chip.add_child(line)
+        var flag := TextureRect.new()
+        flag.texture = Country.flag(id)
+        flag.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+        flag.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+        flag.custom_minimum_size = Vector2(42, 28)
+        flag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        line.add_child(flag)
+        var label := Label.new()
+        label.add_theme_font_size_override("font_size", 28)
+        label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        line.add_child(label)
+        row.add_child(chip)
+        _country_chips[id] = chip
+        _country_labels[id] = label
+    _update_countries()
+
+
+func _update_countries() -> void:
+    if _country_chips.is_empty():
+        return
+    var counts := Country.counts(selected_augments)
+    for id in Country.ids():
+        var count: int = counts[id]
+        var next := Country.next_tier_at(count)
+        var active := Country.tier(count) > 0
+        var color := Country.color(id)
+        var label: Label = _country_labels[id]
+        label.text = "%d/%d" % [count, next] if next > 0 else "%d MAX" % count
+        label.add_theme_color_override("font_color", color if active else Color("94a3b8"))
+        var style := _box_style(Color(color, 0.18) if active else CARGO_ROW_COLOR, color if active else Color("334155"), 2 + Country.tier(count))
+        style.content_margin_left = 8
+        style.content_margin_right = 8
+        style.content_margin_top = 4
+        style.content_margin_bottom = 4
+        _country_chips[id].add_theme_stylebox_override("panel", style)
+
+
+## While an offer is hovered, its country's chip stands out.
+func _highlight_country(id: String) -> void:
+    for chip_id in _country_chips.keys():
+        var chip: PanelContainer = _country_chips[chip_id]
+        chip.modulate.a = 1.0 if id == "" or chip_id == id else 0.35
+        if chip_id == id:
+            chip.pivot_offset = chip.size * 0.5
+            chip.scale = Vector2(1.15, 1.15)
+            chip.create_tween().tween_property(chip, "scale", Vector2.ONE, 0.3).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+func _flag_bbcode(id: String) -> String:
+    return "[img=42x28]%s[/img]" % Country.flag(id).resource_path
+
+
+## "Made in Solvara" plus where its bonus stands. `adding`: the card isn't in
+## the cargo yet, so show what picking it would change.
+func _country_line(id: String, adding: bool) -> String:
+    var count: int = Country.counts(selected_augments)[id]
+    var color := Country.color(id).to_html(false)
+    var t := "%s [color=#%s]Made in %s[/color]  " % [_flag_bbcode(id), color, Country.display_name(id)]
+    var now := Country.tier(count)
+    if adding:
+        var after := Country.tier(count + 1)
+        if after > now:
+            return t + "[color=#39ff6a]Picking it unlocks: %s![/color]" % Country.bonus_text(id, after)
+        var next := Country.next_tier_at(count + 1)
+        if next > 0:
+            return t + "[color=#8a94a6]%d/%d cards for: %s[/color]" % [count + 1, next, Country.bonus_text(id, Country.tier(next))]
+        return t + "[color=#8a94a6]%s (max)[/color]" % Country.bonus_text(id, now)
+    if now > 0:
+        return t + "[color=#%s]%s[/color]" % [color, Country.bonus_text(id, now)]
+    return t + "[color=#8a94a6]%d/%d cards for: %s[/color]" % [count, Country.TIERS[0], Country.bonus_text(id, 1)]
+
+
+## The details panel tells everything about a country's bonus.
+func _show_country_details(id: String) -> void:
+    var count: int = Country.counts(selected_augments)[id]
+    var color := Country.color(id).to_html(false)
+    var t := "%s [b][color=#%s]%s[/color][/b]\n" % [_flag_bbcode(id), color, Country.display_name(id).to_upper()]
+    t += "[color=#8a94a6]%s[/color]\n" % Country.DATA[id]["motto"]
+    t += "Cards from %s in the cargo: [color=#%s]%d[/color]\n" % [Country.display_name(id), color, count]
+    for i in Country.TIERS.size():
+        var reached := count >= Country.TIERS[i]
+        t += "[color=#%s]%s %d cards: %s[/color]\n" % [
+            color if reached else "64748b", "[lb]x[rb]" if reached else "[lb] [rb]", Country.TIERS[i], Country.bonus_text(id, i + 1)]
+    %CardDetails.text = t.strip_edges()
 
 
 # --- Target hand ----------------------------------------------------------------
@@ -942,7 +1064,7 @@ func _on_hand_hover(hovering: bool, card: AugmentCard) -> void:
         return
     if hovering:
         _hand_cards.move_child(card, -1)
-        show_details(card.augment_instance.augment)
+        show_details(card.augment_instance.augment, card.augment_instance.country)
     else:
         _hand_cards.move_child(card, _hand_list.find(card))
         show_details(null)

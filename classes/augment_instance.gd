@@ -1,5 +1,7 @@
 class_name AugmentInstance extends Node
 
+## Country that built this card (a Country id, "" for none, e.g. in the
+## codex). Shown as a flag on the card; see Country for the bonuses.
 var country: String = ""
 var augment: Augment
 

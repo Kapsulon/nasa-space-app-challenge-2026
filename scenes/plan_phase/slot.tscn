@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bi6qgpcikicf8"]
 
-[ext_resource type="Texture2D" uid="uid://dj2m7f1lxoya1" path="res://icon.svg" id="1_25e6j"]
+[ext_resource type="Texture2D" uid="uid://dlvy3ti1fdbqk" path="res://assets/textures/slot_capsule.png" id="1_25e6j"]
 
 [node name="TextureRect" type="TextureRect" unique_id=1992565295]
 custom_maximum_size = Vector2(64, 64)

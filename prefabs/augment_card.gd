@@ -9,8 +9,6 @@ signal hover_changed(hovering: bool)
         augment_instance = new_augment_instance
         update_display()
 
-@export var country: String
-
 
 ## Card face colors (dark, readable on the parchment).
 const FACE_COLORS: Dictionary[String, String] = {
@@ -55,6 +53,9 @@ func update_display() -> void:
     %Card.add_theme_stylebox_override("panel", sb)
 
     %FamilyImage.texture = Augment.TYPE_ICONS[augment.type]
+    # The flag of the country that built the card (none in the codex).
+    %CountryImage.texture = Country.flag(augment_instance.country)
+    %CountryImage.visible = %CountryImage.texture != null
     %AugmentImage.texture = augment.image
     %Foil.visible = augment.rarity == Augment.Rarity.MYTHIC
 

@@ -85,6 +85,7 @@ Cards are **`Augment`** resources (`classes/augment.gd`).
   - `risks` are `CardRisk` sub-resources, checked in the morning or at night.
   - `flags` are global effects (see `Augment.FLAG_TEXT`).
   - `synergy_*` adds bonuses from related cards. Some only count cards **adjacent in cargo order**, so the order of picks matters.
+- **Countries:** every `AugmentInstance` has a random `country` (`classes/country.gd`: Solvara, Glacia, Verdania, Ferrovia), shown as a flag in the card's top right. Each country gives a passive bonus (night power/water/oxygen in `MissionState`, launch reliability in `LaunchProfile`) that grows in tiers with the number of its cards in the cargo. Not to be confused with a card's *family*, its `type` (Vital, Technical, Special: the top-left icon).
 - **Launch-only domains** (Propulsion, Fuel, Logistics) never act as ship modules.
   - Logistics cards with a `plan_action` are used up when picked. They edit the deck in `plan_phase.gd`: remove, swap, crate, duplicate, trade-up, gambles, bonus slots.
 

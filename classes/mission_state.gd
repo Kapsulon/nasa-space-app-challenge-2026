@@ -155,6 +155,8 @@ const CONDITIONS: Dictionary[String, Dictionary] = {
 ## Event effects that pick modules by domain: "break_energy",
 ## "lose_communication_or_navigation", "offline_navigation", "break_any".
 const MODULE_EFFECTS: Array[String] = ["break_", "lose_", "offline_"]
+## Resources the countries can add every night (see Country).
+const COUNTRY_NIGHT_KEYS: Array[String] = ["power", "water", "oxygen"]
 
 enum Outcome { ONGOING, WON, LOST }
 
@@ -200,6 +202,10 @@ var _accum: Dictionary[String, float] = {}
 ## Hours spent on a module repair / curing sickness.
 var _repair_hours: float = 0.0
 var _cure_hours: Dictionary[CrewMember, float] = {}
+## Cards per country in the cargo, and what the countries add every night
+## ("power", "water", "oxygen"; see Country).
+var country_counts: Dictionary[String, int] = {}
+var country_bonus: Dictionary[String, int] = {}
 
 
 func _init(_scenario_name: String, _mission_days: int, event_pool: Array[MissionEvent], augments: Array[AugmentInstance]) -> void:
@@ -217,6 +223,13 @@ func _init(_scenario_name: String, _mission_days: int, event_pool: Array[Mission
     _apply_augments(augments)
     for module in modules:
         rerolls_left += module.augment.event_rerolls
+    country_counts = Country.counts(augments)
+    country_bonus = Country.bonuses(country_counts)
+    for id in Country.ids():
+        var at_tier := Country.tier(country_counts[id])
+        if at_tier > 0:
+            _log("[color=#%s]%s backs the mission (%d cards): %s.[/color]" % [
+                Country.color(id).to_html(false), Country.display_name(id), country_counts[id], Country.bonus_text(id, at_tier)])
 
 
 static func load_event_pool(dir_path: String = "res://data/events") -> Array[MissionEvent]:
@@ -804,6 +817,8 @@ func forecast() -> Dictionary[String, int]:
             for key in effects.keys():
                 if delta.has(key):
                     delta[key] += effects[key]
+    for key in COUNTRY_NIGHT_KEYS:
+        delta[key] += country_bonus.get(key, 0)
     delta["power"] += SOLAR_POWER_PER_DAY - LIFE_SUPPORT_POWER - _powered_stations_used()
     delta["oxygen"] -= aboard.size() * OXYGEN_PER_CREW
     delta["hull"] -= HULL_DECAY_PER_DAY
@@ -881,8 +896,12 @@ func end_day() -> Dictionary:
     var recap := {"day": day}
     var aboard := crew_aboard()
 
-    # 1. Ship modules, then the capsule's own solar wings and life support.
+    # 1. Ship modules, the countries' support, then the capsule's own solar
+    # wings and life support.
     _run_modules()
+    for key in COUNTRY_NIGHT_KEYS:
+        resources[key] += country_bonus.get(key, 0)
+    _clamp_resources()
     if has_condition("blackout"):
         resources["power"] = 0
         _power_short = true
@@ -1152,8 +1171,15 @@ func _gain_random_card(rarity: Augment.Rarity) -> void:
             pool.append(augment)
     if pool.is_empty():
         return
-    var instance := AugmentInstance.new(pool.pick_random(), "")
+    var instance := AugmentInstance.new(pool.pick_random(), Country.random_id())
     instance.roll()
+    var tier_before := Country.tier(country_counts[instance.country])
+    country_counts[instance.country] += 1
+    country_bonus = Country.bonuses(country_counts)
+    var tier_now := Country.tier(country_counts[instance.country])
+    if tier_now > tier_before:
+        _log("[color=#%s]%s steps up its support: %s.[/color]" % [
+            Country.color(instance.country).to_html(false), Country.display_name(instance.country), Country.bonus_text(instance.country, tier_now)])
     var module := ShipModule.new(instance.augment, modules.size())
     modules.append(module)
     for key in instance.augment.upgrades.keys():

@@ -70,7 +70,7 @@ func _ready() -> void:
     var cargo: Array[AugmentInstance] = TransitionData.selected_augments
     if cargo.is_empty():
         for augment in test_cargo:
-            var instance := AugmentInstance.new(augment, "")
+            var instance := AugmentInstance.new(augment, Country.random_id())
             instance.roll()
             cargo.append(instance)
     state = MissionState.new(scenario_name, TransitionData.scenario_days, MissionState.load_event_pool(), cargo)
@@ -580,6 +580,8 @@ func _briefing() -> void:
     term.print_text("Mission: [color=#%s]%s[/color] in [color=#%s]%d days[/color]. %d crew aboard, %d modules running.\n" % [
         T_BLUE, state.scenario_name, T_BLUE, state.mission_days, state.crew.size(), state.ship_modules().size()])
     term.print_text("[color=#%s]Click an astronaut, then a room to send them there. Red bubbles are alerts: click them to send help. Space pauses.[/color]\n" % T_DIM)
+    # The countries backing the mission.
+    _flush_log()
     term.print_text("\n[color=#%s]==== DAY 1 / %d  -  08:00 ====[/color]\n" % [T_AMBER, state.mission_days])
 
 

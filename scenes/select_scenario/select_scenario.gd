@@ -15,7 +15,7 @@ const AUGMENT_CARD := preload("res://prefabs/augment_card.tscn")
 
 ## The missions on offer. Add entries here for more.
 const SCENARIOS: Array[Dictionary] = [
-    {"name": "Reach the ISS", "orbit": "LOW EARTH ORBIT", "slots": 27, "days": 10,
+    {"name": "Reach the ISS", "orbit": "LOW EARTH ORBIT", "slots": 40, "days": 10,
         "objective": "Keep the crew alive for 10 days until docking with the International Space Station."},
 ]
 
