@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bd8jmi2gv5624"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Quartermaster Trade-Up"
+short_name = "Quartermaster"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 1
+domain = 5
+card_type = 7
+slot_override = 0
+plan_action = 5
+gives_text = "Trade 2 Common cards for 1 random Rare"
+risks_text = "The Rare is random, so it may not fit your build"
+lore = "Logistics officers are always trying to turn a pile of junk into one good part."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://hrf2jqnpwpr2"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://1n7p1xwbluqv" path="res://assets/textures/ASSETS/rover.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 5
+chance = 0.35
+every_days = 1
+effects = {}
+offline_today = true
+hazard_up = 0.1
+short_text = "Loses its fix 35% of days (+10% hazards)"
+log_text = "The {module} lost its satellite fix and keeps saying \"recalculating\". Hazards are more likely today."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "\"Itinéraire Bis\" Smartphone GPS App"
+short_name = "GPS App"
+image = ExtResource("2_img")
+weight = 0.05
+type = 1
+rarity = 0
+domain = 7
+card_type = 9
+daily = Dictionary[String, int]({"power": -1})
+toggleable = true
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+hazard_reduction = 0.1
+gives_text = "Reduces the chance of Hazard events appearing by 10%"
+costs_text = "-3 kW Energy per turn"
+risks_text = "35% chance per turn of losing the satellite fix: the reduction is lost and the chance of Hazard events appearing is +10% instead (the app steers you into the debris)"
+synergy_text = "Reductions from Navigation cards add up (suggested cap: -75%)"
+lore = "Consumer GPS receivers lock out above a speed and altitude limit (export-control limits) and were built to follow roads, not orbits. Past Earth orbit the app keeps announcing \"recalculating\" and confidently sends you the wrong way."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

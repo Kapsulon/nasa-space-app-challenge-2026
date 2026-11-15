@@ -338,6 +338,7 @@ func _fill_popup() -> void:
             button.disabled = not state.can_afford(choice.cost)
             button.pressed.connect(_pick_choice.bind(choice))
             %PopupChoices.add_child(button)
+        _add_navigation_buttons(event)
         return
 
     # Second step: who goes?
@@ -376,6 +377,56 @@ func _fill_popup() -> void:
         _popup_choice = null
         _fill_popup())
     %PopupChoices.add_child(back)
+
+
+## Star tracker (redraw the alert) and AutoNav (cancel a bad one).
+func _add_navigation_buttons(event: MissionEvent) -> void:
+    var row := HBoxContainer.new()
+    row.add_theme_constant_override("separation", 10)
+    if state.can_reroll():
+        var reroll := Button.new()
+        reroll.text = "Redraw this alert (star tracker, %d left)" % state.rerolls_left
+        reroll.add_theme_font_size_override("font_size", 19)
+        reroll.add_theme_color_override("font_color", Augment.DOMAIN_COLORS[Augment.Domain.NAVIGATION])
+        reroll.pressed.connect(_reroll_alert)
+        row.add_child(reroll)
+    if state.cancel_cooldown() > 0 and not event.tags.has(&"good"):
+        var cancel := Button.new()
+        var wait := state.cancel_wait()
+        cancel.text = "Cancel it (AutoNav)" if wait == 0 else "AutoNav recharging: %d day%s" % [wait, "" if wait == 1 else "s"]
+        cancel.disabled = not state.can_cancel(event)
+        cancel.add_theme_font_size_override("font_size", 19)
+        cancel.add_theme_color_override("font_color", Augment.DOMAIN_COLORS[Augment.Domain.NAVIGATION])
+        cancel.pressed.connect(_cancel_alert)
+        row.add_child(cancel)
+    if row.get_child_count() > 0:
+        %PopupChoices.add_child(row)
+    else:
+        row.free()
+
+
+func _reroll_alert() -> void:
+    var bubble := _popup_bubble
+    if bubble == null:
+        return
+    var other := state.reroll_event(bubble.event)
+    if other == null:
+        return
+    _command("nav --star-tracker --reroll \"%s\"" % bubble.event.title.to_lower())
+    _info("The star tracker found a better path: \"%s\" is gone, but there's something else." % bubble.event.title)
+    bubble.set_event(other)
+    _alert("%s  [color=#%s](%s)[/color]" % [other.title, T_DIM, ShipView.room_name(bubble.room)])
+    _fill_popup()
+
+
+func _cancel_alert() -> void:
+    var bubble := _popup_bubble
+    if bubble == null or not state.cancel_event(bubble.event):
+        return
+    _close_popup()
+    _remove_bubble(bubble)
+    _command("nav --autonav --avoid \"%s\"" % bubble.event.title.to_lower())
+    %Terminal.then(func(): _info("AutoNav re-planned the route: \"%s\" is no longer a problem." % bubble.event.title))
 
 
 func _pick_choice(choice: EventChoice) -> void:
@@ -517,7 +568,7 @@ func _briefing() -> void:
     term.type_text("./open_channel --crew\n", 0.3)
     term.print_text("[color=#%s]uplink ........ [/color][color=#%s][OK][/color]\n" % [T_DIM, T_GREEN])
     term.print_text("Mission: [color=#%s]%s[/color] in [color=#%s]%d days[/color]. %d crew aboard, %d modules running.\n" % [
-        T_BLUE, state.scenario_name, T_BLUE, state.mission_days, state.crew.size(), state.modules.size()])
+        T_BLUE, state.scenario_name, T_BLUE, state.mission_days, state.crew.size(), state.ship_modules().size()])
     term.print_text("[color=#%s]Click an astronaut, then a room to send them there. Red bubbles are alerts: click them to send help. Space pauses.[/color]\n" % T_DIM)
     term.print_text("\n[color=#%s]==== DAY 1 / %d  -  08:00 ====[/color]\n" % [T_AMBER, state.mission_days])
 
@@ -736,12 +787,13 @@ func _set_stat(stat: Dictionary, value: int, color: Color) -> void:
 func _build_modules() -> void:
     for child in %ModuleList.get_children():
         child.queue_free()
-    %ModulesHeader.text = "Modules (%d)" % state.modules.size()
-    if state.modules.is_empty():
+    var ship_modules := state.ship_modules()
+    %ModulesHeader.text = "Modules (%d)" % ship_modules.size()
+    if ship_modules.is_empty():
         var empty := _label("No modules aboard: the crew relies on the capsule's own supplies.", 18, COLOR_MUTED)
         empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         %ModuleList.add_child(empty)
-    for module in state.modules:
+    for module in ship_modules:
         %ModuleList.add_child(_make_module_row(module))
 
 
@@ -763,9 +815,11 @@ func _make_module_row(module: ShipModule) -> Control:
     for key in effects.keys():
         if effects[key] != 0:
             parts.append(Augment.daily_line(key, effects[key]))
+    if augment.hazard_reduction > 0.0:
+        parts.append("hazards -%d%%" % roundi(augment.hazard_reduction * 100.0))
     var detail := ", ".join(parts) + " / night" if not parts.is_empty() else "Supplies loaded at launch"
     var status_color := COLOR_MUTED
-    if not module.working():
+    if not module.working() or module.unpowered:
         detail = module.status_text()
         status_color = COLOR_BAD if module.broken or module.lost else COLOR_WARN
     var detail_label := _label(detail, 15, status_color)

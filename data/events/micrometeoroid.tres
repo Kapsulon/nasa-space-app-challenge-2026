@@ -33,4 +33,5 @@ min_day = 2
 weight = 1.2
 skill = "engineering"
 location = "hull"
+tags = Array[StringName]([&"hazard"])
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

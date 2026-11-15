@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://5nyhbvan8e6q"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Double or Nothing Cargo Gamble"
+short_name = "Double or Nothing"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 1
+domain = 5
+card_type = 8
+slot_override = 2
+plan_action = 6
+gives_text = "50% chance of 2 random Rare cards, 50% chance of losing 2 random cards"
+costs_text = "2 slots"
+risks_text = "The loss can hit your key cards"
+lore = "Some crews bet the whole cargo on a single resupply."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

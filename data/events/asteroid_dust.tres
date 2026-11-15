@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Resource_choice0"]
+script = ExtResource("2_choice")
+work_hours = 2.5
+label = "Spacewalk to sweep the dust off the solar wings"
+cost = Dictionary[String, int]({"oxygen": 1})
+success_chance = 0.7
+success_effects = Dictionary[String, int]({"power": 2, "science": 1})
+success_text = "Clean panels, full power again, and a few dust grains bagged for the lab."
+failure_effects = Dictionary[String, int]({"power": -4, "random_crew_stress": 10})
+failure_text = "The dust was stickier than expected. The panels are still dim and the spacewalker is fed up."
+
+[sub_resource type="Resource" id="Resource_choice1"]
+script = ExtResource("2_choice")
+needs_crew = false
+label = "Live with dusty panels for a while"
+cost = Dictionary[String, int]({})
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"power": -6})
+success_text = "The dusty solar wings make less power for a while."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Asteroid dust storm"
+description = "The ship is crossing the dusty trail of a small asteroid. Fine grit is settling on the solar wings and dimming them."
+min_day = 3
+weight = 0.9
+skill = "engineering"
+location = "hull"
+tags = Array[StringName]([&"hazard"])
+choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://0pq7fh7h8okx"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dgdjbxw5hmnmg" path="res://assets/textures/ASSETS/politique_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Space-Tetris Packing Plan"
+short_name = "Space-Tetris Plan"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 2
+domain = 5
+card_type = 4
+slot_override = 0
+bonus_slots = 2
+gives_text = "+2 slots"
+lore = "A perfect packing plan, with every module fitted so that none disturbs another."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

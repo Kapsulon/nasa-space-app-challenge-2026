@@ -84,14 +84,16 @@ func _build_report() -> String:
     t += "\n"
 
     t += _header("CARGO MANIFEST")
-    var slots_used := 0
+    var slots_used := TransitionData.cargo_overhead_slots
     var counts: Dictionary[Augment, int] = {}
+    var slot_counts: Dictionary[Augment, int] = {}
     var order: Array[Augment] = []
     for instance in augments:
-        slots_used += instance.augment.slot_cost()
+        slots_used += instance.slots_taken()
         if not counts.has(instance.augment):
             order.append(instance.augment)
         counts[instance.augment] = counts.get(instance.augment, 0) + 1
+        slot_counts[instance.augment] = slot_counts.get(instance.augment, 0) + instance.slots_taken()
     if order.is_empty():
         t += _dim("  (EMPTY)") + "\n"
     for augment in order:
@@ -99,8 +101,11 @@ func _build_report() -> String:
         t += "  [color=#%s][%s][/color] %s x%d ... %d SLOT%s\n" % [
             Augment.RARITY_COLORS[augment.rarity].to_html(false),
             augment.rarity_name().to_upper(), augment.card_name().to_upper(), n,
-            augment.slot_cost() * n, "" if augment.slot_cost() * n == 1 else "S"]
-    var total_slots: int = TransitionData.scenario_base_slot_count if TransitionData.scenario_base_slot_count > 0 else slots_used
+            slot_counts[augment], "" if slot_counts[augment] == 1 else "S"]
+    if TransitionData.cargo_overhead_slots > 0:
+        t += _dim("  CRATES AND GAMBLES ... %d SLOTS" % TransitionData.cargo_overhead_slots) + "\n"
+    var total_slots: int = TransitionData.cargo_slots_total if TransitionData.cargo_slots_total > 0 \
+        else (TransitionData.scenario_base_slot_count if TransitionData.scenario_base_slot_count > 0 else slots_used)
     t += "  TOTAL ....... %d / %d SLOTS\n\n" % [slots_used, total_slots]
 
     t += _header("LAUNCH CONFIGURATION")
@@ -119,8 +124,8 @@ func _build_report() -> String:
     var chance := launch.success_chance()
     t += _header("VEHICLE")
     t += "  TOTAL WEIGHT .... %5.1f T" % launch.total_weight() + _dim("  (CAPSULE %.1f + CARGO %.1f)" % [LaunchProfile.CAPSULE_TONS, launch.cargo_tons]) + "\n"
-    t += "  ENGINE LIFT ..... %5.1f T" % launch.lift_tons + ("  [color=#%s]OVERWEIGHT[/color]" % RED if launch.is_overweight() else "") + "\n"
-    t += "  FUEL ............ %5.0f T" % launch.fuel_tons + _dim("  (NEEDS %.0f T)" % launch.fuel_needed()) + "\n"
+    t += "  THRUST .......... %5.0f" % launch.thrust + _dim("  (NEEDS %.0f)" % launch.thrust_needed()) + ("  [color=#%s]OVERWEIGHT[/color]" % RED if launch.is_overweight() else "") + "\n"
+    t += "  FUEL ............ %5.0f" % launch.fuel_available() + _dim("  (ENGINES BURN %.0f)" % launch.fuel_needed()) + "\n"
     t += "  LAUNCH ODDS ..... [color=#%s]%d%%[/color]\n\n" % [_odds_color(chance), roundi(chance * 100.0)]
 
     t += _header("OBJECTIVE")

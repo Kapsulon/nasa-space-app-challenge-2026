@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cb762f6v5wl82"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dgdjbxw5hmnmg" path="res://assets/textures/ASSETS/politique_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Prototype Lottery"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 2
+domain = 5
+card_type = 8
+slot_override = 4
+plan_action = 7
+gives_text = "Add 1 random Mythic to your deck"
+costs_text = "4 slots"
+lore = "New hardware flies on trust in the engineers until the first real test."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

@@ -25,6 +25,8 @@ var days_thirsty: int = 0
 var skill: String = ""
 ## The station (MissionState.STATIONS) they are assigned to.
 var station: String = "bunks"
+## Stress can't go above this (lowered by some Communication cards).
+var stress_cap: int = MAX_STRESS
 
 
 func _init(_name: String, _role: String) -> void:
@@ -48,7 +50,7 @@ func heal(amount: int) -> void:
 
 func add_stress(amount: int) -> void:
     if aboard:
-        stress = clampi(stress + amount, 0, MAX_STRESS)
+        stress = clampi(stress + amount, 0, stress_cap)
 
 
 func send_home(reason: String) -> void:

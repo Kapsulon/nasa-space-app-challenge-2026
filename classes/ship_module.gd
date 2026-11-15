@@ -12,6 +12,9 @@ var broken: bool = false
 var lost: bool = false
 ## Not producing today (e.g. the bargain solar panel blacked out).
 var offline_today: bool = false
+## Stayed off last night for lack of power (or another resource): no hazard
+## protection until it runs again.
+var unpowered: bool = false
 
 
 func _init(_augment: Augment, _index: int) -> void:
@@ -36,4 +39,6 @@ func status_text() -> String:
         return "Switched off"
     if offline_today:
         return "Offline today"
+    if unpowered:
+        return "Out of power"
     return "Working"

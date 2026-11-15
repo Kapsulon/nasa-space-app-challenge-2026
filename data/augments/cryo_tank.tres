@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://8skuomxh3s28"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://do2q7xdif88ud" path="res://assets/textures/ASSETS/fuel.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Aluminium-Lithium Cryogenic Tank"
+short_name = "Cryogenic Tank"
+image = ExtResource("2_img")
+weight = 2.5
+type = 1
+rarity = 1
+domain = 8
+card_type = 12
+upgrades = Dictionary[String, String]({"fuel": "200", "fuel_leak": "10"})
+gives_text = "+200 Fuel"
+risks_text = "Boil-off: loses 10 Fuel before take-off"
+synergy_text = "Best paired with Hydrogen or Methalox engines"
+lore = "Aluminium-lithium alloy is lighter and stronger than ordinary aluminium, and was used for the giant external tank of the Space Shuttle. Cryogenic propellants slowly boil away even in insulated tanks."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

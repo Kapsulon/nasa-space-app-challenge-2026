@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://dvh061aah6nq"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Modular Cargo Container"
+short_name = "Cargo Container"
+image = ExtResource("2_img")
+weight = 6.0
+type = 2
+rarity = 1
+domain = 5
+card_type = 4
+slot_override = 0
+bonus_slots = 3
+gives_text = "+3 slots"
+costs_text = "+6 t mass, which makes take-off harder"
+lore = "Extra storage always weighs something, and the rocket has to lift it."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

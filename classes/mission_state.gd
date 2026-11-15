@@ -125,6 +125,8 @@ const EVENT_SKILL_BONUS: float = 0.2
 const EVENT_STRESS_PENALTY: float = 0.3
 const EVENT_SICK_PENALTY: float = 0.15
 const EVENT_WORK_STRESS: int = 4
+## Stress from homesick alerts with an "isolation_relief" module aboard.
+const ISOLATION_RELIEF: float = 0.75
 
 enum Outcome { ONGOING, WON, LOST }
 
@@ -141,6 +143,12 @@ var outcome_text: String = ""
 var modules: Array[ShipModule] = []
 ## The radio is down today: calls home don't get through.
 var comms_down: bool = false
+## Extra hazard chance for today (navigation glitches).
+var hazard_up_today: float = 0.0
+## Alerts the crew can still redraw (Star tracker).
+var rerolls_left: int = 0
+## Day from which a bad alert can be cancelled again (AutoNav).
+var _cancel_ready_day: int = 1
 
 var _event_pool: Array[MissionEvent] = []
 var _all_events: Array[MissionEvent] = []
@@ -170,6 +178,8 @@ func _init(_scenario_name: String, _mission_days: int, event_pool: Array[Mission
         member.station = entry[3]
         crew.append(member)
     _apply_augments(augments)
+    for module in modules:
+        rerolls_left += module.augment.event_rerolls
 
 
 static func load_event_pool(dir_path: String = "res://data/events") -> Array[MissionEvent]:
@@ -253,7 +263,7 @@ func synergy_count(module: ShipModule) -> int:
     var pool: Array[ShipModule] = neighbours(module) if augment.synergy_adjacent else modules
     var count := 0
     for other in pool:
-        if other != module and not other.lost and other.augment.domain == augment.synergy_domain:
+        if other != module and not other.lost and augment.is_synergy_partner(other.augment):
             count += 1
     return mini(count, augment.synergy_max)
 
@@ -293,8 +303,24 @@ func _trigger_risk(module: ShipModule, risk: CardRisk) -> void:
         module.broken = true
     if risk.offline_today:
         module.offline_today = true
-    if risk.cuts_comms:
+    if risk.cuts_comms and not has_flag(&"laser_comms"):
         comms_down = true
+    hazard_up_today += risk.hazard_up
+
+
+## Chance of a risk for this module, after neighbours and modules that
+## soften it.
+func risk_chance(module: ShipModule, risk: CardRisk) -> float:
+    var chance := risk.chance
+    if risk.adjacent_chance >= 0.0 and _next_to_domain(module, risk.domain):
+        chance = risk.adjacent_chance
+    if risk.halved_by != &"" and has_flag(risk.halved_by):
+        chance *= 0.5
+    return chance
+
+
+func _next_to_domain(module: ShipModule, domain: Augment.Domain) -> bool:
+    return neighbours(module).any(func(n: ShipModule): return not n.lost and n.augment.domain == domain)
 
 
 ## Morning checks: modules that misbehave on a schedule.
@@ -304,7 +330,7 @@ func _morning_risks() -> void:
             continue
         for risk in module.augment.risks:
             if risk.condition == CardRisk.Condition.EVERY_N_DAYS and risk.every_days > 0 \
-                    and day % risk.every_days == 0 and not _risk_blocked(risk) and randf() < risk.chance:
+                    and day % risk.every_days == 0 and not _risk_blocked(risk) and randf() < risk_chance(module, risk):
                 _trigger_risk(module, risk)
 
 
@@ -321,14 +347,14 @@ func _night_risks() -> void:
                 CardRisk.Condition.ANY_DAY:
                     condition_met = true
                 CardRisk.Condition.ADJACENT_DOMAIN:
-                    condition_met = neighbours(module).any(func(n: ShipModule): return not n.lost and n.augment.domain == risk.domain)
+                    condition_met = _next_to_domain(module, risk.domain)
                 CardRisk.Condition.POWER_SHORTAGE:
                     condition_met = _power_short
                 CardRisk.Condition.POWER_FULL:
                     condition_met = resources["power"] >= capacities["power"]
                 CardRisk.Condition.WATER_BELOW:
                     condition_met = resources["water"] < risk.threshold
-            if condition_met and randf() < risk.chance:
+            if condition_met and randf() < risk_chance(module, risk):
                 _trigger_risk(module, risk)
                 if module.lost or module.broken:
                     break
@@ -342,6 +368,9 @@ func adjacency_notes() -> PackedStringArray:
             if risk.condition == CardRisk.Condition.ADJACENT_DOMAIN \
                     and neighbours(module).any(func(n: ShipModule): return n.augment.domain == risk.domain):
                 notes.append("%s is next to an %s card. Risk: %s" % [module.augment.card_name(), Augment.Domain.keys()[risk.domain].capitalize(), risk.short_text.to_lower()])
+            elif risk.adjacent_chance >= 0.0 and neighbours(module).any(func(n: ShipModule): return n.augment.domain == risk.domain):
+                notes.append("%s is next to an %s card: %d%% risk instead of %d%%" % [module.augment.card_name(),
+                    Augment.Domain.keys()[risk.domain].capitalize(), roundi(risk.adjacent_chance * 100.0), roundi(risk.chance * 100.0)])
         if module.augment.synergy_adjacent and not module.augment.synergy_daily.is_empty():
             notes.append("%s links %d %s card%s" % [module.augment.card_name(), synergy_count(module),
                 Augment.Domain.keys()[module.augment.synergy_domain].capitalize(), "" if synergy_count(module) == 1 else "s"])
@@ -365,6 +394,19 @@ func crew_aboard() -> Array[CrewMember]:
     return crew.filter(func(c: CrewMember): return c.is_aboard())
 
 
+## Modules that do something aboard (launch hardware and deck cards left
+## out).
+func ship_modules() -> Array[ShipModule]:
+    return modules.filter(func(m: ShipModule): return not m.augment.is_launch_only())
+
+
+func _update_stress_cap() -> void:
+    var cap := Augment.MORALE_FLOOR_STRESS if has_flag(&"morale_floor") else CrewMember.MAX_STRESS
+    for member in crew:
+        member.stress_cap = cap
+        member.stress = mini(member.stress, cap)
+
+
 # --- Day flow -----------------------------------------------------------------
 
 func start_day() -> void:
@@ -372,18 +414,39 @@ func start_day() -> void:
     _day_start_science = science
     _stations_used.clear()
     comms_down = false
+    hazard_up_today = 0.0
     for module in modules:
         module.offline_today = false
     _morning_risks()
+    _update_stress_cap()
 
 
 ## Picks a random alert for today, or null. Events don't repeat until every
-## available one has happened.
+## available one has happened. Navigation cards can steer the ship clear of a
+## hazard (null), glitching ones can lead it into one.
 func draw_event() -> MissionEvent:
-    var candidates := _event_pool.filter(func(e: MissionEvent): return e.min_day <= day)
+    var event := _draw(func(_e: MissionEvent): return true)
+    if event == null:
+        return null
+    var change := hazard_change()
+    if event.tags.has(&"hazard") and change < 0.0 and randf() < -change:
+        _log("[color=#7cf08a]Navigation spotted trouble early and steered around it: \"%s\" avoided.[/color]" % event.title)
+        return null
+    if not event.tags.has(&"hazard") and change > 0.0 and randf() < change:
+        var hazard := _draw(func(e: MissionEvent): return e.tags.has(&"hazard"))
+        if hazard != null:
+            _event_pool.append(event)
+            return hazard
+    return event
+
+
+func _draw(filter: Callable) -> MissionEvent:
+    var candidates := _event_pool.filter(func(e: MissionEvent): return e.min_day <= day and filter.call(e))
     if candidates.is_empty() and not _all_events.is_empty():
-        _event_pool = _all_events.duplicate()
-        candidates = _event_pool.filter(func(e: MissionEvent): return e.min_day <= day)
+        for e in _all_events:
+            if not _event_pool.has(e):
+                _event_pool.append(e)
+        candidates = _event_pool.filter(func(e: MissionEvent): return e.min_day <= day and filter.call(e))
     if candidates.is_empty():
         return null
     var total := 0.0
@@ -397,6 +460,58 @@ func draw_event() -> MissionEvent:
             return e
     _event_pool.erase(candidates[-1])
     return candidates[-1]
+
+
+## How much more (positive) or less (negative) likely hazard alerts are
+## today, from the Navigation cards.
+func hazard_change() -> float:
+    var reduction := 0.0
+    var cap := Augment.DEFAULT_HAZARD_CAP
+    for module in modules:
+        if module.working() and not module.unpowered and module.augment.hazard_reduction > 0.0:
+            reduction += module.augment.hazard_reduction
+            cap = maxf(cap, module.augment.hazard_cap)
+    return hazard_up_today - minf(reduction, cap)
+
+
+## Star tracker: swap an alert for another one.
+func can_reroll() -> bool:
+    return rerolls_left > 0 and modules.any(func(m: ShipModule): return m.augment.event_rerolls > 0 and m.working())
+
+
+func reroll_event(event: MissionEvent) -> MissionEvent:
+    if not can_reroll():
+        return null
+    var other := _draw(func(e: MissionEvent): return e != event)
+    if other == null:
+        return null
+    rerolls_left -= 1
+    return other
+
+
+## AutoNav: wave a bad alert away, once every few days.
+func cancel_cooldown() -> int:
+    var every := 0
+    for module in modules:
+        if module.working() and not module.unpowered and module.augment.cancel_every_days > 0:
+            every = module.augment.cancel_every_days if every == 0 else mini(every, module.augment.cancel_every_days)
+    return every
+
+
+func can_cancel(event: MissionEvent) -> bool:
+    return cancel_cooldown() > 0 and day >= _cancel_ready_day and not event.tags.has(&"good")
+
+
+## Days until the AutoNav can cancel again (0 = ready).
+func cancel_wait() -> int:
+    return maxi(0, _cancel_ready_day - day)
+
+
+func cancel_event(event: MissionEvent) -> bool:
+    if not can_cancel(event):
+        return false
+    _cancel_ready_day = day + cancel_cooldown()
+    return true
 
 
 func can_afford(cost: Dictionary) -> bool:
@@ -561,7 +676,12 @@ func begin_event_choice(choice: EventChoice) -> bool:
 ## Rolls and applies the outcome. Returns {success: bool, text: String}.
 func finish_event_choice(event: MissionEvent, choice: EventChoice, member: CrewMember) -> Dictionary:
     var success := randf() < event_chance(event, choice, member)
-    apply_effects(choice.success_effects if success else choice.failure_effects)
+    var effects: Dictionary = (choice.success_effects if success else choice.failure_effects).duplicate()
+    if event.tags.has(&"isolation") and has_flag(&"isolation_relief"):
+        for key in ["crew_stress", "random_crew_stress"]:
+            if effects.get(key, 0) > 0:
+                effects[key] = roundi(effects[key] * ISOLATION_RELIEF)
+    apply_effects(effects)
     if member != null:
         member.add_stress(EVENT_WORK_STRESS)
     return {"success": success, "text": choice.success_text if success else choice.failure_text}
@@ -628,7 +748,9 @@ func _run_modules() -> void:
                 break
         if missing != "":
             _log("The %s stayed off tonight: not enough %s." % [module.augment.card_name(), missing])
+            module.unpowered = true
             continue
+        module.unpowered = false
         for key in effects.keys():
             if resources.has(key):
                 resources[key] += effects[key]

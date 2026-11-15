@@ -14,15 +14,19 @@ enum Condition {
     POWER_FULL,
     ## Only when the water stock is below `threshold` liters.
     WATER_BELOW,
-    ## Every `every_days` days, checked in the morning before modules run.
+    ## Every `every_days` days, checked in the morning before modules run
+    ## (every_days = 1: every morning).
     EVERY_N_DAYS,
 }
 
 @export var condition: Condition = Condition.ANY_DAY
 ## Chance (0 to 1) that the risk happens when its condition holds.
 @export_range(0.0, 1.0, 0.01) var chance: float = 1.0
-## For ADJACENT_DOMAIN.
+## For ADJACENT_DOMAIN, and for `adjacent_chance`.
 @export var domain: Augment.Domain = Augment.Domain.ENERGY
+## When >= 0, the chance used instead of `chance` while the module sits next
+## to a card of `domain` (e.g. a radio next to a power module).
+@export_range(-1.0, 1.0, 0.01) var adjacent_chance: float = -1.0
 ## For WATER_BELOW.
 @export var threshold: int = 0
 ## For EVERY_N_DAYS.
@@ -43,6 +47,10 @@ enum Condition {
 ## The risk never happens while a working module with this flag is aboard
 ## (e.g. "pure_water", "stable_power").
 @export var blocked_by: StringName = &""
+## The chance is halved while a working module with this flag is aboard.
+@export var halved_by: StringName = &""
+## Hazard alerts become this much more likely for the day (0.1 = +10%).
+@export_range(0.0, 1.0, 0.05) var hazard_up: float = 0.0
 
 ## Short line for the card face, e.g. "Shorts next to Energy".
 @export var short_text: String = ""

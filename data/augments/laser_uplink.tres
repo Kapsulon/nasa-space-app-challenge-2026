@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bd5vyca4egyy"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dwkxof82rmkom" path="res://assets/textures/ASSETS/communication_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Deep Space Optical Communications Terminal (Laser Uplink)"
+short_name = "Laser Uplink"
+image = ExtResource("2_img")
+weight = 0.6
+type = 2
+rarity = 2
+domain = 6
+card_type = 9
+daily = Dictionary[String, int]({"crew_stress": -7, "power": -3})
+toggleable = true
+flags = Array[StringName]([&"morale_floor", &"laser_comms"])
+synergy_daily = Dictionary[String, int]({"crew_stress": -3})
+synergy_domain = 7
+synergy_max = 1
+gives_text = "+35 Morale per turn (cumulative with other Communication cards). Crew Morale can never fall below 25. Immune to all communication blackouts and failures"
+costs_text = "-20 kW Energy per turn"
+synergy_text = "+10 Morale per turn extra if a Navigation card is in play (precise laser pointing). Cancels every Communication risk"
+lore = "NASA's DSOC experiment on the Psyche mission (2023) proved that a laser can carry data across tens of millions of kilometres at far higher rates than radio. Extrapolated here to endless HD calls, music and live Earth broadcasts, which makes the crew feel they never left home."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

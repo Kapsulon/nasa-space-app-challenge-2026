@@ -83,7 +83,10 @@ func _run() -> void:
         match t:
             10: _log("COUNTDOWN STARTED")
             8: _log("GO/NO-GO POLL: ALL STATIONS GO")
-            6: _log("FUEL LOADED: %d T" % roundi(profile.fuel_tons))
+            6:
+                _log("FUEL LOADED: %d" % roundi(profile.fuel))
+                if profile.fuel_leak > 0.0:
+                    _log("[color=#%s]%d FUEL LEAKED OR BOILED OFF, %d LEFT[/color]" % [AMBER, roundi(profile.fuel_leak), roundi(profile.fuel_available())])
             5: _log("CREW STRAPPED IN AND SMILING")
             3:
                 _log("IGNITION SEQUENCE START")
@@ -189,10 +192,10 @@ func _fuel_abort() -> void:
     await _wait(2.0)
     _show_result(
         "SPLASHDOWN", AMBER,
-        ("The rocket ran low on fuel before reaching orbit: it had [color=#%s]%d t[/color], but a rocket this heavy needs about [color=#%s]%d t[/color] to be safe.\n" +
+        ("The engines ran the tanks dry before reaching orbit: they had [color=#%s]%d fuel[/color], but these engines burn about [color=#%s]%d[/color] on the way up.\n" +
         "The capsule separated and floated down under its parachute. A recovery boat picked up the crew, safe and smiling!\n\n" +
-        "[color=#%s]Tip: fuel tanks help heavy rockets reach orbit.[/color]") % [
-            RED, roundi(profile.fuel_tons), AMBER, ceili(profile.fuel_needed() * LaunchProfile.FUEL_SAFE), DIM],
+        "[color=#%s]Tip: every engine burns fuel at take-off. Fuel tanks keep them going.[/color]") % [
+            RED, roundi(profile.fuel_available()), AMBER, ceili(profile.fuel_needed() * LaunchProfile.FUEL_SAFE), DIM],
         "> BACK TO PLANNING")
 
 
@@ -215,10 +218,10 @@ func _too_heavy() -> void:
     await _wait(1.5)
     _show_result(
         "LAUNCH SCRUBBED", AMBER,
-        ("The rocket weighed [color=#%s]%.1f t[/color], but its engines can only lift about [color=#%s]%.1f t[/color] safely. " +
+        ("The rocket weighed [color=#%s]%.1f t[/color]: it needs about [color=#%s]%d thrust[/color] to climb safely, but its engines only make [color=#%s]%d[/color]. " +
         "The flight computer shut the engines down safely and the crew climbed out with a wave.\n\n" +
-        "[color=#%s]Tip: engine upgrades lift more, and every card shows its weight.[/color]") % [
-            RED, profile.total_weight(), AMBER, profile.lift_tons * LaunchProfile.LOAD_SAFE, DIM],
+        "[color=#%s]Tip: engine and booster cards add thrust, and every card shows its weight.[/color]") % [
+            RED, profile.total_weight(), AMBER, ceili(profile.thrust_needed() * LaunchProfile.THRUST_SAFE), RED, roundi(profile.thrust), DIM],
         "> BACK TO PLANNING")
 
 
@@ -234,7 +237,7 @@ func _glitch_hold() -> void:
         "LAUNCH SCRUBBED", AMBER,
         ("A sensor glitched during the countdown, so mission control stopped the launch. Safety first! " +
         "The crew is fine, and the rocket will try again another day.\n\n" +
-        "[color=#%s]Tip: engine upgrades also make the rocket more reliable.[/color]") % DIM,
+        "[color=#%s]Tip: more thrust also makes the rocket a bit more reliable.[/color]") % DIM,
         "> BACK TO PLANNING")
 
 

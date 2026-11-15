@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://f235vx7fkywk"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Flea Market Swap"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 0
+domain = 5
+card_type = 7
+slot_override = 0
+plan_action = 2
+gives_text = "Replace 1 card with a random card of the same rarity"
+risks_text = "The new card can be worse. The bad Commons like the Plastic Jug are in the pool"
+lore = "Swapping parts at the last minute before launch is a gamble, as the original sellers know."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

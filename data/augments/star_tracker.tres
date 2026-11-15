@@ -1,0 +1,37 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://chfw4kqpykkaq"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://1n7p1xwbluqv" path="res://assets/textures/ASSETS/rover.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 5
+chance = 0.17
+every_days = 1
+effects = {}
+hazard_up = 0.15
+short_text = "Sun glare halves it 1 day in 6"
+log_text = "Sun glare blinded the {module}: hazard protection is halved today."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Star Tracker + Inertial Measurement Unit (IMU)"
+short_name = "Star Tracker + IMU"
+image = ExtResource("2_img")
+weight = 0.3
+type = 1
+rarity = 1
+domain = 7
+card_type = 9
+daily = Dictionary[String, int]({"power": -2})
+toggleable = true
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+hazard_reduction = 0.3
+event_rerolls = 1
+gives_text = "Reduces the chance of Hazard events appearing by 30%. Once per phase, reroll one drawn random event"
+costs_text = "-8 kW Energy per turn"
+risks_text = "Sun glare blinds the star tracker 1 turn in 6: the Hazard reduction is halved that turn"
+synergy_text = "Reductions from Navigation cards add up (suggested cap: -75%). Draws on Energy"
+lore = "Spacecraft find their orientation by photographing star fields and matching them to a catalogue (star trackers), while gyroscopes and accelerometers (IMU) keep track of movement between photos. The combination is the backbone of real attitude and navigation systems."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

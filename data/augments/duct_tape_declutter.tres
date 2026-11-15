@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://b3qqt2h8vcjht"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Duct-Tape Declutter"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 0
+domain = 5
+card_type = 7
+slot_override = 0
+plan_action = 1
+action_max_rarity = 1
+bonus_slots = 1
+gives_text = "Remove 1 card of your choice from the deck (not a Mythic) and gain +1 slot"
+risks_text = "The removal is permanent"
+lore = "Astronauts throw away or cannibalise anything that doesn't earn its place in the cabin."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

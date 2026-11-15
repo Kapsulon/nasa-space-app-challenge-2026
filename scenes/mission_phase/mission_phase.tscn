@@ -16,9 +16,9 @@
 [ext_resource type="Resource" uid="uid://dicy4abr8ks2j" path="res://data/augments/solar_panel.tres" id="t_3"]
 [ext_resource type="Resource" uid="uid://bx75edonb0oui" path="res://data/augments/urine_distiller.tres" id="t_4"]
 [ext_resource type="Resource" uid="uid://jbdocux8xm0h" path="res://data/augments/oxygen_concentrator.tres" id="t_5"]
-[ext_resource type="Resource" uid="uid://sw3g33l7f4jo" path="res://data/augments/ficus.tres" id="t_6"]
+[ext_resource type="Resource" uid="uid://chfw4kqpykkaq" path="res://data/augments/star_tracker.tres" id="t_6"]
 [ext_resource type="Resource" uid="uid://bij248hpmo75b" path="res://data/augments/liion_battery.tres" id="t_7"]
-[ext_resource type="Resource" uid="uid://ceuj5qtktunk4" path="res://data/augments/scuba_tank.tres" id="t_8"]
+[ext_resource type="Resource" uid="uid://blls4xalgq31a" path="res://data/augments/ham_radio.tres" id="t_8"]
 [ext_resource type="Resource" uid="uid://bs1daudhu48dj" path="res://data/augments/oga.tres" id="t_9"]
 
 [sub_resource type="SystemFont" id="SystemFont_mono"]

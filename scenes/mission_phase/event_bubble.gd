@@ -26,12 +26,17 @@ var _time: float = 0.0
 
 
 func setup(_event: MissionEvent, _view: ShipView) -> void:
-    event = _event
     view = _view
-    room = event.location if ShipView.ROOMS.has(event.location) else "galley"
     mouse_filter = Control.MOUSE_FILTER_STOP
     mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-    tooltip_text = event.title
+    set_event(_event)
+
+
+## Shows another alert in this bubble (the clock starts over).
+func set_event(_event: MissionEvent) -> void:
+    event = _event
+    room = event.location if ShipView.ROOMS.has(event.location) else "galley"
+    hours_left = MissionState.EVENT_DEADLINE_HOURS
     refresh_position()
 
 

@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bgww4mjxaljf0"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Spare Parts Cannibalization"
+short_name = "Spare Parts"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 1
+domain = 5
+card_type = 7
+slot_override = 0
+plan_action = 1
+bonus_slots = 2
+gives_text = "Remove 1 card and gain +2 slots"
+costs_text = "You lose the removed card's effect for the whole run"
+lore = "The ISS crews routinely strip one dead module to repair another."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

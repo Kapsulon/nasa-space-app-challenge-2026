@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cmhbmypf7r3ut"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://do2q7xdif88ud" path="res://assets/textures/ASSETS/fuel.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Auxiliary Kerosene Tank (RP-1)"
+short_name = "Kerosene Tank"
+image = ExtResource("2_img")
+weight = 2.0
+type = 1
+rarity = 0
+domain = 8
+card_type = 12
+upgrades = Dictionary[String, String]({"fuel": "100"})
+gives_text = "+100 Fuel"
+lore = "Kerosene (RP-1) is dense, cheap and easy to store, so a simple welded tank does the job with no special handling."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

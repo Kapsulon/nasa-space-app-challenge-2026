@@ -33,4 +33,5 @@ min_day = 2
 weight = 1.0
 skill = "command"
 location = "comms"
+tags = Array[StringName]([&"isolation", &"good"])
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

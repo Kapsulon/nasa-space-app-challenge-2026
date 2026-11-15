@@ -6,6 +6,10 @@ class_name Augment extends Resource
 ##   - `risks` can trigger during the night.
 ##   - `synergy_*` gives a daily bonus for related cards (optionally only for
 ##     cards right next to this one in the cargo).
+##   - Navigation cards lower the odds of hazard alerts (`hazard_reduction`).
+## Propulsion, Fuel and Logistics cards never become modules: they only matter
+## for the launch, or act on the deck as soon as they are picked
+## (`plan_action`).
 
 enum Type {
     VITAL,
@@ -26,6 +30,10 @@ enum Domain {
     OXYGEN,
     FOOD,
     PROPULSION,
+    LOGISTICS,
+    COMMUNICATION,
+    NAVIGATION,
+    FUEL,
 }
 
 enum CardType {
@@ -36,7 +44,39 @@ enum CardType {
     STORAGE,
     CONNECTOR,
     PROPULSION,
+    DECK_MANAGEMENT,
+    GAMBLE,
+    MODULE,
+    BOOSTER,
+    ENGINE,
+    TANK,
 }
+
+## What a Logistics card does to the deck the moment it is picked.
+enum PlanAction {
+    NONE,
+    ## Throw away a card of the cargo (up to `action_max_rarity`).
+    REMOVE,
+    ## Replace a card with a random one of the same rarity.
+    SWAP,
+    ## 3 random cards, at least one of them Rare.
+    CRATE,
+    ## Copy a Common card already in the cargo (the copy takes its slots).
+    DUPLICATE,
+    ## 2 Common cards become 1 random Rare.
+    TRADE_UP,
+    ## 50%: 2 random Rare cards. 50%: lose 2 random cards.
+    DOUBLE_OR_NOTHING,
+    ## 1 random Mythic.
+    LOTTERY,
+}
+
+## Cards that only matter before the mission (never ship modules).
+const LAUNCH_ONLY_DOMAINS: Array[Domain] = [Domain.PROPULSION, Domain.FUEL, Domain.LOGISTICS]
+
+## Total hazard reduction allowed from Navigation cards (unless a card
+## raises it with `hazard_cap`).
+const DEFAULT_HAZARD_CAP: float = 0.75
 
 static var RARITY_CARDS: Dictionary[Rarity, CompressedTexture2D] = {
     Rarity.COMMON: load("res://assets/textures/card_common.png"),
@@ -75,12 +115,33 @@ static var DOMAIN_COLORS: Dictionary[Domain, Color] = {
     Domain.OXYGEN: Color("63b1ff"),
     Domain.FOOD: Color("f2b53a"),
     Domain.PROPULSION: Color("ff7a1a"),
+    Domain.LOGISTICS: Color("c9a274"),
+    Domain.COMMUNICATION: Color("ff7ac8"),
+    Domain.NAVIGATION: Color("7cf08a"),
+    Domain.FUEL: Color("ff4f4f"),
 }
 
 ## Flags a module can carry, and what they mean on the card.
 const FLAG_TEXT: Dictionary[StringName, String] = {
     &"pure_water": "No water sickness aboard",
     &"stable_power": "Power never fails",
+    &"laser_comms": "Radio never goes down, no comms risks",
+    &"morale_floor": "Crew stress never goes above 75",
+    &"isolation_relief": "Homesick alerts cost 25% less stress",
+    &"comms_relay": "Halves Common comms interference",
+}
+
+## Crew stress can't go above this with a "morale_floor" module aboard.
+const MORALE_FLOOR_STRESS: int = 75
+
+const PLAN_ACTION_TEXT: Dictionary[PlanAction, String] = {
+    PlanAction.REMOVE: "Throw away a card",
+    PlanAction.SWAP: "Swap a card for a random one of the same rarity",
+    PlanAction.CRATE: "3 random cards (at least 1 Rare)",
+    PlanAction.DUPLICATE: "Copy a Common card",
+    PlanAction.TRADE_UP: "Trade 2 Commons for a random Rare",
+    PlanAction.DOUBLE_OR_NOTHING: "50%: 2 random Rares. 50%: lose 2 cards",
+    PlanAction.LOTTERY: "1 random Mythic",
 }
 
 @export var display_name: String = ""
@@ -96,8 +157,8 @@ const FLAG_TEXT: Dictionary[StringName, String] = {
 @export var rarity: Rarity
 @export var domain: Domain
 @export var card_type: CardType
-## Slots taken in the cargo. 0 = depends on rarity.
-@export var slot_override: int = 0
+## Slots taken in the cargo. -1 = depends on rarity.
+@export var slot_override: int = -1
 
 @export_group("Effects")
 ## Applied once at launch. Resource ids (water, oxygen, food, power) add
@@ -105,6 +166,9 @@ const FLAG_TEXT: Dictionary[StringName, String] = {
 ## amount; negative values are a one-time cost). "<id>_capacity" adds empty
 ## storage. "fuel" and "engine_thrust" are used by the launch, "mission_days"
 ## changes the mission length.
+## Launch keys (see LaunchProfile): "thrust", "fuel", "fuel_burn" (fuel the
+## engine burns at take-off), "fuel_leak" (fuel lost before take-off),
+## "reliability" (launch reliability, in %).
 @export var upgrades: Dictionary[String, String] = {}
 ## Applied every night while the module works. Resource ids, plus
 ## crew_stress (each crew member) and crew_water (extra liters each crew
@@ -124,6 +188,27 @@ const FLAG_TEXT: Dictionary[StringName, String] = {
 @export var synergy_adjacent: bool = false
 ## Maximum number of related cards that count.
 @export var synergy_max: int = 1
+## Only related cards of at least this rarity count.
+@export var synergy_min_rarity: Rarity = Rarity.COMMON
+## Launch keys (like `upgrades`) added when a related card is in the cargo.
+@export var launch_synergy: Dictionary[String, String] = {}
+
+@export_group("Navigation")
+## Lowers the chance of hazard alerts (0.3 = 30% less likely).
+@export_range(0.0, 1.0, 0.05) var hazard_reduction: float = 0.0
+## Raises the cap on the total hazard reduction (0 = DEFAULT_HAZARD_CAP).
+@export_range(0.0, 1.0, 0.05) var hazard_cap: float = 0.0
+## The crew can redraw this many alerts during the mission.
+@export var event_rerolls: int = 0
+## The crew can cancel a bad alert, once every this many days (0 = never).
+@export var cancel_every_days: int = 0
+
+@export_group("Plan phase")
+@export var plan_action: PlanAction = PlanAction.NONE
+## Highest rarity the action can target (REMOVE).
+@export var action_max_rarity: Rarity = Rarity.MYTHIC
+## Extra cargo slots, as soon as the card is picked.
+@export var bonus_slots: int = 0
 
 @export_group("Card text")
 @export_multiline var gives_text: String = ""
@@ -138,7 +223,17 @@ func card_name() -> String:
 
 
 func slot_cost() -> int:
-    return slot_override if slot_override > 0 else RARITY_SLOTS[rarity]
+    return slot_override if slot_override >= 0 else RARITY_SLOTS[rarity]
+
+
+## Only matters before the mission: launch hardware or a deck action.
+func is_launch_only() -> bool:
+    return domain in LAUNCH_ONLY_DOMAINS
+
+
+## Used up when picked: it acts on the deck and doesn't fly.
+func is_consumed() -> bool:
+    return plan_action != PlanAction.NONE
 
 
 func rarity_name() -> String:
@@ -178,16 +273,31 @@ func summary_lines() -> PackedStringArray:
 ## "good", "bad", "risk" or "info".
 func summary_entries() -> Array[Dictionary]:
     var entries: Array[Dictionary] = []
+    if plan_action != PlanAction.NONE:
+        var text: String = PLAN_ACTION_TEXT[plan_action]
+        if plan_action == PlanAction.REMOVE and action_max_rarity == Rarity.RARE:
+            text += " (not a Mythic)"
+        entries.append({"text": text, "kind": "info"})
+    if bonus_slots != 0:
+        entries.append({"text": "%+d cargo slot%s" % [bonus_slots, "" if absi(bonus_slots) == 1 else "s"], "kind": "good"})
     for key in upgrades.keys():
         var r := parse_range(upgrades[key])
         var amount := "%+d" % r.x if r.x == r.y else "+%d-%d" % [r.x, r.y]
         var kind := "bad" if r.y < 0 else "good"
         var text := ""
         match key:
+            "thrust":
+                text = "%s thrust" % amount
             "fuel":
-                text = "%s t rocket fuel" % amount
-            "engine_thrust":
-                text = "Engines lift %s t" % amount
+                text = "%s fuel" % amount
+            "fuel_burn":
+                text = "Burns %d fuel at take-off" % r.x
+                kind = "bad"
+            "fuel_leak":
+                text = "Loses %d fuel before take-off" % r.x
+                kind = "bad"
+            "reliability":
+                text = "%s%% launch reliability" % amount
             "mission_days":
                 text = "%s mission days" % amount
             "power":
@@ -205,18 +315,36 @@ func summary_entries() -> Array[Dictionary]:
         var amount: int = daily[key]
         var good := amount < 0 if key in ["crew_stress", "crew_water"] else amount > 0
         entries.append({"text": daily_line(key, amount) + " / day", "kind": "good" if good else "bad"})
+    if hazard_reduction > 0.0:
+        entries.append({"text": "Hazard alerts %d%% less likely" % roundi(hazard_reduction * 100.0), "kind": "good"})
+    if event_rerolls > 0:
+        entries.append({"text": "Redraw %d alert%s per mission" % [event_rerolls, "" if event_rerolls == 1 else "s"], "kind": "good"})
+    if cancel_every_days > 0:
+        entries.append({"text": "Cancel a bad alert every %d days" % cancel_every_days, "kind": "good"})
+    var related := "%s%s%s card" % ["adjacent " if synergy_adjacent else "",
+        "Mythic " if synergy_min_rarity == Rarity.MYTHIC else ("Rare+ " if synergy_min_rarity == Rarity.RARE else ""),
+        Domain.keys()[synergy_domain].capitalize()]
     if not synergy_daily.is_empty():
         var parts: PackedStringArray = []
         for key in synergy_daily.keys():
             parts.append(daily_line(key, synergy_daily[key]))
-        entries.append({"text": "%s / day per %s%s card" % [", ".join(parts), "adjacent " if synergy_adjacent else "",
-            Domain.keys()[synergy_domain].capitalize()], "kind": "good"})
+        entries.append({"text": "%s / day per %s" % [", ".join(parts), related], "kind": "good"})
+    if not launch_synergy.is_empty():
+        var parts: PackedStringArray = []
+        for key in launch_synergy.keys():
+            parts.append("%+d %s" % [int(launch_synergy[key]), key.replace("_", " ")])
+        entries.append({"text": "%s with a %s" % [", ".join(parts), related], "kind": "good"})
     for flag in flags:
         entries.append({"text": FLAG_TEXT.get(flag, String(flag)), "kind": "good"})
     for risk in risks:
         if risk.short_text != "":
             entries.append({"text": "Risk: " + risk.short_text, "kind": "risk"})
     return entries
+
+
+## A related card for the synergy bonuses.
+func is_synergy_partner(other: Augment) -> bool:
+    return other.domain == synergy_domain and other.rarity >= synergy_min_rarity
 
 
 static func daily_line(key: String, amount: int) -> String:

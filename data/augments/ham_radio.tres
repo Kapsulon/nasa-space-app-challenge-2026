@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://blls4xalgq31a"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dpt1rap27ed8b" path="res://assets/textures/ASSETS/communication.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 5
+chance = 0.2
+domain = 1
+adjacent_chance = 0.3
+every_days = 1
+effects = {"crew_stress": 2}
+offline_today = true
+blocked_by = &"laser_comms"
+halved_by = &"comms_relay"
+short_text = "Interference 20% of days (30% next to Energy)"
+log_text = "Radio interference! The {module} only crackles today, and the silence gets on everyone's nerves."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "\"CQ Tonight\" Amateur Ham Radio Handheld"
+short_name = "Ham Radio"
+image = ExtResource("2_img")
+weight = 0.1
+type = 2
+rarity = 0
+domain = 6
+card_type = 9
+daily = Dictionary[String, int]({"crew_stress": -2, "power": -1})
+toggleable = true
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "+4 Morale per turn (cumulative: every copy adds its own bonus)"
+costs_text = "-5 kW Energy per turn"
+risks_text = "20% chance per turn of radio interference: the bonus is lost and the crew takes -3 Morale from the silence. Chance rises to 30% if placed next to the Energy card"
+synergy_text = "Stacks with all Communication cards; each copy rolls its own interference. Bad adjacency with Energy"
+lore = "Amateur radio has flown on the ISS for years (ARISS) and lets astronauts chat with schoolkids and hobbyists. Consumer-grade handhelds were never shielded for a crowded spacecraft: electromagnetic interference from power lines makes them crackle, drop out and drive the crew mad."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

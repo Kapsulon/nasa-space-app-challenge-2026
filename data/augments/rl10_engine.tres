@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bhw8mi05uwwg7"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://brs820hmr50vs" path="res://assets/textures/ASSETS/fusee.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Liquid Hydrogen Upper-Stage Engine (RL10 Type)"
+short_name = "RL10 Hydrogen Engine"
+image = ExtResource("2_img")
+weight = 2.0
+type = 1
+rarity = 1
+domain = 4
+card_type = 11
+upgrades = Dictionary[String, String]({"thrust": "150", "fuel_burn": "35"})
+gives_text = "+150 Thrust"
+costs_text = "Burns 35 Fuel at take-off. +2 t mass"
+synergy_text = "Very fuel-efficient: best Thrust per Fuel in the deck outside the Mythic"
+lore = "Hydrogen and oxygen engines have the best specific impulse of any chemical rocket, which is why they power the upper stages of many launchers. The catch is that hydrogen is very bulky, so the tanks are huge."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

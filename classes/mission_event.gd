@@ -14,6 +14,10 @@ class_name MissionEvent extends Resource
 ## or one of the extra spots in ShipView ("galley", "engine_bay", "hull",
 ## "outside").
 @export var location: String = "galley"
+## "hazard": debris, meteoroids, flares (Navigation cards make them rarer).
+## "isolation": homesickness and crew tension (some Communication cards
+## soften them). "good": a nice surprise (can't be cancelled, nobody wants to).
+@export var tags: Array[StringName] = []
 ## The last choice is what the crew falls back on when nobody answers the
 ## alert in time, so it should be the passive option.
 @export var choices: Array[EventChoice] = []

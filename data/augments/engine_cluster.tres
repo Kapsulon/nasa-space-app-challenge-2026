@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://c3fja6cj381u5"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dw74xm0066oj2" path="res://assets/textures/ASSETS/fusee_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Heavy-Lift Engine Cluster (33-Engine Array)"
+short_name = "33-Engine Cluster"
+image = ExtResource("2_img")
+weight = 12.0
+type = 1
+rarity = 2
+domain = 4
+card_type = 11
+upgrades = Dictionary[String, String]({"thrust": "600", "fuel_burn": "150", "reliability": "3"})
+gives_text = "+600 Thrust"
+costs_text = "Burns 150 Fuel at take-off. +12 t mass"
+synergy_text = "Highest Thrust per Fuel and per tonne in the game"
+lore = "Clustering dozens of engines under a single stage is the way to launch the heaviest payloads ever built. The N1 failed because of the complexity of its cluster; modern engine controllers can shut down a failed engine and keep climbing."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

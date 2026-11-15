@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bywc8v3a6auoe"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://brs820hmr50vs" path="res://assets/textures/ASSETS/fusee.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Recycled Solid Rocket Booster"
+short_name = "Recycled Booster"
+image = ExtResource("2_img")
+weight = 4.0
+type = 1
+rarity = 0
+domain = 4
+card_type = 10
+upgrades = Dictionary[String, String]({"thrust": "120", "fuel_burn": "60", "reliability": "-2"})
+gives_text = "+120 Thrust"
+costs_text = "Burns 60 Fuel at take-off. +4 t mass"
+risks_text = "Cannot be throttled or shut down once lit"
+lore = "Solid boosters, like the Space Shuttle's reusable pair, deliver enormous thrust cheaply, but a solid motor burns until it is empty: you can neither throttle it nor switch it off."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cnpthywhuxkk2"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://do2q7xdif88ud" path="res://assets/textures/ASSETS/fuel.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Composite Overwrapped Propellant Tank"
+short_name = "Composite Tank"
+image = ExtResource("2_img")
+weight = 2.0
+type = 1
+rarity = 1
+domain = 8
+card_type = 12
+upgrades = Dictionary[String, String]({"fuel": "150"})
+gives_text = "+150 Fuel"
+synergy_text = "Safer than the cryogenic tank: no boil-off"
+lore = "Carbon-fibre overwrapped tanks hold high pressure reliably and do not leak or boil off. Spacecraft use them for gas and propellant storage because they are tough and light."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

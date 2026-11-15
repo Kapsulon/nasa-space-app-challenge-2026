@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://c84t0xqixystj"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bdyunb4wi5kcl" path="res://assets/textures/ASSETS/politique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "\"Lot #4B\" Mystery Crate"
+short_name = "Mystery Crate"
+image = ExtResource("2_img")
+weight = 0.0
+type = 2
+rarity = 1
+domain = 5
+card_type = 8
+slot_override = 4
+plan_action = 3
+gives_text = "3 random cards, at least 1 of them Rare"
+costs_text = "4 slots"
+risks_text = "The other 2 cards can be of any rarity, Mythic included, and can be the bad ones"
+lore = "A box of unlabelled surplus gear bought at auction without opening it."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

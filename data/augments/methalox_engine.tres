@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://dotsto1hatot7"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://brs820hmr50vs" path="res://assets/textures/ASSETS/fusee.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Methalox Staged-Combustion Engine"
+short_name = "Methalox Engine"
+image = ExtResource("2_img")
+weight = 5.0
+type = 1
+rarity = 1
+domain = 4
+card_type = 11
+upgrades = Dictionary[String, String]({"thrust": "260", "fuel_burn": "90"})
+synergy_domain = 2
+synergy_min_rarity = 2
+launch_synergy = Dictionary[String, String]({"fuel": "40"})
+gives_text = "+260 Thrust"
+costs_text = "Burns 90 Fuel at take-off. +5 t mass"
+synergy_text = "Methane can be made on Mars (Sabatier reaction): pairs with the Oxygen Mythic"
+lore = "Staged-combustion engines burn their propellants completely and reach very high efficiency and chamber pressure. Methane and liquid oxygen is the fuel mix of choice for reusable rockets and Mars missions."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

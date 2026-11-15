@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cafd5tsmo45o3"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://drwhhxwsg0lyw" path="res://assets/textures/ASSETS/fuel_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Sub-Cooled Densified Propellant Depot Stage"
+short_name = "Propellant Depot Stage"
+image = ExtResource("2_img")
+weight = 5.0
+type = 1
+rarity = 2
+domain = 8
+card_type = 12
+upgrades = Dictionary[String, String]({"fuel": "450"})
+gives_text = "+450 Fuel"
+synergy_text = "Largest Fuel reserve in the game"
+lore = "Chilling propellants well below their boiling point makes them denser, so more fits in the same volume. Orbital propellant depots and densified propellant are key technologies for deep space and Mars missions."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

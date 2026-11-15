@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://c7e8ujgcrxr56"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dpt1rap27ed8b" path="res://assets/textures/ASSETS/communication.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Private Family Video Link (Ku-Band Relay)"
+short_name = "Family Video Link"
+image = ExtResource("2_img")
+weight = 0.4
+type = 2
+rarity = 1
+domain = 6
+card_type = 9
+daily = Dictionary[String, int]({"crew_stress": -4, "power": -2})
+toggleable = true
+flags = Array[StringName]([&"isolation_relief", &"comms_relay"])
+gives_text = "+12 Morale per turn (cumulative with other Communication cards). Isolation events cost 25% less Morale"
+costs_text = "-12 kW Energy per turn"
+synergy_text = "Halves the interference chance of Common Communication cards. Stacks with all Communication cards"
+lore = "Real crews get scheduled private video calls with their families and private medical and psychological conferences, relayed through data satellites (TDRS on the ISS). Seeing loved ones is one of the best countermeasures against isolation on long missions."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

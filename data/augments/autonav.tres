@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://dkqgdc1aq4vc2"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dmo8je587tl61" path="res://assets/textures/ASSETS/rover_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Autonomous Optical Navigation + Debris Radar (AutoNav)"
+short_name = "AutoNav + Debris Radar"
+image = ExtResource("2_img")
+weight = 0.8
+type = 1
+rarity = 2
+domain = 7
+card_type = 9
+daily = Dictionary[String, int]({"power": -4})
+toggleable = true
+synergy_daily = Dictionary[String, int]({"crew_stress": -3})
+synergy_domain = 6
+synergy_max = 1
+synergy_min_rarity = 2
+hazard_reduction = 0.6
+hazard_cap = 0.85
+cancel_every_days = 6
+gives_text = "Reduces the chance of Hazard events (debris, asteroids, micrometeoroids) appearing by 60%. Once every 6 turns, cancel one negative random event"
+costs_text = "-25 kW Energy per turn"
+synergy_text = "+10 Morale per turn if the Communication Mythic is also in play (ground control updates the course). Stacks with other Navigation cards, but total Hazard reduction is capped at -85%. Draws heavily on Energy"
+lore = "Deep Space 1 tested autonomous optical navigation (AutoNav) in 1998, and Perseverance landed using terrain-relative navigation. An onboard AI that watches the sky, tracks debris and re-plans the route without waiting for Earth makes the voyage far safer, but space still holds surprises."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"
