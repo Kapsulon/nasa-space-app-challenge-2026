@@ -5,48 +5,42 @@
 [ext_resource type="Script" uid="uid://c4woqkiwrgpbd" path="res://scenes/plan_phase/slots.gd" id="6_b27o0"]
 [ext_resource type="Texture2D" uid="uid://dj2m7f1lxoya1" path="res://icon.svg" id="6_pu4gb"]
 [ext_resource type="PackedScene" uid="uid://bi6qgpcikicf8" path="res://scenes/plan_phase/slot.tscn" id="7_b27o0"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_qn8d1"]
-draw_center = false
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 1)
-expand_margin_left = 2.0
-expand_margin_top = 2.0
-expand_margin_right = 2.0
-expand_margin_bottom = 2.0
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secnn"]
-bg_color = Color(1, 0.22745098, 0.33333334, 1)
+[ext_resource type="Script" path="res://classes/pixel_bar.gd" id="8_pixbar"]
+[ext_resource type="Script" path="res://scenes/plan_phase/plan_background.gd" id="9_planbg"]
+[ext_resource type="Shader" path="res://assets/shaders/crt.gdshader" id="10_crt"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_details"]
-content_margin_left = 20.0
-content_margin_top = 14.0
-content_margin_right = 20.0
-content_margin_bottom = 14.0
-bg_color = Color(0.09, 0.1, 0.13, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 0.25)
-corner_radius_top_left = 6
-corner_radius_top_right = 6
-corner_radius_bottom_right = 6
-corner_radius_bottom_left = 6
+content_margin_left = 24.0
+content_margin_top = 16.0
+content_margin_right = 24.0
+content_margin_bottom = 16.0
+bg_color = Color(0.059, 0.09, 0.165, 0.92)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.2, 0.255, 0.333, 1)
+shadow_color = Color(0.008, 0.024, 0.09, 1)
+shadow_size = 1
+shadow_offset = Vector2(0, 6)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_odds_bg"]
-bg_color = Color(0.08, 0.08, 0.1, 1)
-border_width_left = 2
-border_width_top = 2
-border_width_right = 2
-border_width_bottom = 2
-border_color = Color(1, 1, 1, 0.6)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_manifest"]
+content_margin_left = 26.0
+content_margin_top = 22.0
+content_margin_right = 26.0
+content_margin_bottom = 22.0
+bg_color = Color(0.027, 0.043, 0.078, 0.94)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.22, 0.741, 0.973, 1)
+shadow_color = Color(0.008, 0.024, 0.09, 1)
+shadow_size = 1
+shadow_offset = Vector2(0, 6)
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_odds_fill"]
-bg_color = Color(0.2235, 1, 0.4157, 1)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_crt"]
+shader = ExtResource("10_crt")
 
 [node name="Main" type="Control" unique_id=187906876]
 layout_mode = 3
@@ -57,6 +51,26 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_l3v5p")
 script = ExtResource("2_b27o0")
+
+[node name="Background" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("9_planbg")
+
+[node name="CRT" type="ColorRect" parent="."]
+material = SubResource("ShaderMaterial_crt")
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=2015498903]
 layout_mode = 1
@@ -112,14 +126,32 @@ theme_override_constants/margin_top = 8
 theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 8
 
-[node name="TimeLeftProgress" type="ProgressBar" parent="MarginContainer/HBoxContainer/VBoxContainer/VBoxContainer/MarginContainer2" unique_id=1336981004]
+[node name="TimeLeftProgress" type="Control" parent="MarginContainer/HBoxContainer/VBoxContainer/VBoxContainer/MarginContainer2" unique_id=1336981004]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 32)
+custom_minimum_size = Vector2(0, 34)
 layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_qn8d1")
-theme_override_styles/fill = SubResource("StyleBoxFlat_secnn")
-value = 86.13
-show_percentage = false
+script = ExtResource("8_pixbar")
+value = 0.86
+fill_color = Color(0.063, 0.725, 0.506, 1)
+striped = true
+animate_stripes = true
+
+[node name="TimeLeftLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer/VBoxContainer/MarginContainer2/TimeLeftProgress"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = -14.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.008, 0.024, 0.09, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 20
+text = "60s"
+horizontal_alignment = 2
+vertical_alignment = 1
 
 [node name="DetailsMargin" type="MarginContainer" parent="MarginContainer/HBoxContainer/VBoxContainer/VBoxContainer" unique_id=1111833754]
 layout_mode = 2
@@ -426,116 +458,189 @@ offset_right = 992.0
 offset_bottom = 64.0
 texture = ExtResource("6_pu4gb")
 
-[node name="Control" type="Control" parent="MarginContainer/HBoxContainer" unique_id=715348961]
-custom_minimum_size = Vector2(480, 0)
+[node name="Manifest" type="PanelContainer" parent="MarginContainer/HBoxContainer"]
+custom_minimum_size = Vector2(500, 0)
 layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_manifest")
 
-[node name="ColorRect" type="ColorRect" parent="MarginContainer/HBoxContainer/Control" unique_id=1885695251]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-color = Color(0.23031491, 0.23031494, 0.23031494, 1)
-
-[node name="ManifestMargin" type="MarginContainer" parent="MarginContainer/HBoxContainer/Control" unique_id=543355970]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
-
-[node name="VBox" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Control/ManifestMargin" unique_id=2034539924]
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Manifest"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 14
 
-[node name="ManifestTitle" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=1823056721]
+[node name="Header" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
-text = "Cargo manifest"
+theme_override_constants/separation = 14
 
-[node name="SlotsLabel" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=69588745]
-unique_name_in_owner = true
+[node name="Accent" type="ColorRect" parent="MarginContainer/HBoxContainer/Manifest/VBox/Header"]
+custom_minimum_size = Vector2(12, 12)
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
+size_flags_vertical = 4
+color = Color(0.976, 0.451, 0.086, 1)
+
+[node name="ManifestTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.973, 0.98, 0.988, 1)
 theme_override_font_sizes/font_size = 30
-text = "0 / 30 slots filled"
+text = "CARGO MANIFEST"
 
-[node name="OddsTitle" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=1360524728]
+[node name="SlotsLabel" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Header"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 36
-text = "Launch odds"
-
-[node name="OddsBar" type="ProgressBar" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=410206494]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 48)
+theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
+theme_override_font_sizes/font_size = 18
+text = "0 / 30 SLOTS"
+
+[node name="Sep0" type="ColorRect" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
-theme_override_styles/background = SubResource("StyleBoxFlat_odds_bg")
-theme_override_styles/fill = SubResource("StyleBoxFlat_odds_fill")
-value = 94.0
-show_percentage = false
+color = Color(0.118, 0.161, 0.231, 1)
 
-[node name="OddsLabel" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox/OddsBar" unique_id=572078840]
+[node name="OddsHeader" type="HBoxContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+layout_mode = 2
+
+[node name="OddsTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/OddsHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 8
+theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
+theme_override_font_sizes/font_size = 18
+text = "LAUNCH ODDS"
+
+[node name="OddsLabel" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/OddsHeader"]
 unique_name_in_owner = true
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 32
+theme_override_colors/font_shadow_color = Color(0.008, 0.024, 0.09, 1)
+theme_override_constants/shadow_offset_x = 0
+theme_override_constants/shadow_offset_y = 4
+theme_override_font_sizes/font_size = 52
 text = "94%"
-horizontal_alignment = 1
-vertical_alignment = 1
+horizontal_alignment = 2
 
-[node name="OddsHint" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=304590857]
+[node name="OddsBar" type="Control" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+script = ExtResource("8_pixbar")
+value = 0.94
+fill_color = Color(0.224, 1, 0.416, 1)
+segments = 20
+
+[node name="OddsHint" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 18
 text = "Looking good!"
 autowrap_mode = 3
 
-[node name="LaunchStats" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=123053949]
+[node name="Stats" type="GridContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+layout_mode = 2
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 8
+columns = 3
+
+[node name="ThrustTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.639, 0.722, 1)
+theme_override_font_sizes/font_size = 18
+text = "THRUST"
+
+[node name="ThrustBar" type="Control" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+script = ExtResource("8_pixbar")
+frame_width = 2
+padding = 2
+
+[node name="ThrustValue" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 0)
+theme_override_colors/font_color = Color(0.973, 0.98, 0.988, 1)
+theme_override_font_sizes/font_size = 18
+text = "0 / 0"
+horizontal_alignment = 2
+
+[node name="FuelTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.58, 0.639, 0.722, 1)
+theme_override_font_sizes/font_size = 18
+text = "FUEL"
+
+[node name="FuelBar" type="Control" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+script = ExtResource("8_pixbar")
+frame_width = 2
+padding = 2
+
+[node name="FuelValue" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
+layout_mode = 2
+unique_name_in_owner = true
+custom_minimum_size = Vector2(120, 0)
+theme_override_colors/font_color = Color(0.973, 0.98, 0.988, 1)
+theme_override_font_sizes/font_size = 18
+text = "0 / 0"
+horizontal_alignment = 2
+
+[node name="WeightLabel" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+layout_mode = 2
+unique_name_in_owner = true
+theme_override_colors/font_color = Color(0.58, 0.639, 0.722, 1)
+theme_override_font_sizes/font_size = 16
+text = "WEIGHT 0.0 T"
+
+[node name="Sep1" type="ColorRect" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+custom_minimum_size = Vector2(0, 2)
+layout_mode = 2
+color = Color(0.118, 0.161, 0.231, 1)
+
+[node name="SuppliesTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
+theme_override_font_sizes/font_size = 18
+text = "SUPPLIES"
+
+[node name="Supplies" type="GridContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
-theme_override_font_sizes/font_size = 24
-text = "Weight 8.0 t / engines lift 18.0 t
-Fuel 60 t / needs 40 t"
+theme_override_constants/h_separation = 14
+theme_override_constants/v_separation = 8
+columns = 4
 
-[node name="BalanceTitle" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=929120059]
-layout_mode = 2
-theme_override_font_sizes/font_size = 36
-text = "Ship supplies"
-
-[node name="Balance" type="RichTextLabel" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=664141432]
+[node name="SupplyNotes" type="RichTextLabel" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
-theme_override_font_sizes/normal_font_size = 22
+theme_override_font_sizes/normal_font_size = 16
 bbcode_enabled = true
-text = "Water"
 fit_content = true
 scroll_active = false
 
-[node name="HSeparator" type="HSeparator" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=1356236906]
+[node name="Sep2" type="ColorRect" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+custom_minimum_size = Vector2(0, 2)
 layout_mode = 2
+color = Color(0.118, 0.161, 0.231, 1)
 
-[node name="ManifestScroll" type="ScrollContainer" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox" unique_id=1614623191]
+[node name="CargoTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
+theme_override_font_sizes/font_size = 18
+text = "CARGO"
+
+[node name="ManifestScroll" type="ScrollContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="ManifestList" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox/ManifestScroll" unique_id=382719082]
+[node name="ManifestList" type="VBoxContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox/ManifestScroll"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3

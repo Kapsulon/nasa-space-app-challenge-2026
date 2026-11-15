@@ -1,0 +1,2293 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ORBITAL ARENA — Menu Principal & Intégration Modulaire</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-void: #050914;
+      --bg-panel: #070b14;
+      --bg-card: #0f172a;
+      --border-steel: #334155;
+      --sky: #38bdf8;
+      --orange: #f97316;
+      --purple: #a855f7;
+      --emerald: #10b981;
+      --yellow: #eab308;
+    }
+
+    body {
+      background-color: var(--bg-void);
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+    }
+
+    .font-pixel {
+      font-family: 'Press Start 2P', monospace;
+    }
+
+    canvas {
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Boîtes pixel-art modulaires avec ombrage dur */
+    .pixel-panel {
+      background-color: rgba(15, 23, 42, 0.92);
+      border: 3px solid var(--border-steel);
+      box-shadow: inset 0 0 0 2px #070b14, 0 6px 0 #020617;
+    }
+
+    .pixel-panel-sky {
+      background-color: rgba(7, 11, 20, 0.94);
+      border: 3px solid var(--sky);
+      box-shadow: inset 0 0 0 2px #0c1e3a, 0 6px 0 #020617;
+    }
+
+    /* Boutons arcade avec état actif clavier/souris */
+    .arcade-btn {
+      position: relative;
+      transition: transform 0.08s ease, background-color 0.12s ease, border-color 0.12s ease;
+      box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.45), 0 4px 0 #020617;
+    }
+    .arcade-btn:hover,
+    .arcade-btn.is-focused {
+      border-color: var(--sky);
+      background-color: #1e293b;
+      transform: translateX(4px);
+    }
+    .arcade-btn:active {
+      transform: translateY(2px);
+      box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.45), 0 1px 0 #020617;
+    }
+
+    /* Cartes de rareté du Codex */
+    .card-common {
+      background: linear-gradient(180deg, #0c1e3a 0%, #070b14 100%);
+      border: 3px solid #38bdf8;
+    }
+    .card-epic {
+      background: linear-gradient(180deg, #241038 0%, #070b14 100%);
+      border: 3px solid #a855f7;
+    }
+    .card-mythic {
+      background: linear-gradient(180deg, #3b2506 0%, #070b14 100%);
+      border: 3px solid #eab308;
+      box-shadow: 0 0 18px rgba(234, 179, 8, 0.35);
+    }
+
+    /* Barre hachurée style croquis tableau blanc */
+    .striped-progress {
+      background-image: repeating-linear-gradient(
+        -45deg,
+        rgba(56, 189, 248, 0.85),
+        rgba(56, 189, 248, 0.85) 8px,
+        rgba(14, 116, 144, 0.9) 8px,
+        rgba(14, 116, 144, 0.9) 16px
+      );
+    }
+
+    /* Animation d'insertion de carte dans l'écran géant */
+    @keyframes screenCardPop {
+      0% { transform: translateY(10px) scale(0.95); opacity: 0; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+    .draft-card-anim {
+      animation: screenCardPop 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    /* Lignes de balayage CRT discrètes */
+    .crt-lines {
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+      background-size: 100% 4px;
+      pointer-events: none;
+    }
+
+    /* Mode contraste élevé / daltonien */
+    body.high-contrast .pixel-panel {
+      border-color: #f8fafc;
+      background-color: #020617;
+    }
+
+    /* Scrollbar propre */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #050914; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #38bdf8; }
+  </style>
+</head>
+<body class="min-h-screen w-screen flex flex-col items-center justify-center p-2 sm:p-4 relative">
+
+  <!-- ========================================================================= -->
+  <!-- ARRIÈRE-PLAN CANVAS PIXEL ART ANIMÉ (320x180 NATIF UPSCALÉ)               -->
+  <!-- ========================================================================= -->
+  <canvas id="spaceBgCanvas" width="320" height="180" class="fixed inset-0 w-full h-full object-cover z-0"></canvas>
+  <div class="crt-lines fixed inset-0 z-10"></div>
+
+  <!-- ========================================================================= -->
+  <!-- BARRE SUPÉRIEURE DISCRÈTE (AUDIO 8-BIT, FPS, INDICATEUR D'INTÉGRATION)    -->
+  <!-- ========================================================================= -->
+  <header class="relative z-20 w-full max-w-6xl flex flex-wrap items-center justify-between gap-2 mb-3 px-1">
+    <div class="pixel-panel px-3 py-1.5 flex items-center gap-2.5">
+      <span class="w-2.5 h-2.5 bg-emerald-400 inline-block animate-pulse"></span>
+      <span class="font-pixel text-[8px] sm:text-[9px] text-slate-300">API HOOKS: <strong class="text-emerald-400">PRÊT</strong></span>
+      <span id="fpsCounter" class="hidden font-pixel text-[8px] text-sky-400 ml-2">60 FPS</span>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <!-- Navigation rapide entre vues -->
+      <div class="hidden md:flex items-center gap-1 bg-slate-900/90 border-2 border-slate-700 p-1 rounded">
+        <button data-route="main" class="quick-nav px-2 py-1 font-pixel text-[8px] text-sky-400 hover:bg-slate-800 rounded">ACCUEIL</button>
+        <button data-route="play" class="quick-nav px-2 py-1 font-pixel text-[8px] text-orange-400 hover:bg-slate-800 rounded">MISSION</button>
+        <button data-route="draft" class="quick-nav px-2 py-1 font-pixel text-[8px] text-amber-300 bg-amber-500/10 border border-amber-400/40 hover:bg-slate-800 rounded">PHASE 1: DRAFT</button>
+        <button data-route="codex" class="quick-nav px-2 py-1 font-pixel text-[8px] text-purple-400 hover:bg-slate-800 rounded">CODEX</button>
+        <button data-route="options" class="quick-nav px-2 py-1 font-pixel text-[8px] text-emerald-400 hover:bg-slate-800 rounded">OPTIONS</button>
+        <button data-route="credits" class="quick-nav px-2 py-1 font-pixel text-[8px] text-yellow-400 hover:bg-slate-800 rounded">CRÉDITS</button>
+      </div>
+
+      <!-- Bouton Musique / SFX 8-bit -->
+      <button id="audioToggleBtn" class="arcade-btn pixel-panel px-3 py-1.5 font-pixel text-[8px] sm:text-[9px] text-sky-400 flex items-center gap-1.5" title="Activer/Couper le synthétiseur 8-bit">
+        <span id="audioIcon">🔊</span>
+        <span id="audioLabel">AUDIO: ON</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========================================================================= -->
+  <!-- CONTENEUR PRINCIPAL DES ÉCRANS (ROUTEUR MODULAIRE)                        -->
+  <!-- ========================================================================= -->
+  <main class="relative z-20 w-full max-w-6xl min-h-[540px] sm:min-h-[600px] flex flex-col justify-center">
+
+    <!-- ======================================================================= -->
+    <!-- VUE 1 : MENU PRINCIPAL (main)                                           -->
+    <!-- ======================================================================= -->
+    <section id="view-main" class="menu-view w-full max-w-3xl mx-auto flex flex-col justify-center">
+      
+      <!-- Colonne Unique Centrée : Logo & Menu d'Arcade -->
+      <div class="w-full flex flex-col gap-5">
+        <!-- En-tête Titre -->
+        <div class="pixel-panel-sky p-5 sm:p-7">
+          <div class="inline-flex items-center gap-2 px-2.5 py-1 bg-sky-500/15 border border-sky-400 text-sky-300 font-pixel text-[8px] sm:text-[9px] mb-3">
+            <span class="w-2 h-2 bg-orange-500 inline-block"></span>
+            NASA SPACE APPS CHALLENGE 2026
+          </div>
+
+          <h1 class="font-pixel text-2xl sm:text-4xl md:text-5xl text-white tracking-wider leading-tight drop-shadow-[0_4px_0_#0284c7]">
+            ORBITAL ARENA
+          </h1>
+
+          <p class="font-pixel text-[9px] sm:text-xs text-amber-400 mt-2.5 tracking-widest">
+            60s DRAFT • STATION SURVIVAL
+          </p>
+
+          <p class="text-xs sm:text-sm text-slate-300 mt-3 leading-relaxed">
+            Assemblez les modules de votre station spatiale en <strong class="text-white">60 secondes</strong>, équilibrez vos ressources vitales et survivez jusqu'en orbite martienne.
+          </p>
+        </div>
+
+        <!-- Les 4 Boutons Principaux d'Arcade -->
+        <nav id="mainMenuButtons" class="flex flex-col gap-3" aria-label="Menu Principal">
+          <button data-route="play" data-index="0" class="arcade-btn menu-item is-focused pixel-panel px-5 py-4 flex items-center justify-between text-left border-l-8 border-l-orange-500">
+            <div class="flex items-center gap-3.5">
+              <span class="cursor-arrow font-pixel text-xs text-orange-400">▶</span>
+              <div class="font-pixel text-xs sm:text-sm text-white">JOUER</div>
+            </div>
+            <span class="font-pixel text-[9px] text-orange-400 hidden sm:inline">[ENTRÉE]</span>
+          </button>
+
+          <button data-route="codex" data-index="1" class="arcade-btn menu-item pixel-panel px-5 py-4 flex items-center justify-between text-left border-l-8 border-l-purple-500">
+            <div class="flex items-center gap-3.5">
+              <span class="cursor-arrow font-pixel text-xs text-purple-400 opacity-0">▶</span>
+              <div class="font-pixel text-xs sm:text-sm text-white">🗂 CODEX CARTES</div>
+            </div>
+            <span class="font-pixel text-[9px] text-purple-400 hidden sm:inline">6 DOMAINES</span>
+          </button>
+
+          <button data-route="options" data-index="2" class="arcade-btn menu-item pixel-panel px-5 py-4 flex items-center justify-between text-left border-l-8 border-l-sky-400">
+            <div class="flex items-center gap-3.5">
+              <span class="cursor-arrow font-pixel text-xs text-sky-400 opacity-0">▶</span>
+              <div class="font-pixel text-xs sm:text-sm text-white">⚙ PARAMÈTRES</div>
+            </div>
+            <span class="font-pixel text-[9px] text-sky-400 hidden sm:inline">CONFIG</span>
+          </button>
+
+          <button data-route="credits" data-index="3" class="arcade-btn menu-item pixel-panel px-5 py-4 flex items-center justify-between text-left border-l-8 border-l-yellow-400">
+            <div class="flex items-center gap-3.5">
+              <span class="cursor-arrow font-pixel text-xs text-yellow-400 opacity-0">▶</span>
+              <div class="font-pixel text-xs sm:text-sm text-white">★ CRÉDITS & ÉQUIPE</div>
+            </div>
+            <span class="font-pixel text-[9px] text-yellow-400 hidden sm:inline">TEAM</span>
+          </button>
+        </nav>
+
+        <!-- Rappel discret des raccourcis clavier -->
+        <div class="pixel-panel px-4 py-2.5 text-center text-xs text-slate-400">
+          <strong class="text-slate-200 font-pixel text-[8px] mr-2">CLAVIER :</strong>
+          Utilisez <span class="text-sky-400 font-semibold">↑ / ↓</span> pour sélectionner, <span class="text-orange-400 font-semibold">ENTRÉE</span> pour valider et <span class="text-slate-200 font-semibold">ÉCHAP</span> pour revenir.
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- VUE 2 : PRÉPARATION DE MISSION (play)                                   -->
+    <!-- ======================================================================= -->
+    <section id="view-play" class="menu-view hidden w-full flex flex-col gap-4">
+      <!-- En-tête de vue -->
+      <div class="pixel-panel p-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span class="font-pixel text-[8px] text-orange-400">ÉTAPE 01 // CONFIGURATION DE VOL</span>
+          <h2 class="font-pixel text-sm sm:text-lg text-white mt-1">PRÉPARATION DE MISSION</h2>
+        </div>
+        <button data-route="main" class="arcade-btn px-3.5 py-2 bg-slate-800 border-2 border-slate-600 font-pixel text-[9px] text-slate-300">
+          ◀ RETOUR [ESC]
+        </button>
+      </div>
+
+      <!-- Grille des 4 Agences Spatiales -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3" id="agencyGrid">
+        <!-- Injecté dynamiquement par JS -->
+      </div>
+
+      <!-- Sélection de Difficulté + Bouton Lancement -->
+      <div class="pixel-panel-sky p-4 sm:p-5 flex flex-col lg:flex-row items-center justify-between gap-4">
+        <div class="w-full lg:w-auto">
+          <div class="font-pixel text-[8px] text-sky-400 mb-2">NIVEAU DE DIFFICULTÉ (TIMER DRAFT & ALERTES) :</div>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2" id="difficultyGrid">
+            <!-- Injecté dynamiquement par JS -->
+          </div>
+        </div>
+
+        <button id="launchMissionBtn" class="arcade-btn w-full lg:w-auto px-6 py-4 bg-orange-600 hover:bg-orange-500 border-2 border-amber-300 font-pixel text-xs sm:text-sm text-white shadow-lg flex items-center justify-center gap-2.5">
+          <span>PASSER EN SALLE DE CONTRÔLE (PHASE 1) 🚀</span>
+        </button>
+      </div>
+
+      <!-- Panneau de confirmation / Payload JSON prêt à brancher au moteur du jeu -->
+      <div id="missionLaunchPayloadBox" class="hidden pixel-panel p-4 border-emerald-400 bg-slate-950/95">
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+          <span class="font-pixel text-[9px] text-emerald-400">✓ CALLBACK ORBITAL_HOOKS.onStartMission(config) DÉCLENCHÉ !</span>
+          <button id="closePayloadBtn" class="font-pixel text-[8px] text-slate-400 hover:text-white">✕ FERMER</button>
+        </div>
+        <pre id="missionPayloadJson" class="text-[11px] font-mono text-sky-300 bg-[#050914] p-3 border border-slate-800 overflow-x-auto"></pre>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- VUE 2 BIS : PHASE 1 - SALLE DE CONTRÔLE NASA (80%) & FUSÉE CARGO (20%)  -->
+    <!-- ======================================================================= -->
+    <section id="view-draft" class="menu-view hidden w-full flex flex-col gap-2.5">
+      
+      <!-- Bandeau supérieur d'état Phase 1 (Terre - Cap Canaveral) -->
+      <div class="pixel-panel px-3 py-2 flex flex-wrap items-center justify-between gap-2 bg-slate-950/95">
+        <div class="flex items-center gap-2.5">
+          <span class="px-2 py-0.5 bg-orange-600 text-white font-pixel text-[8px]">PHASE 1 // TERRE</span>
+          <span class="font-pixel text-[9px] sm:text-[10px] text-sky-300">CAP CANAVERAL — CENTRE DE CONTRÔLE &amp; CHARGEMENT CARGO</span>
+          <span id="draftAgencyBadge" class="font-pixel text-[8px] px-2 py-0.5 bg-slate-800 border border-sky-400 text-sky-300">AGENCE: NASA</span>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Affichage en direct de la formule de Pity Mythique du tableau blanc -->
+          <div class="px-2.5 py-1 bg-[#1e1b4b] border-2 border-amber-400 flex items-center gap-2" title="Règle du tableau : 2,08% de base. Si non tiré dans les 3 cartes -> +1%. Si tiré -> réinitialise à 2,08%.">
+            <span class="w-2 h-2 bg-amber-400 inline-block animate-ping"></span>
+            <span class="font-pixel text-[8px] text-amber-300">PROBA MYTHIQUE: <strong id="mythicProbDisplay" class="text-white">2.08%</strong></span>
+            <span id="pityStreakBadge" class="font-pixel text-[7px] text-amber-200/80">(+0% PITY)</span>
+          </div>
+
+          <!-- Chrono 60s -->
+          <div class="px-2.5 py-1 bg-slate-900 border-2 border-slate-600 font-pixel text-[9px] text-emerald-400">
+            T-MINUS: <span id="draftTimerText">60s</span>
+          </div>
+
+          <button data-route="play" class="arcade-btn px-2.5 py-1 bg-slate-800 border border-slate-600 font-pixel text-[8px] text-slate-300">
+            ◀ AGENCES
+          </button>
+        </div>
+      </div>
+
+      <!-- =================================================================== -->
+      <!-- SPLIT SCREEN 80% GAUCHE (SALLE DE CONTRÔLE) / 20% DROITE (FUSÉE)    -->
+      <!-- =================================================================== -->
+      <div class="w-full flex flex-col lg:flex-row gap-3 items-stretch min-h-[590px]">
+
+        <!-- ================================================================= -->
+        <!-- PARTIE GAUCHE (80%) : SALLE DE CONTRÔLE NASA EN PIXEL ART 16-BIT  -->
+        <!-- ================================================================= -->
+        <div class="w-full lg:w-[78%] pixel-panel relative overflow-hidden flex flex-col justify-between p-2.5 sm:p-3 bg-[#060a14]">
+          
+          <!-- Canvas 16-bit de la Salle de Contrôle NASA (Murs, radars, pupitres incurvés, opérateurs animés, robot blanc) -->
+          <canvas id="missionControlCanvas" width="480" height="270" class="absolute inset-0 w-full h-full object-cover z-0 pointer-events-none"></canvas>
+
+          <!-- GRAND ÉCRAN MURAL GÉANT DE HOUSTON (Occupe toute la hauteur jusqu'aux pupitres des opérateurs) -->
+          <div class="relative z-10 w-full flex-1 flex flex-col mb-24 sm:mb-28">
+            <div class="flex-1 flex flex-col bg-[#060d1c]/90 border-4 border-slate-500 shadow-[inset_0_0_30px_rgba(2,132,199,0.28),0_10px_28px_rgba(0,0,0,0.9)] p-2.5 sm:p-3.5 relative">
+              
+              <!-- Cadre métallique supérieur de l'écran géant avec voyants et crochets -->
+              <div class="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2.5 border-b-2 border-slate-700/90 bg-slate-950/80 px-2.5 py-1.5">
+                <div class="flex items-center gap-2">
+                  <span class="w-2.5 h-2.5 bg-red-500 inline-block animate-pulse"></span>
+                  <span class="w-2 h-2 bg-emerald-400 inline-block"></span>
+                  <h2 class="font-pixel text-[9px] sm:text-xs text-white tracking-wider">
+                    ÉCRAN MURAL HOUSTON // <span class="text-sky-400">CHOOSE CARGO MODULE</span>
+                  </h2>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span id="drawCountBadge" class="font-pixel text-[8px] text-slate-300 bg-slate-900 px-2 py-1 border border-slate-700">
+                    TIRAGE #1
+                  </span>
+                </div>
+              </div>
+
+              <!-- LES 3 CARTES PLEINE HAUTEUR DANS LES 3 MONITEURS DU MUR D'ÉCRANS -->
+              <div id="threeCardsContainer" class="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 items-stretch">
+                <!-- Injecté dynamiquement par JS (3 moniteurs pleine hauteur + bouton [ SÉLECTIONNER ] en bas) -->
+              </div>
+
+              <!-- Pied mécanique de l'écran géant (Support mural au-dessus des têtes des ingénieurs) -->
+              <div class="hidden sm:flex items-center justify-between pt-2 mt-2 border-t border-slate-800/90 font-pixel text-[7px] text-slate-500 px-1">
+                <span>MONITEUR A // TELEMETRY</span>
+                <span>CAPCOM MAIN DISPLAY • LIVE FEED</span>
+                <span>MONITEUR C // PAYLOAD</span>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- ESPACE INFÉRIEUR : DIRECTEUR DE VOL & BARRE HACHURÉE DEVANT LES PUPITRES -->
+          <div class="relative z-10 w-full max-w-3xl mx-auto flex flex-col gap-1.5">
+            
+            <!-- Bulle de dialogue en direct du Directeur de Vol (vie dans la salle de contrôle) -->
+            <div class="flex items-center justify-between px-2 py-1 bg-slate-950/90 border border-slate-700 text-[11px]">
+              <div class="flex items-center gap-2">
+                <span class="font-pixel text-[8px] text-amber-400">[FLIGHT DIRECTOR] :</span>
+                <span id="flightDirectorQuote" class="text-slate-200 italic">"Sélectionnez un module sur l'écran principal pour l'embarquer dans la coiffe de la fusée."</span>
+              </div>
+              <span class="font-pixel text-[7px] text-emerald-400 hidden sm:inline">CAPCOM: GO</span>
+            </div>
+
+            <!-- LA BARRE HACHURÉE EN BAS À GAUCHE DU CROQUIS (Jauge d'avancement du remplissage Cargo) -->
+            <div class="bg-[#050914] border-2 border-slate-500 p-1.5 flex items-center gap-3 shadow-lg">
+              <span class="font-pixel text-[8px] text-sky-300 shrink-0 px-1">SÉQUENCE CARGO</span>
+              <div class="flex-1 h-4 bg-slate-900 border border-slate-700 p-0.5 overflow-hidden relative">
+                <div id="BottomStripedBar" class="h-full striped-progress transition-all duration-300" style="width: 0%"></div>
+              </div>
+              <span id="BottomStripedLabel" class="font-pixel text-[8px] text-white shrink-0 px-1">0 / 16</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- PARTIE DROITE (20%) : FUSÉE TEMPS RÉEL & SILO CARGO (10^6 KG)     -->
+        <!-- ================================================================= -->
+        <div class="w-full lg:w-[22%] pixel-panel-sky p-3 flex flex-col justify-between bg-[#050914] relative">
+          
+          <!-- En-tête Masse 10^6 kg (Fidèle à l'annotation "10^6 kg" en haut à droite du croquis) -->
+          <div class="border-b-2 border-slate-800 pb-2">
+            <div class="flex items-center justify-between">
+              <span class="font-pixel text-[8px] text-amber-400">SILO PAD 39A</span>
+              <span id="rocketSlotsBadge" class="font-pixel text-[8px] px-1.5 py-0.5 bg-sky-500/20 border border-sky-400 text-sky-300">0 / 16</span>
+            </div>
+            <div class="font-pixel text-xs sm:text-sm text-white mt-1.5 flex items-baseline justify-between">
+              <span id="rocketMassText">0.00</span>
+              <span class="text-[9px] text-orange-400">/ 10<sup class="text-[7px]">6</sup> kg</span>
+            </div>
+            <!-- Barre de masse vers 10^6 kg -->
+            <div class="w-full h-2 bg-slate-900 border border-slate-700 mt-1.5 overflow-hidden">
+              <div id="rocketMassBar" class="h-full bg-gradient-to-r from-sky-400 via-amber-400 to-orange-500 transition-all duration-200" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- CANVAS INTERACTIF DE LA FUSÉE EN COUPE VERTICALE (Tour à gauche, Fusée à 16 étages au centre, Jauge à droite) -->
+          <div class="relative flex-1 my-2 flex items-center justify-center bg-[#040710] border-2 border-slate-800 overflow-hidden min-h-[310px]">
+            <canvas id="rocketSiloCanvas" width="140" height="300" class="w-full h-full object-contain cursor-pointer" title="Cliquez sur un étage de la fusée pour inspecter ou retirer ce cargo"></canvas>
+          </div>
+
+          <!-- Info du dernier module chargé ou survolé dans la fusée -->
+          <div id="SelectedCargoInfo" class="bg-slate-950 border border-slate-800 p-2 text-[11px] text-slate-300 mb-2 min-h-[48px] flex flex-col justify-center">
+            <div class="font-pixel text-[7px] text-slate-400">DERNIER CARGO EMBARQUÉ :</div>
+            <div id="lastCargoName" class="font-pixel text-[8px] text-sky-300 mt-1 truncate">SOUTE VIDE (CHOISISSEZ À GAUCHE)</div>
+          </div>
+
+          <!-- Actions Fusée : Vider / Décollage vers l'Orbite -->
+          <div class="flex flex-col gap-1.5">
+            <button id="launchRocketBtn" class="arcade-btn w-full py-3 px-2 bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-300 font-pixel text-[9px] text-white shadow-lg flex items-center justify-center gap-1.5">
+              <span>🚀 DÉCOLLAGE ORBITAL</span>
+            </button>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- VUE 3 : CODEX RAPIDE DES CARTES (codex)                                 -->
+    <!-- ======================================================================= -->
+    <section id="view-codex" class="menu-view hidden w-full flex flex-col gap-4">
+      <!-- En-tête + Filtres par les 6 domaines -->
+      <div class="pixel-panel p-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <span class="font-pixel text-[8px] text-purple-400">BASE DE DONNÉES // 6 DOMAINES</span>
+          <h2 class="font-pixel text-sm sm:text-lg text-white mt-1">CODEX DES MODULES</h2>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-1.5" id="codexFilters">
+          <button data-domain="ALL" class="codex-filter-btn arcade-btn px-2.5 py-1.5 bg-sky-600 border border-sky-300 font-pixel text-[8px] text-white">TOUS</button>
+          <button data-domain="Propulsion" class="codex-filter-btn arcade-btn px-2.5 py-1.5 bg-slate-800 border border-slate-600 font-pixel text-[8px] text-orange-400">PROPULSION</button>
+          <button data-domain="Eau" class="codex-filter-btn arcade-btn px-2.5 py-1.5 bg-slate-800 border border-slate-600 font-pixel text-[8px] text-sky-400">EAU</button>
+          <button data-domain="Équipage" class="codex-filter-btn arcade-btn px-2.5 py-1.5 bg-slate-800 border border-slate-600 font-pixel text-[8px] text-purple-400">ÉQUIPAGE</button>
+          <button data-domain="Énergie" class="codex-filter-btn arcade-btn px-2.5 py-1.5 bg-slate-800 border border-slate-600 font-pixel text-[8px] text-yellow-400">ÉNERGIE</button>
+          <button data-domain="Télémétrie" class="codex-filter-btn arcade-btn px-2.5 py-1.5 bg-slate-800 border border-slate-600 font-pixel text-[8px] text-amber-300">TÉLÉMÉTRIE</button>
+          <button data-domain="Serre" class="codex-filter-btn arcade-btn px-2.5 py-1.5 bg-slate-800 border border-slate-600 font-pixel text-[8px] text-emerald-400">SERRE</button>
+        </div>
+
+        <button data-route="main" class="arcade-btn px-3.5 py-2 bg-slate-800 border-2 border-slate-600 font-pixel text-[9px] text-slate-300">
+          ◀ RETOUR [ESC]
+        </button>
+      </div>
+
+      <!-- Grille des cartes pixel-art -->
+      <div id="codexCardsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 max-h-[440px] overflow-y-auto pr-1">
+        <!-- Injecté dynamiquement par JS -->
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- VUE 4 : PARAMÈTRES & EXPORTATION JSON (options)                         -->
+    <!-- ======================================================================= -->
+    <section id="view-options" class="menu-view hidden w-full max-w-3xl mx-auto flex flex-col gap-4">
+      <div class="pixel-panel p-4 flex items-center justify-between">
+        <div>
+          <span class="font-pixel text-[8px] text-sky-400">SYSTÈME // LOCALSTORAGE</span>
+          <h2 class="font-pixel text-sm sm:text-lg text-white mt-1">PARAMÈTRES DU JEU</h2>
+        </div>
+        <button data-route="main" class="arcade-btn px-3.5 py-2 bg-slate-800 border-2 border-slate-600 font-pixel text-[9px] text-slate-300">
+          ◀ RETOUR [ESC]
+        </button>
+      </div>
+
+      <div class="pixel-panel p-5 sm:p-6 flex flex-col gap-5">
+        <!-- Volume SFX -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+          <div>
+            <div class="font-pixel text-[10px] text-white">VOLUME SYNTHÉTISEUR 8-BIT (SFX)</div>
+            <div class="text-xs text-slate-400 mt-1">Bruitages rétro générés via WebAudio API</div>
+          </div>
+          <div class="flex items-center gap-3">
+            <input id="optVolume" type="range" min="0" max="100" value="60" class="w-36 accent-sky-400 cursor-pointer">
+            <span id="optVolumeVal" class="font-pixel text-[10px] text-sky-400 w-12 text-right">60%</span>
+          </div>
+        </div>
+
+        <!-- Mode Daltonien / Contraste élevé -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <div class="font-pixel text-[10px] text-white">MODE DALTONIEN / CONTRASTE ÉLEVÉ</div>
+            <div class="text-xs text-slate-400 mt-1">Renforce les bordures et ajoute des icônes de domaine</div>
+          </div>
+          <button id="optContrastBtn" class="arcade-btn px-4 py-2 bg-slate-800 border-2 border-slate-600 font-pixel text-[9px] text-slate-300">
+            DÉSACTIVÉ
+          </button>
+        </div>
+
+        <!-- Affichage FPS -->
+        <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+          <div>
+            <div class="font-pixel text-[10px] text-white">AFFICHER LE COMPTEUR FPS</div>
+            <div class="text-xs text-slate-400 mt-1">Affiche les images/seconde dans la barre supérieure</div>
+          </div>
+          <button id="optFpsBtn" class="arcade-btn px-4 py-2 bg-slate-800 border-2 border-slate-600 font-pixel text-[9px] text-slate-300">
+            MASQUÉ
+          </button>
+        </div>
+
+        <!-- Outil Développeur : Copier Config JSON -->
+        <div class="bg-[#070b14] border border-slate-700 p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3">
+          <div class="text-xs text-slate-300">
+            <strong class="font-pixel text-[9px] text-amber-400 block mb-1">INTÉGRATION COÉQUIPIER :</strong>
+            Copiez la configuration complète (`window.ORBITAL_CONFIG`) au format JSON.
+          </div>
+          <button id="copyConfigJsonBtn" class="arcade-btn shrink-0 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 border border-emerald-300 font-pixel text-[9px] text-white">
+            📋 COPIER CONFIG JSON
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- VUE 5 : CRÉDITS & ÉQUIPE ÉDITABLE (credits)                             -->
+    <!-- ======================================================================= -->
+    <section id="view-credits" class="menu-view hidden w-full max-w-4xl mx-auto flex flex-col gap-4">
+      <div class="pixel-panel p-4 flex items-center justify-between">
+        <div>
+          <span class="font-pixel text-[8px] text-yellow-400">HACKATHON // NASA SPACE APPS CHALLENGE</span>
+          <h2 class="font-pixel text-sm sm:text-lg text-white mt-1">CRÉDITS & ÉQUIPE</h2>
+        </div>
+        <button data-route="main" class="arcade-btn px-3.5 py-2 bg-slate-800 border-2 border-slate-600 font-pixel text-[9px] text-slate-300">
+          ◀ RETOUR [ESC]
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5" id="teamMembersGrid">
+        <!-- Cartes de membres éditables (contenteditable) injectées par JS -->
+      </div>
+
+      <div class="pixel-panel p-3 text-center text-xs text-slate-400">
+        Cliquez directement sur un nom ou un rôle ci-dessus pour le personnaliser (sauvegarde automatique).
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Notification Toast discrète -->
+  <div id="toastBox" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 border-2 border-sky-400 text-white px-4 py-2 font-pixel text-[9px] shadow-xl opacity-0 pointer-events-none transition-opacity duration-200">
+    Notification
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- OVERLAY PLEIN ÉCRAN : CINÉMATIQUE DE DÉCOLLAGE ORBITAL (16-BIT)           -->
+  <!-- ========================================================================= -->
+  <div id="fullscreenLaunchOverlay" class="fixed inset-0 z-50 hidden bg-[#050914] flex flex-col items-center justify-center">
+    <canvas id="fullscreenLaunchCanvas" width="480" height="270" class="w-full h-full object-cover"></canvas>
+    <div class="crt-lines fixed inset-0 pointer-events-none"></div>
+
+    <!-- Bandeau supérieur télémétrie en direct pendant le décollage -->
+    <div class="fixed top-4 left-4 right-4 z-50 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+      <div class="pixel-panel px-3 py-2 bg-slate-950/90 flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 bg-red-500 inline-block animate-ping"></span>
+        <span id="launchTelemetryStage" class="font-pixel text-[9px] sm:text-xs text-amber-400">ALLUMAGE DES MOTEURS PRINCIPAUX</span>
+      </div>
+      <div class="pixel-panel px-3 py-2 bg-slate-950/90 font-pixel text-[9px] sm:text-xs text-sky-300">
+        ALTITUDE: <span id="launchAltitudeText" class="text-white">0.0 KM</span> • CARGOS: <span id="launchCargoCountText" class="text-emerald-400">0</span>
+      </div>
+    </div>
+
+    <!-- Bouton discret pour fermer / rejouer ou passer en bas à droite -->
+    <div class="fixed bottom-5 right-5 z-50 flex items-center gap-2">
+      <button id="replayFullscreenLaunchBtn" class="arcade-btn pixel-panel px-4 py-2.5 font-pixel text-[9px] text-amber-300 bg-slate-950/95">
+        ↺ REJOUER LE DÉCOLLAGE
+      </button>
+      <button id="closeFullscreenLaunchBtn" class="arcade-btn px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 border-2 border-emerald-300 font-pixel text-[9px] text-white shadow-xl">
+        RETOUR AU MENU ▶
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- SCRIPT PRINCIPAL : ARCHITECTURE MODULAIRE POUR COÉQUIPIER                 -->
+  <!-- ========================================================================= -->
+  <script>
+    /**
+     * =========================================================================
+     * 1. CONFIGURATION GLOBALE & HOOKS D'INTÉGRATION (À BRANCHER PAR LE COÉQUIPIER)
+     * =========================================================================
+     * Votre coéquipier peut lire `window.ORBITAL_CONFIG` ou remplacer les fonctions
+     * de `window.ORBITAL_HOOKS` pour connecter son moteur de jeu principal.
+     */
+    window.ORBITAL_CONFIG = {
+      version: "1.0.0-spaceapps",
+      selectedAgency: "VALDORIA",
+      difficulty: "COMMANDANT",
+      draftDurationSeconds: 45,
+      alertFrequencyMultiplier: 1.0,
+      startingResources: {
+        water: 50,
+        o2: 65,
+        energy: 2,
+        fuel: 55,
+        comms: 100,
+        food: 55
+      },
+      settings: {
+        audioEnabled: true,
+        sfxVolume: 60,
+        highContrast: false,
+        showFps: false
+      },
+      team: [
+        { role: "GAME DESIGN & PIXEL ART", name: "Commandant Créatif", color: "#38bdf8" },
+        { role: "MOTEUR DE JEU & LOGIQUE", name: "Ingénieur Systèmes", color: "#f97316" },
+        { role: "BALANCING & CARTES", name: "Architecte Orbital", color: "#a855f7" },
+        { role: "AUDIO & TÉLÉMÉTRIE", name: "Spécialiste Comms", color: "#10b981" }
+      ]
+    };
+
+    window.ORBITAL_HOOKS = {
+      /**
+       * Appelé quand le joueur clique sur "LANCER LA MISSION 🚀"
+       * @param {Object} missionConfig - Copie complète de window.ORBITAL_CONFIG
+       */
+      onStartMission: function (missionConfig) {
+        console.log("[ORBITAL_HOOKS] Lancement de la mission avec la config :", missionConfig);
+        // Exemple d'intégration pour le coéquipier :
+        // window.location.href = `jeu.html?agency=${missionConfig.selectedAgency}&diff=${missionConfig.difficulty}`;
+      },
+
+      /**
+       * Appelé lors du changement d'agence spatiale
+       */
+      onSelectAgency: function (agencyObj) {
+        console.log("[ORBITAL_HOOKS] Agence sélectionnée :", agencyObj.id);
+      },
+
+      /**
+       * Appelé lors du changement de difficulté
+       */
+      onDifficultyChange: function (difficultyObj) {
+        console.log("[ORBITAL_HOOKS] Difficulté modifiée :", difficultyObj.id);
+      },
+
+      /**
+       * Appelé à chaque modification des paramètres utilisateur
+       */
+      onSettingsChange: function (settingsObj) {
+        console.log("[ORBITAL_HOOKS] Paramètres mis à jour :", settingsObj);
+      }
+    };
+
+    /**
+     * =========================================================================
+     * 2. DONNÉES DU JEU (NATIONS SPATIALES FICTIVES, DIFFICULTÉS, CATALOGUE CODEX)
+     * =========================================================================
+     */
+    const AGENCIES_DATA = [
+      {
+        id: "VALDORIA",
+        name: "VALDORIA",
+        tag: "CONFÉDÉRATION DE VALDORIA • ASTRA",
+        color: "#38bdf8",
+        flag: "aurelia",
+        bonusText: "FUEL +15% • COMMS +10%",
+        signatureCard: "Tuyère Saturn V (Mythique)",
+        resources: { water: 50, o2: 65, energy: 2, fuel: 70, comms: 100, food: 55 }
+      },
+      {
+        id: "KRYPTOS",
+        name: "KRYPTOS",
+        tag: "UNION DE KRYPTOS • NEXUS",
+        color: "#a855f7",
+        flag: "borealis",
+        bonusText: "ÉNERGIE +2 • EAU +15%",
+        signatureCard: "Condenseur Sabatier (Épique)",
+        resources: { water: 65, o2: 65, energy: 4, fuel: 55, comms: 100, food: 55 }
+      },
+      {
+        id: "SOLARIA",
+        name: "SOLARIA",
+        tag: "DOMINION DE SOLARIA • IGNIS",
+        color: "#f97316",
+        flag: "helios",
+        bonusText: "SERRE +20% • FUEL +10%",
+        signatureCard: "Serre Hydroponique (Épique)",
+        resources: { water: 50, o2: 65, energy: 2, fuel: 65, comms: 95, food: 75 }
+      },
+      {
+        id: "NEBULON",
+        name: "NEBULON",
+        tag: "ALLIANCE DE NEBULON • VORTEX",
+        color: "#10b981",
+        flag: "zephyria",
+        bonusText: "O2 +20% • ÉNERGIE +1",
+        signatureCard: "Robot Médical EVA-01 (Mythique)",
+        resources: { water: 55, o2: 85, energy: 3, fuel: 55, comms: 100, food: 55 }
+      }
+    ];
+
+    const DIFFICULTIES_DATA = [
+      { id: "CADET", label: "CADET", draftSec: 60, alertMult: 0.7, color: "#10b981", desc: "Draft 60s • Alertes douces" },
+      { id: "COMMANDANT", label: "COMMANDANT", draftSec: 45, alertMult: 1.0, color: "#38bdf8", desc: "Draft 45s • Équilibré" },
+      { id: "ORBITAL HARDCORE", label: "ORBITAL HARDCORE", draftSec: 30, alertMult: 1.5, color: "#f97316", desc: "Draft 30s • Tempêtes solaires" }
+    ];
+
+    const CODEX_CARDS = [
+      { id: "p1", name: "TUYÈRE SATURN V", domain: "Propulsion", rarity: "MYTHIQUE", rarityClass: "card-mythic", color: "#f97316", icon: "propulsion", stats: "FUEL +25% | Vitesse +2", desc: "Propulseur lourd permettant d'éviter les essaims de débris orbitaux." },
+      { id: "w1", name: "FILTRE CRYO-EAU", domain: "Eau", rarity: "COMMUN", rarityClass: "card-common", color: "#38bdf8", icon: "water", stats: "EAU +20% | ÉNERGIE -1", desc: "Purifie et recycle 98% de l'humidité de la station ISS." },
+      { id: "c1", name: "CAPSULE ORION", domain: "Équipage", rarity: "ÉPIQUE", rarityClass: "card-epic", color: "#a855f7", icon: "crew", stats: "ÉQUIPAGE +20% | O2 +10%", desc: "Quartiers pressurisés avec sangles 0G et kit médical d'urgence." },
+      { id: "e1", name: "AILE SOLAIRE ISS", domain: "Énergie", rarity: "COMMUN", rarityClass: "card-common", color: "#eab308", icon: "energy", stats: "ÉNERGIE +3/s", desc: "Panneaux photovoltaïques orientables couplés aux radiateurs." },
+      { id: "t1", name: "DISQUE D'OR VOYAGER", domain: "Télémétrie", rarity: "MYTHIQUE", rarityClass: "card-mythic", color: "#facc15", icon: "telemetry", stats: "COMMS 100% | Bouclier", desc: "Antenne grand gain immunisant la station contre les pertes de signal." },
+      { id: "s1", name: "SERRE HYDROPONIQUE", domain: "Serre", rarity: "ÉPIQUE", rarityClass: "card-epic", color: "#10b981", icon: "serre", stats: "VIVRES +25% | O2 +10%", desc: "Cultures sous LED UV produisant tomates, blé et oxygène frais." },
+      { id: "p2", name: "BOOSTER ARIANE 6", domain: "Propulsion", rarity: "ÉPIQUE", rarityClass: "card-epic", color: "#f97316", icon: "propulsion", stats: "FUEL +18% | Poussée +1", desc: "Propulseur d'appoint européen à propergol solide haute densité." },
+      { id: "w2", name: "CONDENSEUR SABATIER", domain: "Eau", rarity: "ÉPIQUE", rarityClass: "card-epic", color: "#38bdf8", icon: "water", stats: "EAU +22% | O2 +5%", desc: "Réacteur chimique convertissant le CO2 de l'équipage en eau pure." },
+      { id: "c2", name: "COUCHETTE ZÉRO-G", domain: "Équipage", rarity: "COMMUN", rarityClass: "card-common", color: "#a855f7", icon: "crew", stats: "MORAL +15% | O2 +5%", desc: "Cabine individuelle isolée contre les radiations cosmiques." },
+      { id: "e2", name: "RÉACTEUR KILOPOWER", domain: "Énergie", rarity: "MYTHIQUE", rarityClass: "card-mythic", color: "#eab308", icon: "energy", stats: "ÉNERGIE +6/s | Stable", desc: "Micro-réacteur à fission assurant une énergie continue même dans l'ombre." },
+      { id: "t2", name: "RADAR DEEP SPACE", domain: "Télémétrie", rarity: "COMMUN", rarityClass: "card-common", color: "#facc15", icon: "telemetry", stats: "COMMS +15% | Scan +1", desc: "Antenne parabolique détectant à l'avance les tempêtes solaires." },
+      { id: "s2", name: "BIORÉACTEUR SPIRULINE", domain: "Serre", rarity: "COMMUN", rarityClass: "card-common", color: "#10b981", icon: "serre", stats: "VIVRES +15% | O2 +12%", desc: "Cuves de micro-algues photosynthétiques à croissance ultra-rapide." },
+      { id: "c3", name: "ROBOT MÉDICAL EVA-01", domain: "Équipage", rarity: "MYTHIQUE", rarityClass: "card-mythic", color: "#a855f7", icon: "crew", stats: "SOINS 100% | Réparation", desc: "Droïde autonome capable d'assister l'équipage et de réparer la coque." },
+      { id: "w3", name: "RÉSERVOIR CRYO-GLACE", domain: "Eau", rarity: "MYTHIQUE", rarityClass: "card-mythic", color: "#38bdf8", icon: "water", stats: "EAU +35% | Refroid.", desc: "Stockage massif d'eau glacée doublé d'un bouclier thermique." }
+    ];
+
+    /**
+     * =========================================================================
+     * 3. SYNTHÉTISEUR AUDIO 8-BIT (WEBAUDIO API SANS FICHIER EXTERNE)
+     * =========================================================================
+     */
+    const RetroAudio = {
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AC = window.AudioContext || window.webkitAudioContext;
+          if (AC) this.ctx = new AC();
+        }
+        if (this.ctx && this.ctx.state === "suspended") {
+          this.ctx.resume();
+        }
+      },
+      tone(freq = 440, dur = 0.06, type = "square") {
+        const s = window.ORBITAL_CONFIG.settings;
+        if (!s.audioEnabled || s.sfxVolume <= 0) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          const vol = (s.sfxVolume / 100) * 0.09;
+          osc.type = type;
+          osc.frequency.setValueAtTime(freq, now);
+          gain.gain.setValueAtTime(vol, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + dur);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + dur);
+        } catch (e) {}
+      },
+      move() {
+        this.tone(540, 0.045, "square");
+      },
+      confirm() {
+        this.tone(523.25, 0.06, "square");
+        setTimeout(() => this.tone(659.25, 0.08, "square"), 55);
+      },
+      launch() {
+        [440, 554.37, 659.25, 880].forEach((f, idx) => {
+          setTimeout(() => this.tone(f, 0.09, "sawtooth"), idx * 60);
+        });
+      }
+    };
+
+    /**
+     * =========================================================================
+     * 4. ROUTEUR DE VUES & GESTION DU FOCUS CLAVIER
+     * =========================================================================
+     */
+    function showToast(msg) {
+      const box = document.getElementById("toastBox");
+      if (!box) return;
+      box.textContent = msg;
+      box.classList.remove("opacity-0");
+      setTimeout(() => box.classList.add("opacity-0"), 2200);
+    }
+
+    const MenuRouter = {
+      current: "main",
+      focusedIndex: 0,
+      go(route) {
+        RetroAudio.confirm();
+        this.current = route;
+        document.querySelectorAll(".menu-view").forEach(v => v.classList.add("hidden"));
+        const target = document.getElementById(`view-${route}`);
+        if (target) target.classList.remove("hidden");
+      },
+      setFocusIndex(idx) {
+        const items = document.querySelectorAll("#mainMenuButtons .menu-item");
+        if (!items.length) return;
+        this.focusedIndex = (idx + items.length) % items.length;
+        items.forEach((btn, i) => {
+          const arrow = btn.querySelector(".cursor-arrow");
+          if (i === this.focusedIndex) {
+            btn.classList.add("is-focused");
+            if (arrow) arrow.classList.remove("opacity-0");
+          } else {
+            btn.classList.remove("is-focused");
+            if (arrow) arrow.classList.add("opacity-0");
+          }
+        });
+      }
+    };
+    window.ORBITAL_ROUTER = MenuRouter;
+
+    // Attache tous les boutons possédant un attribut data-route
+    document.querySelectorAll("[data-route]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const route = btn.getAttribute("data-route");
+        if (route === "draft") {
+          OrbitalDraftPhase1.resetForNewMission();
+        }
+        MenuRouter.go(route);
+      });
+    });
+
+    // Survol souris sur les boutons du menu principal
+    document.querySelectorAll("#mainMenuButtons .menu-item").forEach((btn, idx) => {
+      btn.addEventListener("mouseenter", () => {
+        RetroAudio.move();
+        MenuRouter.setFocusIndex(idx);
+      });
+    });
+
+    /**
+     * =========================================================================
+     * 5. SAUVEGARDE & SYNCHRONISATION DES PARAMÈTRES (LOCALSTORAGE)
+     * =========================================================================
+     */
+    const STORAGE_KEY = "orbital_arena_settings_v1";
+
+    function loadSettingsFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const parsed = JSON.parse(raw);
+        if (parsed.settings) {
+          window.ORBITAL_CONFIG.settings = { ...window.ORBITAL_CONFIG.settings, ...parsed.settings };
+        }
+        if (Array.isArray(parsed.team)) {
+          window.ORBITAL_CONFIG.team = parsed.team;
+        }
+      } catch (e) {}
+    }
+
+    function saveSettingsToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          settings: window.ORBITAL_CONFIG.settings,
+          team: window.ORBITAL_CONFIG.team
+        }));
+      } catch (e) {}
+      window.ORBITAL_HOOKS.onSettingsChange(window.ORBITAL_CONFIG.settings);
+    }
+
+    function syncSettingsUI() {
+      const s = window.ORBITAL_CONFIG.settings;
+
+      // Bouton Audio en haut
+      document.getElementById("audioIcon").textContent = s.audioEnabled ? "🔊" : "🔇";
+      document.getElementById("audioLabel").textContent = s.audioEnabled ? "AUDIO: ON" : "AUDIO: OFF";
+
+      // Slider Volume
+      const volInput = document.getElementById("optVolume");
+      const volVal = document.getElementById("optVolumeVal");
+      if (volInput) volInput.value = s.sfxVolume;
+      if (volVal) volVal.textContent = `${s.sfxVolume}%`;
+
+      // Contraste élevé
+      document.body.classList.toggle("high-contrast", !!s.highContrast);
+      const cBtn = document.getElementById("optContrastBtn");
+      if (cBtn) {
+        cBtn.textContent = s.highContrast ? "ACTIVÉ ✓" : "DÉSACTIVÉ";
+        cBtn.className = `arcade-btn px-4 py-2 border-2 font-pixel text-[9px] ${
+          s.highContrast ? "bg-sky-600 border-sky-300 text-white" : "bg-slate-800 border-slate-600 text-slate-300"
+        }`;
+      }
+
+      // Compteur FPS
+      const fpsEl = document.getElementById("fpsCounter");
+      const fBtn = document.getElementById("optFpsBtn");
+      if (fpsEl) fpsEl.classList.toggle("hidden", !s.showFps);
+      if (fBtn) {
+        fBtn.textContent = s.showFps ? "AFFICHÉ ✓" : "MASQUÉ";
+        fBtn.className = `arcade-btn px-4 py-2 border-2 font-pixel text-[9px] ${
+          s.showFps ? "bg-emerald-600 border-emerald-300 text-white" : "bg-slate-800 border-slate-600 text-slate-300"
+        }`;
+      }
+    }
+
+    document.getElementById("audioToggleBtn").addEventListener("click", () => {
+      window.ORBITAL_CONFIG.settings.audioEnabled = !window.ORBITAL_CONFIG.settings.audioEnabled;
+      syncSettingsUI();
+      saveSettingsToStorage();
+      if (window.ORBITAL_CONFIG.settings.audioEnabled) RetroAudio.confirm();
+    });
+
+    /**
+     * =========================================================================
+     * 6. RENDU DES AGENCES SPATIALES & DIFFICULTÉS
+     * =========================================================================
+     */
+    function drawAgencyFlagPixel(canvasEl, flagCode) {
+      if (!canvasEl) return;
+      const c = canvasEl.getContext("2d");
+      c.imageSmoothingEnabled = false;
+      c.clearRect(0, 0, 24, 16);
+
+      if (flagCode === "aurelia") {
+        // Drapeau fictif Aurelia : Bleu azur, bande diagonale/horizontale blanche et étoile dorée
+        c.fillStyle = "#0369a1";
+        c.fillRect(0, 0, 24, 16);
+        c.fillStyle = "#f8fafc";
+        c.fillRect(0, 6, 24, 4);
+        c.fillStyle = "#38bdf8";
+        c.fillRect(0, 7, 24, 2);
+        c.fillStyle = "#facc15";
+        c.fillRect(5, 5, 6, 6);
+        c.fillStyle = "#0369a1";
+        c.fillRect(7, 7, 2, 2);
+      } else if (flagCode === "borealis") {
+        // Drapeau fictif Borealis : Violet cosmique, croix scandinave cyan et losange blanc
+        c.fillStyle = "#4c1d95";
+        c.fillRect(0, 0, 24, 16);
+        c.fillStyle = "#a855f7";
+        c.fillRect(7, 0, 4, 16);
+        c.fillRect(0, 6, 24, 4);
+        c.fillStyle = "#f8fafc";
+        c.fillRect(8, 7, 2, 2);
+      } else if (flagCode === "helios") {
+        // Drapeau fictif Helios : Terracotta sombre, bandes orange et soleil rayonnant doré
+        c.fillStyle = "#7c2d12";
+        c.fillRect(0, 0, 24, 16);
+        c.fillStyle = "#f97316";
+        c.fillRect(0, 0, 24, 3);
+        c.fillRect(0, 13, 24, 3);
+        c.fillStyle = "#facc15";
+        c.fillRect(9, 5, 6, 6);
+        c.fillStyle = "#fef08a";
+        c.fillRect(11, 4, 2, 8);
+        c.fillRect(8, 7, 8, 2);
+      } else if (flagCode === "zephyria") {
+        // Drapeau fictif Zephyria : Vert émeraude profond, chevrons menthe et croissant orbital blanc
+        c.fillStyle = "#064e3b";
+        c.fillRect(0, 0, 24, 16);
+        c.fillStyle = "#10b981";
+        c.fillRect(0, 0, 8, 16);
+        c.fillStyle = "#34d399";
+        c.fillRect(8, 0, 3, 16);
+        c.fillStyle = "#f8fafc";
+        c.fillRect(14, 5, 5, 6);
+        c.fillStyle = "#064e3b";
+        c.fillRect(16, 6, 3, 4);
+      }
+    }
+
+    function renderAgencies() {
+      const grid = document.getElementById("agencyGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      AGENCIES_DATA.forEach(ag => {
+        const isSelected = window.ORBITAL_CONFIG.selectedAgency === ag.id;
+        const card = document.createElement("div");
+        card.className = `arcade-btn pixel-panel p-4 cursor-pointer flex flex-col justify-between transition ${
+          isSelected ? "ring-2 ring-sky-400 bg-slate-900" : "opacity-85 hover:opacity-100"
+        }`;
+        card.style.borderColor = isSelected ? ag.color : "#334155";
+
+        card.innerHTML = `
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-3">
+              <div class="flex items-center gap-2">
+                <canvas width="24" height="16" class="w-7 h-5 border border-slate-600 agency-flag"></canvas>
+                <span class="font-pixel text-xs sm:text-sm text-white">${ag.name}</span>
+              </div>
+              <span class="font-pixel text-[8px] px-2 py-0.5 border" style="color:${ag.color};border-color:${ag.color}">
+                ${isSelected ? "ACTIF ✓" : "CHOISIR"}
+              </span>
+            </div>
+            <div class="font-pixel text-[8px] text-slate-400 mb-2">${ag.tag}</div>
+            <div class="bg-[#050914] border border-slate-800 p-2.5 text-xs text-emerald-400 font-semibold mb-2">
+              ${ag.bonusText}
+            </div>
+          </div>
+          <div class="text-[11px] text-slate-300 border-t border-slate-800 pt-2">
+            <span class="text-slate-400 block text-[10px]">Module signature :</span>
+            <strong class="text-amber-300">${ag.signatureCard}</strong>
+          </div>
+        `;
+
+        drawAgencyFlagPixel(card.querySelector(".agency-flag"), ag.flag);
+
+        card.addEventListener("click", () => {
+          RetroAudio.confirm();
+          window.ORBITAL_CONFIG.selectedAgency = ag.id;
+          window.ORBITAL_CONFIG.startingResources = { ...ag.resources };
+          window.ORBITAL_HOOKS.onSelectAgency(ag);
+          renderAgencies();
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function renderDifficulties() {
+      const grid = document.getElementById("difficultyGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      DIFFICULTIES_DATA.forEach(df => {
+        const isSelected = window.ORBITAL_CONFIG.difficulty === df.id;
+        const btn = document.createElement("button");
+        btn.className = `arcade-btn px-3.5 py-2.5 border-2 text-left transition ${
+          isSelected ? "bg-slate-800 border-sky-400" : "bg-slate-950/90 border-slate-700 opacity-80 hover:opacity-100"
+        }`;
+        btn.innerHTML = `
+          <div class="font-pixel text-[9px]" style="color:${df.color}">${df.label} ${isSelected ? "●" : ""}</div>
+          <div class="text-[11px] text-slate-300 mt-1">${df.desc}</div>
+        `;
+
+        btn.addEventListener("click", () => {
+          RetroAudio.move();
+          window.ORBITAL_CONFIG.difficulty = df.id;
+          window.ORBITAL_CONFIG.draftDurationSeconds = df.draftSec;
+          window.ORBITAL_CONFIG.alertFrequencyMultiplier = df.alertMult;
+          window.ORBITAL_HOOKS.onDifficultyChange(df);
+          renderDifficulties();
+        });
+
+        grid.appendChild(btn);
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 7. RENDU DU CODEX DES CARTES & ICÔNES PIXEL-ART PROCÉDURALES
+     * =========================================================================
+     */
+    function paintCodexIcon(canvasEl, iconType) {
+      if (!canvasEl) return;
+      const c = canvasEl.getContext("2d");
+      c.imageSmoothingEnabled = false;
+      c.fillStyle = "#050914";
+      c.fillRect(0, 0, 48, 48);
+
+      if (iconType === "propulsion") {
+        c.fillStyle = "#f59e0b";
+        c.fillRect(14, 6, 20, 26);
+        c.fillStyle = "#1e293b";
+        c.fillRect(16, 8, 16, 22);
+        c.fillStyle = "#f97316";
+        c.fillRect(12, 32, 24, 8);
+        c.fillStyle = "#fef08a";
+        c.fillRect(18, 34, 12, 10);
+      } else if (iconType === "water") {
+        c.fillStyle = "#0284c7";
+        c.fillRect(10, 10, 8, 28);
+        c.fillRect(20, 10, 8, 28);
+        c.fillRect(30, 10, 8, 28);
+        c.fillStyle = "#7dd3fc";
+        c.fillRect(12, 14, 3, 18);
+        c.fillRect(22, 14, 3, 18);
+        c.fillRect(32, 14, 3, 18);
+      } else if (iconType === "crew") {
+        c.fillStyle = "#a855f7";
+        c.fillRect(8, 10, 32, 28);
+        c.fillStyle = "#241038";
+        c.fillRect(10, 12, 28, 24);
+        c.fillStyle = "#c084fc";
+        c.fillRect(12, 15, 24, 7);
+        c.fillStyle = "#f8fafc";
+        c.fillRect(12, 15, 6, 7);
+        c.fillStyle = "#9333ea";
+        c.fillRect(12, 26, 24, 7);
+        c.fillStyle = "#f8fafc";
+        c.fillRect(12, 26, 6, 7);
+      } else if (iconType === "energy") {
+        c.fillStyle = "#1e3a8a";
+        c.fillRect(8, 8, 32, 32);
+        c.fillStyle = "#eab308";
+        c.fillRect(8, 8, 32, 4);
+        c.fillRect(8, 36, 32, 4);
+        c.fillStyle = "#38bdf8";
+        c.fillRect(18, 8, 2, 32);
+        c.fillRect(28, 8, 2, 32);
+        c.fillRect(8, 22, 32, 2);
+      } else if (iconType === "telemetry") {
+        c.fillStyle = "#fbbf24";
+        c.fillRect(12, 12, 24, 24);
+        c.fillStyle = "#78350f";
+        c.fillRect(21, 21, 6, 6);
+        c.fillStyle = "#fef08a";
+        c.fillRect(15, 15, 5, 5);
+      } else if (iconType === "serre") {
+        c.fillStyle = "#052e16";
+        c.fillRect(8, 8, 32, 32);
+        c.fillStyle = "#10b981";
+        c.fillRect(10, 18, 28, 4);
+        c.fillRect(10, 32, 28, 4);
+        c.fillStyle = "#4ade80";
+        c.fillRect(14, 11, 7, 7);
+        c.fillStyle = "#ef4444";
+        c.fillRect(27, 25, 6, 6);
+      }
+    }
+
+    function renderCodex(domainFilter = "ALL") {
+      const grid = document.getElementById("codexCardsGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      const list = domainFilter === "ALL"
+        ? CODEX_CARDS
+        : CODEX_CARDS.filter(c => c.domain === domainFilter);
+
+      list.forEach(card => {
+        const el = document.createElement("div");
+        el.className = `${card.rarityClass} p-3.5 flex flex-col justify-between gap-2`;
+        el.innerHTML = `
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-3">
+              <canvas width="48" height="48" class="w-12 h-12 border border-slate-600 shrink-0 codex-icon"></canvas>
+              <div>
+                <span class="font-pixel text-[7px] px-1.5 py-0.5 bg-slate-900 border border-slate-700" style="color:${card.color}">
+                  ${card.domain.toUpperCase()} • ${card.rarity}
+                </span>
+                <h3 class="font-pixel text-[10px] text-white mt-1.5">${card.name}</h3>
+              </div>
+            </div>
+          </div>
+          <p class="text-xs text-slate-300 leading-relaxed">${card.desc}</p>
+          <div class="bg-slate-950/90 border border-slate-800 px-2.5 py-1.5 font-pixel text-[8px] text-emerald-400">
+            ${card.stats}
+          </div>
+        `;
+        paintCodexIcon(el.querySelector(".codex-icon"), card.icon);
+        grid.appendChild(el);
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 8. RENDU DES CRÉDITS & MEMBRES D'ÉQUIPE ÉDITABLES
+     * =========================================================================
+     */
+    function renderTeamCredits() {
+      const grid = document.getElementById("teamMembersGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      window.ORBITAL_CONFIG.team.forEach((member, idx) => {
+        const box = document.createElement("div");
+        box.className = "pixel-panel p-4 flex items-center gap-3.5";
+        box.innerHTML = `
+          <div class="w-10 h-10 bg-slate-950 border-2 flex items-center justify-center font-pixel text-xs shrink-0" style="border-color:${member.color};color:${member.color}">
+            0${idx + 1}
+          </div>
+          <div class="min-w-0 flex-1">
+            <div contenteditable="true" data-field="role" data-idx="${idx}" class="font-pixel text-[8px] outline-none focus:underline" style="color:${member.color}">${member.role}</div>
+            <div contenteditable="true" data-field="name" data-idx="${idx}" class="font-pixel text-xs text-white mt-1.5 outline-none focus:underline">${member.name}</div>
+          </div>
+        `;
+
+        box.querySelectorAll("[contenteditable]").forEach(ed => {
+          ed.addEventListener("blur", () => {
+            const i = Number(ed.getAttribute("data-idx"));
+            const f = ed.getAttribute("data-field");
+            window.ORBITAL_CONFIG.team[i][f] = ed.textContent.trim();
+            saveSettingsToStorage();
+          });
+        });
+
+        grid.appendChild(box);
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 9. ARRIÈRE-PLAN CANVAS SPATIAL ANIMÉ & COMPTEUR FPS
+     * =========================================================================
+     */
+    const bgCanvas = document.getElementById("spaceBgCanvas");
+    const bgCtx = bgCanvas.getContext("2d");
+    bgCtx.imageSmoothingEnabled = false;
+
+    let animTick = 0;
+    let lastFpsTime = performance.now();
+    let frameCount = 0;
+
+    const bgStars = Array.from({ length: 48 }, () => ({
+      x: Math.floor(Math.random() * 320),
+      y: Math.floor(Math.random() * 180),
+      s: Math.random() > 0.8 ? 2 : 1,
+      c: Math.random() > 0.7 ? "#38bdf8" : "#e2e8f0"
+    }));
+
+    function renderSpaceBackground(now) {
+      animTick++;
+      frameCount++;
+      if (now - lastFpsTime >= 1000) {
+        const fpsEl = document.getElementById("fpsCounter");
+        if (fpsEl) fpsEl.textContent = `${frameCount} FPS`;
+        frameCount = 0;
+        lastFpsTime = now;
+      }
+
+      bgCtx.fillStyle = "#050914";
+      bgCtx.fillRect(0, 0, 320, 180);
+
+      // Étoiles
+      bgStars.forEach((st, i) => {
+        if (i % 5 === 0 && Math.floor(animTick / 30) % 2 === 0) return;
+        bgCtx.fillStyle = st.c;
+        bgCtx.fillRect(st.x, st.y, st.s, st.s);
+      });
+
+      // Planète Mars en haut à droite
+      bgCtx.fillStyle = "#7c2d12";
+      bgCtx.fillRect(268, 16, 36, 36);
+      bgCtx.fillStyle = "#c2410c";
+      bgCtx.fillRect(270, 18, 32, 32);
+      bgCtx.fillStyle = "#ea580c";
+      bgCtx.fillRect(274, 22, 22, 20);
+      bgCtx.fillStyle = "#f8fafc";
+      bgCtx.fillRect(280, 16, 12, 3);
+
+      // Silhouette de la station ISS en arrière-plan
+      const sy = 82 + Math.round(Math.sin(animTick * 0.03) * 2);
+      bgCtx.fillStyle = "#1e3a8a";
+      bgCtx.fillRect(138, sy - 26, 24, 24);
+      bgCtx.fillRect(138, sy + 18, 24, 24);
+      bgCtx.fillStyle = "#334155";
+      bgCtx.fillRect(92, sy, 116, 16);
+      bgCtx.fillStyle = "#f97316";
+      bgCtx.fillRect(84 - (animTick % 3), sy + 5, 8, 6);
+
+      requestAnimationFrame(renderSpaceBackground);
+    }
+
+    // Bouton LANCER LA MISSION -> Ouvre directement la Phase 1 (Salle de Contrôle 80/20)
+    document.getElementById("launchMissionBtn").addEventListener("click", () => {
+      RetroAudio.launch();
+      const payload = JSON.parse(JSON.stringify(window.ORBITAL_CONFIG));
+      window.ORBITAL_HOOKS.onStartMission(payload);
+
+      // Synchronise le badge d'agence et le chrono de la Phase 1
+      OrbitalDraftPhase1.resetForNewMission();
+      MenuRouter.go("draft");
+      showToast(`Salle de Contrôle (${payload.selectedAgency}) : Choisissez vos cargos !`);
+    });
+
+    document.getElementById("closePayloadBtn").addEventListener("click", () => {
+      document.getElementById("missionLaunchPayloadBox").classList.add("hidden");
+    });
+
+    /**
+     * =========================================================================
+     * 10. PHASE 1 : SALLE DE CONTRÔLE NASA (80%) & SILO FUSÉE CARGO (20%)
+     *     Implémente exactement le croquis au tableau blanc et la formule Mythique :
+     *     - Base Mythique = 2.08% ("si tirés réinitialise 2,08%")
+     *     - Pity = +1% par tirage de 3 cartes sans Mythique ("si non tirés dans les 3 -> +1%")
+     *     - Jusqu'à 16+ étages de cargo empilés en temps réel dans la fusée (10^6 kg)
+     * =========================================================================
+     */
+    const OrbitalDraftPhase1 = {
+      BASE_MYTHIC_CHANCE: 2.08, // 2,08% écrit au tableau
+      PITY_INCREMENT: 1.0,      // +1% si non tiré dans les 3 cartes
+      mythicChance: 2.08,
+      pityStreak: 0,
+      drawNumber: 1,
+      maxSlots: 16,
+      maxMassKg: 1000000,       // 10^6 kg écrit en haut à droite de la fusée
+      currentMassKg: 0,
+      cargoList: [],            // Modules chargés dans la fusée
+      currentThreeCards: [],
+      timeLeft: 60,
+      timerInterval: null,
+      rocketLaunchAnim: 0,
+      isLaunching: false,
+      hoveredSlot: -1,
+
+      resetForNewMission() {
+        this.mythicChance = this.BASE_MYTHIC_CHANCE;
+        this.pityStreak = 0;
+        this.drawNumber = 1;
+        this.cargoList = [];
+        this.currentMassKg = 0;
+        this.isLaunching = false;
+        this.rocketLaunchAnim = 0;
+        this.timeLeft = window.ORBITAL_CONFIG.draftDurationSeconds || 60;
+
+        document.getElementById("draftAgencyBadge").textContent = `NATION: ${window.ORBITAL_CONFIG.selectedAgency}`;
+        this.startTimer();
+        this.dealThreeCards(true);
+        this.updateUI();
+      },
+
+      startTimer() {
+        if (this.timerInterval) clearInterval(this.timerInterval);
+        const timerEl = document.getElementById("draftTimerText");
+        if (timerEl) timerEl.textContent = `${this.timeLeft}s`;
+
+        this.timerInterval = setInterval(() => {
+          if (MenuRouter.current !== "draft" || this.isLaunching) return;
+          if (this.timeLeft > 0) {
+            this.timeLeft--;
+            if (timerEl) timerEl.textContent = `${this.timeLeft}s`;
+          }
+        }, 1000);
+      },
+
+      /**
+       * Tirage d'une carte selon la probabilité Mythique actuelle (formule du tableau blanc)
+       */
+      pickSingleCardWithProbability() {
+        const roll = Math.random() * 100;
+        let targetRarity = "COMMUN";
+
+        if (roll < this.mythicChance) {
+          targetRarity = "MYTHIQUE";
+        } else if (roll < this.mythicChance + 26) {
+          targetRarity = "ÉPIQUE";
+        }
+
+        const pool = CODEX_CARDS.filter(c => c.rarity === targetRarity);
+        const chosen = pool[Math.floor(Math.random() * pool.length)] || CODEX_CARDS[0];
+        // Poids unitaire autour de 62 500 kg pour que 16 cargos atteignent ~10^6 kg (1 000 000 kg)
+        const massKg = chosen.rarity === "MYTHIQUE" ? 72000 : (chosen.rarity === "ÉPIQUE" ? 64000 : 58000);
+        return { ...chosen, massKg, instanceId: Date.now() + Math.random() };
+      },
+
+      /**
+       * Génère les 3 cartes sur l'écran géant de la salle de contrôle
+       * et applique la règle de Pity écrite au tableau :
+       * - Si au moins 1 Mythique est tirée dans les 3 -> réinitialise à 2,08%
+       * - Si aucune Mythique n'est tirée dans les 3 -> +1% au prochain tirage
+       */
+      dealThreeCards(isInitial = false) {
+        if (!isInitial) this.drawNumber++;
+
+        const drawn = [];
+        for (let i = 0; i < 3; i++) {
+          drawn.push(this.pickSingleCardWithProbability());
+        }
+        this.currentThreeCards = drawn;
+
+        const hasMythicInThree = drawn.some(c => c.rarity === "MYTHIQUE");
+
+        if (hasMythicInThree) {
+          // "si tirés réinitialise 2,08%"
+          this.mythicChance = this.BASE_MYTHIC_CHANCE;
+          this.pityStreak = 0;
+          RetroAudio.launch();
+          this.setDirectorQuote("ALERTE HOUSTON : Module MYTHIQUE détecté sur l'écran principal ! Probabilité réinitialisée à 2,08%.");
+        } else if (!isInitial) {
+          // "si non tirés dans les 3 -> +1%"
+          this.pityStreak++;
+          this.mythicChance = Number((this.BASE_MYTHIC_CHANCE + this.pityStreak * this.PITY_INCREMENT).toFixed(2));
+        }
+
+        this.renderThreeCardsDOM();
+        this.updateProbabilityUI();
+      },
+
+      updateProbabilityUI() {
+        const probEl = document.getElementById("mythicProbDisplay");
+        const streakEl = document.getElementById("pityStreakBadge");
+        const drawEl = document.getElementById("drawCountBadge");
+        if (probEl) probEl.textContent = `${this.mythicChance.toFixed(2)}%`;
+        if (streakEl) streakEl.textContent = `(+${this.pityStreak}% PITY)`;
+        if (drawEl) drawEl.textContent = `TIRAGE #${this.drawNumber}`;
+      },
+
+      setDirectorQuote(text) {
+        const q = document.getElementById("flightDirectorQuote");
+        if (q) q.textContent = `"${text}"`;
+      },
+
+      renderThreeCardsDOM() {
+        const container = document.getElementById("threeCardsContainer");
+        if (!container) return;
+        container.innerHTML = "";
+
+        this.currentThreeCards.forEach((card, idx) => {
+          const col = document.createElement("div");
+          col.className = "draft-card-anim flex flex-col h-full justify-between gap-2 bg-[#040812]/90 border-2 border-slate-700/90 p-2 shadow-inner";
+          col.style.animationDelay = `${idx * 55}ms`;
+
+          const massFormatted = `${(card.massKg / 1000).toFixed(0)}k kg`;
+
+          col.innerHTML = `
+            <!-- Carte pleine hauteur dans son sous-écran mural -->
+            <div class="${card.rarityClass} flex-1 p-3 sm:p-3.5 flex flex-col justify-between transition-transform duration-150 hover:-translate-y-1 cursor-pointer select-card-box">
+              <div>
+                <!-- En-tête Domaine & Rareté -->
+                <div class="flex items-center justify-between font-pixel text-[7px] sm:text-[8px] pb-2 border-b border-slate-800/80">
+                  <span class="px-1.5 py-0.5 bg-slate-950 border border-slate-700" style="color:${card.color}">${card.domain.toUpperCase()}</span>
+                  <span class="${card.rarity === 'MYTHIQUE' ? 'text-amber-300 animate-pulse' : 'text-slate-300'}">${card.rarity}</span>
+                </div>
+
+                <!-- Grand visuel Pixel-Art centré façon écran de télémétrie -->
+                <div class="my-3 py-2.5 bg-[#040812] border border-slate-800 flex flex-col items-center justify-center relative">
+                  <canvas width="48" height="48" class="w-16 h-16 sm:w-20 sm:h-20 border border-slate-700 draft-card-icon"></canvas>
+                  <span class="font-pixel text-[7px] text-amber-300/90 mt-2 bg-slate-950 px-2 py-0.5 border border-slate-800">
+                    MASSE: ${massFormatted}
+                  </span>
+                </div>
+
+                <!-- Titre & Statistiques -->
+                <div class="text-center mt-2">
+                  <div class="font-pixel text-[9px] sm:text-[10px] text-white leading-snug">${card.name}</div>
+                  <div class="font-pixel text-[8px] text-emerald-400 mt-1.5 bg-emerald-950/40 border border-emerald-800/60 py-1 px-1.5">
+                    ${card.stats}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Description technique en bas de la carte -->
+              <p class="text-[11px] sm:text-xs text-slate-300 bg-slate-950/90 border border-slate-800 p-2 mt-2.5 leading-relaxed text-center">
+                ${card.desc}
+              </p>
+            </div>
+
+            <!-- Bouton de sélection intégré sous l'écran de la carte -->
+            <button class="arcade-btn pick-card-btn w-full py-2.5 bg-sky-600 hover:bg-sky-500 border-2 border-sky-300 font-pixel text-[8px] sm:text-[9px] text-white shadow shrink-0">
+              [ + CHARGER CARGO #${idx + 1} ]
+            </button>
+          `;
+
+          paintCodexIcon(col.querySelector(".draft-card-icon"), card.icon);
+
+          const triggerPick = () => this.selectCardForRocket(card);
+          col.querySelector(".select-card-box").addEventListener("click", triggerPick);
+          col.querySelector(".pick-card-btn").addEventListener("click", triggerPick);
+
+          container.appendChild(col);
+        });
+      },
+
+      selectCardForRocket(card) {
+        if (this.cargoList.length >= 20) {
+          showToast("Coiffe de la fusée à capacité maximale (20 cargos) !");
+          return;
+        }
+
+        RetroAudio.confirm();
+        this.cargoList.push(card);
+        this.currentMassKg = Math.min(this.maxMassKg, this.currentMassKg + card.massKg);
+
+        // Synchronise dans la config globale pour le coéquipier
+        window.ORBITAL_CONFIG.draftedCargo = this.cargoList;
+
+        this.setDirectorQuote(`Cargo "${card.name}" verrouillé dans l'étage #${this.cargoList.length} de la fusée !`);
+        this.updateUI();
+
+        // Tire immédiatement 3 nouvelles cartes avec calcul de la Pity (+1% ou reset 2.08%)
+        this.dealThreeCards(false);
+      },
+
+      removeCargoAt(slotIndex) {
+        if (slotIndex < 0 || slotIndex >= this.cargoList.length) return;
+        const removed = this.cargoList.splice(slotIndex, 1)[0];
+        this.currentMassKg = Math.max(0, this.currentMassKg - (removed.massKg || 60000));
+        RetroAudio.move();
+        this.setDirectorQuote(`Module "${removed.name}" déchargé du silo.`);
+        this.updateUI();
+      },
+
+      updateUI() {
+        const count = this.cargoList.length;
+        const pctSlots = Math.min(100, (count / this.maxSlots) * 100);
+        const pctMass = Math.min(100, (this.currentMassKg / this.maxMassKg) * 100);
+
+        // Barre hachurée en bas à gauche (croquis)
+        document.getElementById("BottomStripedBar").style.width = `${pctSlots}%`;
+        document.getElementById("BottomStripedLabel").textContent = `${count} / ${this.maxSlots}`;
+
+        // En-tête de la fusée à droite (10^6 kg)
+        document.getElementById("rocketSlotsBadge").textContent = `${count} / ${this.maxSlots}`;
+        const massInMillions = (this.currentMassKg / 1000000).toFixed(2);
+        document.getElementById("rocketMassText").textContent = `${massInMillions}×10⁶`;
+        document.getElementById("rocketMassBar").style.width = `${pctMass}%`;
+
+        // Dernier cargo embarqué
+        const lastEl = document.getElementById("lastCargoName");
+        if (count > 0) {
+          const last = this.cargoList[count - 1];
+          lastEl.textContent = `#${count} ${last.name} (${last.domain})`;
+          lastEl.style.color = last.color;
+        } else {
+          lastEl.textContent = "SOUTE VIDE (CHOISISSEZ À GAUCHE)";
+          lastEl.style.color = "#38bdf8";
+        }
+      }
+    };
+    window.ORBITAL_DRAFT = OrbitalDraftPhase1;
+
+    /**
+     * =========================================================================
+     * 11. RENDU CANVAS 16-BIT : SALLE DE CONTRÔLE NASA (GAUCHE) & FUSÉE (DROITE)
+     * =========================================================================
+     */
+    const mcCanvas = document.getElementById("missionControlCanvas");
+    const mcCtx = mcCanvas.getContext("2d");
+    mcCtx.imageSmoothingEnabled = false;
+
+    const rkCanvas = document.getElementById("rocketSiloCanvas");
+    const rkCtx = rkCanvas.getContext("2d");
+    rkCtx.imageSmoothingEnabled = false;
+
+    function drawMissionControlRoom16Bit() {
+      if (MenuRouter.current !== "draft") return;
+
+      // 1. Mur de fond de la Salle de Contrôle NASA (Cap Canaveral - Terre)
+      mcCtx.fillStyle = "#060b16";
+      mcCtx.fillRect(0, 0, 480, 270);
+
+      // Grille acoustique murale & poutrelles métalliques latérales
+      mcCtx.fillStyle = "#0f172a";
+      for (let x = 0; x < 480; x += 24) {
+        mcCtx.fillRect(x, 0, 2, 270);
+      }
+      for (let y = 0; y < 200; y += 20) {
+        mcCtx.fillRect(0, y, 480, 1);
+      }
+
+      // Câbles et poutrelles de suspension du grand écran mural tout en haut
+      mcCtx.fillStyle = "#334155";
+      mcCtx.fillRect(46, 0, 6, 16);
+      mcCtx.fillRect(237, 0, 6, 16);
+      mcCtx.fillRect(428, 0, 6, 16);
+      // Halo lumineux bleuté projeté par l'écran géant sur la salle
+      mcCtx.fillStyle = "rgba(56, 189, 248, 0.08)";
+      mcCtx.fillRect(22, 10, 436, 178);
+
+      // Écrans latéraux de télémétrie terrestre (Carte du monde / trajectoire Cap Canaveral)
+      // Panneau gauche : Radar météo Floride
+      mcCtx.fillStyle = "#1e293b";
+      mcCtx.fillRect(4, 14, 18, 162);
+      mcCtx.fillStyle = "#052e16";
+      mcCtx.fillRect(6, 18, 14, 42);
+      mcCtx.fillStyle = "#22c55e";
+      const radarSweep = (animTick % 28);
+      mcCtx.fillRect(7 + Math.floor(radarSweep * 0.35), 28, 3, 3);
+      mcCtx.fillStyle = "#0284c7";
+      mcCtx.fillRect(6, 66, 14, 48);
+
+      // Panneau droit : Fenêtre sur le pas de tir terrestre (Ciel bleu crépuscule de Floride)
+      mcCtx.fillStyle = "#1e293b";
+      mcCtx.fillRect(458, 14, 18, 162);
+      mcCtx.fillStyle = "#0c4a6e"; // Ciel terrestre
+      mcCtx.fillRect(460, 18, 14, 42);
+      mcCtx.fillStyle = "#38bdf8"; // Nuages
+      mcCtx.fillRect(462, 26, 8, 3);
+      mcCtx.fillStyle = "#15803d"; // Sol terrestre de Cap Canaveral
+      mcCtx.fillRect(460, 54, 14, 6);
+      mcCtx.fillStyle = "#f59e0b";
+      mcCtx.fillRect(460, 66, 14, 48);
+
+      // 2. GRAND ARC DE CONSOLES INCURVÉES EN BAS (Devant l'écran géant, opérateurs de dos qui regardent l'écran)
+      // Estrade du centre de contrôle
+      mcCtx.fillStyle = "#0b1324";
+      mcCtx.fillRect(0, 182, 480, 88);
+
+      // Dessin de l'arc incurvé caractéristique dessiné sur le tableau blanc sous l'écran
+      mcCtx.strokeStyle = "#38bdf8";
+      mcCtx.lineWidth = 2;
+      mcCtx.beginPath();
+      mcCtx.arc(240, 145, 165, 0.18 * Math.PI, 0.82 * Math.PI);
+      mcCtx.stroke();
+
+      // Rangée de pupitres NASA (Moniteurs verts, cyan, violets, ambre)
+      const desks = [
+        { x: 26, y: 194, col: "#22c55e", opOffset: 0 },
+        { x: 86, y: 202, col: "#38bdf8", opOffset: 1 },
+        { x: 152, y: 208, col: "#a855f7", opOffset: 2 },
+        { x: 222, y: 210, col: "#eab308", opOffset: 0 },
+        { x: 292, y: 208, col: "#38bdf8", opOffset: 1 },
+        { x: 358, y: 202, col: "#f97316", opOffset: 2 },
+        { x: 416, y: 194, col: "#22c55e", opOffset: 0 }
+      ];
+
+      desks.forEach((d, idx) => {
+        // Pupitre métallique gris-bleu
+        mcCtx.fillStyle = "#334155";
+        mcCtx.fillRect(d.x, d.y, 44, 26);
+        mcCtx.fillStyle = "#1e293b";
+        mcCtx.fillRect(d.x + 2, d.y + 2, 40, 14);
+
+        // 2 Écrans lumineux par pupitre
+        mcCtx.fillStyle = d.col;
+        mcCtx.fillRect(d.x + 4, d.y + 4, 16, 10);
+        mcCtx.fillStyle = "#0284c7";
+        mcCtx.fillRect(d.x + 24, d.y + 4, 16, 10);
+
+        // Clavier & voyants clignotants
+        mcCtx.fillStyle = (animTick + idx * 9) % 20 < 10 ? "#ef4444" : "#facc15";
+        mcCtx.fillRect(d.x + 6, d.y + 18, 3, 2);
+        mcCtx.fillStyle = "#cbd5e1";
+        mcCtx.fillRect(d.x + 14, d.y + 18, 18, 2);
+
+        // Silhouette d'ingénieur NASA en chemise blanche / casque audio (animé)
+        const headBob = Math.floor((animTick + idx * 13) / 18) % 2;
+        const ox = d.x + 14;
+        const oy = d.y + 8 + headBob;
+
+        // Tête & casque micro
+        mcCtx.fillStyle = "#0f172a";
+        mcCtx.fillRect(ox + 3, oy, 8, 7);
+        mcCtx.fillStyle = "#38bdf8"; // Arceau casque audio CAPCOM
+        mcCtx.fillRect(ox + 2, oy + 2, 1, 3);
+        // Épaules (chemise blanche d'ingénieur Apollo/NASA ou bleue)
+        mcCtx.fillStyle = idx % 2 === 0 ? "#e2e8f0" : "#1e293b";
+        mcCtx.fillRect(ox, oy + 7, 14, 11);
+        // Dossier du fauteuil
+        mcCtx.fillStyle = "#020617";
+        mcCtx.fillRect(ox + 1, oy + 11, 12, 10);
+      });
+
+      // Directeur de vol qui marche de gauche à droite derrière les consoles avec une tasse de café
+      const directorX = Math.round(190 + Math.sin(animTick * 0.025) * 55);
+      const directorY = 190;
+      mcCtx.fillStyle = "#f8fafc"; // Chemise blanche
+      mcCtx.fillRect(directorX, directorY + 6, 10, 10);
+      mcCtx.fillStyle = "#ef4444"; // Cravate/Badge NASA
+      mcCtx.fillRect(directorX + 4, directorY + 7, 2, 5);
+      mcCtx.fillStyle = "#0f172a"; // Tête
+      mcCtx.fillRect(directorX + 2, directorY, 6, 6);
+      // Bras levé quand une Mythique ou un cargo est chargé
+      mcCtx.fillStyle = "#f59e0b"; // Tasse de café
+      mcCtx.fillRect(directorX + 10, directorY + 8, 3, 3);
+
+      // Petit Robot Blanc à visière bleue en bas à droite de la salle de contrôle
+      const rx = 456;
+      const ry = 228 + Math.round(Math.sin(animTick * 0.06) * 2);
+      mcCtx.fillStyle = "#f8fafc";
+      mcCtx.fillRect(rx, ry, 14, 10); // Casque
+      mcCtx.fillStyle = "#f59e0b";
+      mcCtx.fillRect(rx + 2, ry + 1, 10, 2); // Pare-soleil doré
+      mcCtx.fillStyle = "#38bdf8";
+      mcCtx.fillRect(rx + 2, ry + 3, 10, 5); // Visière bleue
+      mcCtx.fillStyle = "#f8fafc";
+      mcCtx.fillRect(rx - 1, ry + 10, 16, 11); // Corps
+      mcCtx.fillStyle = "#1e293b";
+      mcCtx.fillRect(rx + 3, ry + 12, 8, 5); // DCM
+      mcCtx.fillStyle = "#22c55e";
+      mcCtx.fillRect(rx + 4, ry + 14, 2, 2);
+      mcCtx.fillStyle = "#ef4444";
+      mcCtx.fillRect(rx + 8, ry + 14, 2, 2);
+    }
+
+    /**
+     * DESSIN DU SILO ET DE LA FUSÉE À 16 ÉTAGES DE CARGO EN TEMPS RÉEL (PARTIE DROITE 20%)
+     * Fidèle au croquis : Tour ombilicale à gauche, Fusée rayée au centre, Barre verticale à droite
+     */
+    function drawRocketCargoSilo16Bit() {
+      if (MenuRouter.current !== "draft") return;
+
+      const W = 140;
+      const H = 300;
+      rkCtx.clearRect(0, 0, W, H);
+
+      // 1. Fond du pas de tir sur Terre (Ciel nocturne étoilé de Cap Canaveral + projecteurs)
+      rkCtx.fillStyle = "#050a17";
+      rkCtx.fillRect(0, 0, W, H);
+
+      // Quelques étoiles au-dessus du pas de tir
+      rkCtx.fillStyle = "#38bdf8";
+      rkCtx.fillRect(14, 12, 2, 2);
+      rkCtx.fillRect(118, 18, 2, 2);
+      rkCtx.fillStyle = "#f8fafc";
+      rkCtx.fillRect(36, 8, 1, 1);
+      rkCtx.fillRect(102, 32, 2, 2);
+
+      // Sol du pas de tir en béton + carneau de flammes
+      rkCtx.fillStyle = "#1e293b";
+      rkCtx.fillRect(0, 276, W, 24);
+      rkCtx.fillStyle = "#334155";
+      rkCtx.fillRect(8, 274, W - 16, 4);
+
+      // 2. TOUR DE LANCEMENT OMBILICALE À GAUCHE (Exactement comme la structure à gauche de la fusée sur le croquis)
+      rkCtx.fillStyle = "#475569";
+      rkCtx.fillRect(12, 38, 10, 236);
+      rkCtx.fillStyle = "#1e293b";
+      for (let ty = 42; ty < 270; ty += 12) {
+        rkCtx.fillRect(14, ty, 6, 8);
+        // Passerelles d'accès vers la fusée
+        if (ty % 36 === 6 && !OrbitalDraftPhase1.isLaunching) {
+          rkCtx.fillStyle = "#64748b";
+          rkCtx.fillRect(22, ty + 2, 18, 3);
+          rkCtx.fillStyle = "#1e293b";
+        }
+      }
+
+      // 3. JAUGE VERTICALE À DROITE DE LA FUSÉE (Exactement comme le rectangle vertical à droite sur le croquis)
+      const gaugeX = 116;
+      const gaugeY = 50;
+      const gaugeH = 190;
+      rkCtx.fillStyle = "#334155";
+      rkCtx.fillRect(gaugeX, gaugeY, 12, gaugeH);
+      rkCtx.fillStyle = "#090d16";
+      rkCtx.fillRect(gaugeX + 2, gaugeY + 2, 8, gaugeH - 4);
+
+      const fillRatio = Math.min(1, OrbitalDraftPhase1.cargoList.length / OrbitalDraftPhase1.maxSlots);
+      const filledH = Math.round((gaugeH - 4) * fillRatio);
+      rkCtx.fillStyle = fillRatio >= 1 ? "#10b981" : "#38bdf8";
+      rkCtx.fillRect(gaugeX + 2, gaugeY + gaugeH - 2 - filledH, 8, filledH);
+
+      // 4. LA FUSÉE AU CENTRE (Coiffe pointue, 16 tranches horizontales de cargo, Ailerons et Tuyères)
+      const liftY = OrbitalDraftPhase1.isLaunching ? -Math.round(OrbitalDraftPhase1.rocketLaunchAnim) : 0;
+      const rx = 42; // Centre X de la fusée (largeur 56 px -> de x=42 à x=98)
+      const rw = 56;
+
+      rkCtx.save();
+      rkCtx.translate(0, liftY);
+
+      // A. Coiffe supérieure conique (Nose Cone)
+      rkCtx.fillStyle = "#e2e8f0";
+      rkCtx.fillRect(rx + 24, 18, 8, 6);
+      rkCtx.fillRect(rx + 20, 24, 16, 6);
+      rkCtx.fillRect(rx + 14, 30, 28, 8);
+      rkCtx.fillRect(rx + 8, 38, 40, 8);
+      rkCtx.fillRect(rx + 4, 46, 48, 8);
+      // Bande orange NASA sur la coiffe
+      rkCtx.fillStyle = "#f97316";
+      rkCtx.fillRect(rx + 14, 34, 28, 3);
+      // Hublot supérieur
+      rkCtx.fillStyle = "#38bdf8";
+      rkCtx.fillRect(rx + 24, 42, 8, 6);
+
+      // B. Corps cylindrique divisé en 16 TRANCHES DE CARGO (comme les traits horizontaux du croquis)
+      const bodyTop = 54;
+      const sliceH = 11; // 16 tranches * 11px = 176px (de y=54 à y=230)
+      const totalSlices = 16;
+
+      // Bordures extérieures de la coque de la fusée
+      rkCtx.fillStyle = "#cbd5e1";
+      rkCtx.fillRect(rx, bodyTop, rw, totalSlices * sliceH);
+      rkCtx.fillStyle = "#0f172a";
+      rkCtx.fillRect(rx + 3, bodyTop, rw - 6, totalSlices * sliceH);
+
+      // Dessin des 16 baies de cargo (de bas en haut pour empiler naturellement les cargos !)
+      for (let s = 0; s < totalSlices; s++) {
+        // s=0 est l'étage le plus bas de la soute, s=15 est tout en haut sous la coiffe
+        const sy = bodyTop + (totalSlices - 1 - s) * sliceH;
+        const cargo = OrbitalDraftPhase1.cargoList[s];
+
+        // Ligne de séparation horizontale (traits du croquis)
+        rkCtx.fillStyle = "#334155";
+        rkCtx.fillRect(rx + 3, sy, rw - 6, 1);
+
+        if (cargo) {
+          // Étage rempli par une carte choisie !
+          rkCtx.fillStyle = cargo.color || "#38bdf8";
+          rkCtx.fillRect(rx + 4, sy + 2, rw - 8, sliceH - 3);
+
+          // Reflet supérieur pixel-art sur le conteneur cargo
+          rkCtx.fillStyle = "rgba(255,255,255,0.35)";
+          rkCtx.fillRect(rx + 5, sy + 2, rw - 10, 2);
+
+          // Indicateur de rareté Mythique (cœur doré clignotant)
+          if (cargo.rarity === "MYTHIQUE") {
+            rkCtx.fillStyle = (animTick % 16 < 8) ? "#fef08a" : "#eab308";
+            rkCtx.fillRect(rx + 6, sy + 4, 4, 4);
+            rkCtx.fillRect(rx + rw - 10, sy + 4, 4, 4);
+          } else {
+            rkCtx.fillStyle = "#0f172a";
+            rkCtx.fillRect(rx + 6, sy + 4, 3, 4);
+          }
+        } else {
+          // Étage vide (emplacement disponible)
+          rkCtx.fillStyle = (s === OrbitalDraftPhase1.cargoList.length)
+            ? "rgba(56, 189, 248, 0.18)" // Prochain slot actif en surbrillance douce
+            : "#090f1d";
+          rkCtx.fillRect(rx + 4, sy + 2, rw - 8, sliceH - 3);
+        }
+
+        // Surbrillance au survol souris
+        if (OrbitalDraftPhase1.hoveredSlot === s) {
+          rkCtx.strokeStyle = "#f8fafc";
+          rkCtx.lineWidth = 1;
+          rkCtx.strokeRect(rx + 3.5, sy + 1.5, rw - 7, sliceH - 2);
+        }
+      }
+
+      // C. Grandes Ailettes Latérales (Fins) en bas de la fusée (Fidèle au croquis)
+      rkCtx.fillStyle = "#e2e8f0";
+      // Aileron gauche
+      rkCtx.fillRect(rx - 8, 212, 8, 22);
+      rkCtx.fillRect(rx - 14, 224, 6, 22);
+      rkCtx.fillRect(rx - 18, 236, 4, 20);
+      // Aileron droit
+      rkCtx.fillRect(rx + rw, 212, 8, 22);
+      rkCtx.fillRect(rx + rw + 8, 224, 6, 22);
+      rkCtx.fillRect(rx + rw + 14, 236, 4, 20);
+
+      // Accents rouges/oranges Saturn V sur les ailerons
+      rkCtx.fillStyle = "#ea580c";
+      rkCtx.fillRect(rx - 8, 226, 6, 8);
+      rkCtx.fillRect(rx + rw + 2, 226, 6, 8);
+
+      // D. Bloc Moteurs & Tuyères (Bas de la fusée)
+      rkCtx.fillStyle = "#475569";
+      rkCtx.fillRect(rx + 6, 230, rw - 12, 12);
+      rkCtx.fillStyle = "#1e293b";
+      rkCtx.fillRect(rx + 10, 242, 10, 10);
+      rkCtx.fillRect(rx + 23, 242, 10, 12);
+      rkCtx.fillRect(rx + 36, 242, 10, 10);
+
+      // E. Flammes / Fumée de pré-allumage sous les tuyères (Traits verticaux sous la fusée dans le croquis)
+      const flameFlicker = (animTick % 6 < 3) ? 4 : 0;
+      if (OrbitalDraftPhase1.cargoList.length > 0 || OrbitalDraftPhase1.isLaunching) {
+        const extraFlame = OrbitalDraftPhase1.isLaunching ? 30 : 0;
+        rkCtx.fillStyle = "#f97316";
+        rkCtx.fillRect(rx + 11, 252, 8, 16 + flameFlicker + extraFlame);
+        rkCtx.fillRect(rx + 23, 254, 10, 20 + flameFlicker + extraFlame);
+        rkCtx.fillRect(rx + 37, 252, 8, 16 + flameFlicker + extraFlame);
+
+        rkCtx.fillStyle = "#fef08a";
+        rkCtx.fillRect(rx + 13, 252, 4, 10 + flameFlicker);
+        rkCtx.fillRect(rx + 25, 254, 6, 14 + flameFlicker);
+        rkCtx.fillRect(rx + 39, 252, 4, 10 + flameFlicker);
+      } else {
+        // Vapeur cryogénique d'attente sur le pas de tir
+        rkCtx.fillStyle = "rgba(186, 230, 253, 0.35)";
+        rkCtx.fillRect(rx + 8 - (animTick % 5), 262, 40, 8);
+      }
+
+      rkCtx.restore();
+
+      // Animation de décollage si activée
+      if (OrbitalDraftPhase1.isLaunching) {
+        OrbitalDraftPhase1.rocketLaunchAnim += 2.8;
+        if (OrbitalDraftPhase1.rocketLaunchAnim > 310) {
+          OrbitalDraftPhase1.isLaunching = false;
+          OrbitalDraftPhase1.rocketLaunchAnim = 0;
+        }
+      }
+    }
+
+    // Boucle de rendu additionnelle pour la Phase 1 (Salle de Contrôle + Fusée)
+    function loopPhase1Canvases() {
+      drawMissionControlRoom16Bit();
+      drawRocketCargoSilo16Bit();
+      requestAnimationFrame(loopPhase1Canvases);
+    }
+
+    // Interactions sur la fusée (Survol & Clic sur un étage pour voir/retirer un cargo)
+    rkCanvas.addEventListener("mousemove", e => {
+      const rect = rkCanvas.getBoundingClientRect();
+      const scaleY = 300 / rect.height;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      const bodyTop = 54;
+      const sliceH = 11;
+      const totalSlices = 16;
+
+      if (y >= bodyTop && y < bodyTop + totalSlices * sliceH) {
+        const fromTop = Math.floor((y - bodyTop) / sliceH);
+        const slotIdx = totalSlices - 1 - fromTop;
+        OrbitalDraftPhase1.hoveredSlot = slotIdx;
+
+        const c = OrbitalDraftPhase1.cargoList[slotIdx];
+        if (c) {
+          const lastEl = document.getElementById("lastCargoName");
+          lastEl.textContent = `[ÉTAGE #${slotIdx + 1}] ${c.name} (CLIC = RETIRER)`;
+          lastEl.style.color = c.color;
+        }
+      } else {
+        OrbitalDraftPhase1.hoveredSlot = -1;
+      }
+    });
+
+    rkCanvas.addEventListener("mouseleave", () => {
+      OrbitalDraftPhase1.hoveredSlot = -1;
+      OrbitalDraftPhase1.updateUI();
+    });
+
+    rkCanvas.addEventListener("click", () => {
+      if (OrbitalDraftPhase1.hoveredSlot >= 0 && OrbitalDraftPhase1.cargoList[OrbitalDraftPhase1.hoveredSlot]) {
+        OrbitalDraftPhase1.removeCargoAt(OrbitalDraftPhase1.hoveredSlot);
+      }
+    });
+
+    // Boutons de contrôle de la Phase 1
+    document.getElementById("launchRocketBtn").addEventListener("click", () => {
+      if (OrbitalDraftPhase1.cargoList.length === 0) {
+        showToast("Chargez au moins 1 module cargo avant de lancer la fusée !");
+        return;
+      }
+      RetroAudio.launch();
+      OrbitalDraftPhase1.isLaunching = true;
+      OrbitalDraftPhase1.rocketLaunchAnim = 1;
+      OrbitalDraftPhase1.setDirectorQuote(`ALLUMAGE DES MOTEURS ! Décollage avec ${OrbitalDraftPhase1.cargoList.length} modules vers l'orbite !`);
+      FullscreenLaunchCinema.start(OrbitalDraftPhase1.cargoList);
+    });
+
+    /**
+     * =========================================================================
+     * 12. CINÉMATIQUE DE DÉCOLLAGE EN PLEIN ÉCRAN (16-BIT PIXEL ART)
+     * =========================================================================
+     */
+    const FullscreenLaunchCinema = {
+      active: false,
+      frame: 0,
+      rafId: null,
+      cargos: [],
+      smokeParticles: [],
+      stars: Array.from({ length: 70 }, () => ({
+        x: Math.floor(Math.random() * 480),
+        y: Math.floor(Math.random() * 270),
+        s: Math.random() > 0.78 ? 2 : 1,
+        c: Math.random() > 0.65 ? "#38bdf8" : "#f8fafc"
+      })),
+
+      start(cargoList) {
+        this.cargos = [...cargoList];
+        this.frame = 0;
+        this.active = true;
+        this.smokeParticles = [];
+
+        const overlay = document.getElementById("fullscreenLaunchOverlay");
+        overlay.classList.remove("hidden");
+        document.getElementById("launchCargoCountText").textContent = `${this.cargos.length}`;
+
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+        this.loop();
+      },
+
+      stop() {
+        this.active = false;
+        if (this.rafId) cancelAnimationFrame(this.rafId);
+        document.getElementById("fullscreenLaunchOverlay").classList.add("hidden");
+        OrbitalDraftPhase1.isLaunching = false;
+        OrbitalDraftPhase1.rocketLaunchAnim = 0;
+      },
+
+      loop() {
+        if (!this.active) return;
+        this.frame++;
+        this.render();
+        this.rafId = requestAnimationFrame(() => this.loop());
+      },
+
+      render() {
+        const canvas = document.getElementById("fullscreenLaunchCanvas");
+        if (!canvas) return;
+        const c = canvas.getContext("2d");
+        c.imageSmoothingEnabled = false;
+
+        const W = 480;
+        const H = 270;
+        const f = this.frame;
+
+        // Progression de l'altitude (0 à 400 km sur ~420 frames)
+        const liftoffFrame = Math.max(0, f - 75);
+        const altitudeKm = Math.min(408, Math.pow(liftoffFrame * 0.14, 1.85));
+        const spaceRatio = Math.min(1, altitudeKm / 120); // Transition ciel terrestre -> espace profond
+
+        // Mise à jour télémétrie HTML
+        const altEl = document.getElementById("launchAltitudeText");
+        const stageEl = document.getElementById("launchTelemetryStage");
+        if (altEl) altEl.textContent = `${altitudeKm.toFixed(1)} KM`;
+        if (stageEl) {
+          if (f < 50) stageEl.textContent = "T-MINUS 00:03 • PRESSION CRYO NOMINALE";
+          else if (f < 75) stageEl.textContent = "ALLUMAGE DES MOTEURS PRINCIPAUX !";
+          else if (altitudeKm < 45) stageEl.textContent = "DÉCOLLAGE ! FRANCHISSEMENT DE LA TOUR";
+          else if (altitudeKm < 140) stageEl.textContent = "MAX-Q VALIDÉ • ASCENSION STRATOSPHÉRIQUE";
+          else if (altitudeKm < 380) stageEl.textContent = "SORTIE D'ATMOSPHÈRE • INSERTION ORBITALE";
+          else stageEl.textContent = "ORBITE ATTEINTE ! MISSION LANCÉE";
+        }
+
+        // 1. Ciel dégradé dynamique (Bleu crépuscule Floride -> Bleu nuit -> Noir spatial)
+        if (spaceRatio < 0.35) {
+          c.fillStyle = "#0c4a6e";
+        } else if (spaceRatio < 0.75) {
+          c.fillStyle = "#091833";
+        } else {
+          c.fillStyle = "#050914";
+        }
+        c.fillRect(0, 0, W, H);
+
+        // Bande d'horizon lumineuse qui descend vers le bas à mesure qu'on monte
+        const horizonY = Math.round(215 + liftoffFrame * 1.6);
+        if (horizonY < H + 80) {
+          c.fillStyle = "#0284c7";
+          c.fillRect(0, horizonY - 42, W, 42);
+          c.fillStyle = "#38bdf8";
+          c.fillRect(0, horizonY - 14, W, 14);
+        }
+
+        // Étoiles qui apparaissent et défilent vers le bas pendant l'ascension
+        if (spaceRatio > 0.15) {
+          this.stars.forEach((st, idx) => {
+            const speed = 0.4 + spaceRatio * 3.8;
+            st.y = (st.y + speed) % H;
+            if (idx % 4 === 0 && Math.floor(f / 14) % 2 === 0) return;
+            c.fillStyle = st.c;
+            c.fillRect(Math.floor(st.x), Math.floor(st.y), st.s, st.s);
+          });
+        }
+
+        // Secousse caméra lors de l'allumage et de l'ascension
+        const shakeAmp = f < 50 ? 0 : (spaceRatio < 0.85 ? 2.5 : 0.6);
+        const shakeX = Math.round((Math.random() - 0.5) * 2 * shakeAmp);
+        const shakeY = Math.round((Math.random() - 0.5) * 2 * shakeAmp);
+
+        c.save();
+        c.translate(shakeX, shakeY);
+
+        // 2. Pas de tir terrestre & Tour ombilicale (descendent hors écran au décollage)
+        const padOffsetY = Math.round(liftoffFrame * 2.4);
+        if (padOffsetY < 260) {
+          c.save();
+          c.translate(0, padOffsetY);
+
+          // Sol vert de Cap Canaveral + béton du Pad 39A
+          c.fillStyle = "#14532d";
+          c.fillRect(0, 215, W, 60);
+          c.fillStyle = "#334155";
+          c.fillRect(140, 212, 200, 14);
+          c.fillStyle = "#475569";
+          c.fillRect(165, 208, 150, 6);
+
+          // Tour ombilicale géante à gauche de la fusée
+          c.fillStyle = "#64748b";
+          c.fillRect(168, 44, 14, 164);
+          c.fillStyle = "#1e293b";
+          for (let ty = 48; ty < 204; ty += 12) {
+            c.fillRect(171, ty, 8, 8);
+            // Bras ombilicaux qui se rétractent juste avant le décollage
+            if (ty % 36 === 12) {
+              const armLen = f < 45 ? 28 : Math.max(4, 28 - (f - 45));
+              c.fillStyle = "#94a3b8";
+              c.fillRect(182, ty + 2, armLen, 4);
+              c.fillStyle = "#1e293b";
+            }
+          }
+
+          // Projecteurs DCA du pas de tir
+          c.fillStyle = "rgba(186, 230, 253, 0.14)";
+          c.beginPath();
+          c.moveTo(110, 215);
+          c.lineTo(225, 30);
+          c.lineTo(255, 30);
+          c.lineTo(370, 215);
+          c.closePath();
+          c.fill();
+
+          c.restore();
+        }
+
+        // 3. LA FUSÉE EN PLEIN ÉCRAN (Avec vos cargos assemblés visibles dans la coque !)
+        // Elle monte légèrement vers le centre de l'écran puis reste cadrée en plein vol
+        const rocketScreenY = Math.max(54, Math.round(74 - Math.min(20, liftoffFrame * 0.25)));
+        const rx = 212; // Centre horizontal (largeur 56 px)
+        const rw = 56;
+
+        // A. Coiffe conique NASA
+        c.fillStyle = "#f8fafc";
+        c.fillRect(rx + 24, rocketScreenY - 28, 8, 6);
+        c.fillRect(rx + 20, rocketScreenY - 22, 16, 6);
+        c.fillRect(rx + 14, rocketScreenY - 16, 28, 6);
+        c.fillRect(rx + 8, rocketScreenY - 10, 40, 5);
+        c.fillRect(rx + 4, rocketScreenY - 5, 48, 5);
+        c.fillStyle = "#f97316";
+        c.fillRect(rx + 14, rocketScreenY - 13, 28, 3);
+        c.fillStyle = "#38bdf8";
+        c.fillRect(rx + 24, rocketScreenY - 7, 8, 5);
+
+        // B. Fuselage avec les 16 tranches colorées de vos cargos choisis
+        const sliceH = 7;
+        const totalSlices = 16;
+        const bodyH = totalSlices * sliceH; // 112 px
+
+        c.fillStyle = "#e2e8f0";
+        c.fillRect(rx, rocketScreenY, rw, bodyH);
+        c.fillStyle = "#0f172a";
+        c.fillRect(rx + 3, rocketScreenY, rw - 6, bodyH);
+
+        for (let s = 0; s < totalSlices; s++) {
+          const sy = rocketScreenY + (totalSlices - 1 - s) * sliceH;
+          const cargo = this.cargos[s];
+          c.fillStyle = "#334155";
+          c.fillRect(rx + 3, sy, rw - 6, 1);
+
+          if (cargo) {
+            c.fillStyle = cargo.color || "#38bdf8";
+            c.fillRect(rx + 4, sy + 1, rw - 8, sliceH - 2);
+            c.fillStyle = "rgba(255,255,255,0.35)";
+            c.fillRect(rx + 5, sy + 1, rw - 10, 1);
+          } else {
+            c.fillStyle = "#1e293b";
+            c.fillRect(rx + 4, sy + 1, rw - 8, sliceH - 2);
+          }
+        }
+
+        // C. Grandes ailettes latérales
+        const finTop = rocketScreenY + bodyH - 16;
+        c.fillStyle = "#f8fafc";
+        c.fillRect(rx - 10, finTop, 10, 18);
+        c.fillRect(rx - 16, finTop + 10, 6, 18);
+        c.fillRect(rx + rw, finTop, 10, 18);
+        c.fillRect(rx + rw + 10, finTop + 10, 6, 18);
+        c.fillStyle = "#ea580c";
+        c.fillRect(rx - 10, finTop + 10, 8, 6);
+        c.fillRect(rx + rw + 2, finTop + 10, 8, 6);
+
+        // D. Tuyères & panache de flammes géant
+        const nozzleY = rocketScreenY + bodyH;
+        c.fillStyle = "#475569";
+        c.fillRect(rx + 6, nozzleY, rw - 12, 8);
+        c.fillStyle = "#1e293b";
+        c.fillRect(rx + 10, nozzleY + 8, 10, 8);
+        c.fillRect(rx + 23, nozzleY + 8, 10, 9);
+        c.fillRect(rx + 36, nozzleY + 8, 10, 8);
+
+        if (f >= 45) {
+          const flk = (f % 4) * 5;
+          const flameLen = f < 75 ? 24 + flk : 52 + flk;
+
+          // Flamme externe orange vif
+          c.fillStyle = "#f97316";
+          c.fillRect(rx + 10, nozzleY + 16, 10, flameLen - 8);
+          c.fillRect(rx + 21, nozzleY + 17, 14, flameLen);
+          c.fillRect(rx + 36, nozzleY + 16, 10, flameLen - 8);
+
+          // Cœur blanc-jaune incandescent
+          c.fillStyle = "#fef08a";
+          c.fillRect(rx + 12, nozzleY + 16, 6, Math.round(flameLen * 0.6));
+          c.fillRect(rx + 24, nozzleY + 17, 8, Math.round(flameLen * 0.72));
+          c.fillRect(rx + 38, nozzleY + 16, 6, Math.round(flameLen * 0.6));
+
+          c.fillStyle = "#ffffff";
+          c.fillRect(rx + 26, nozzleY + 17, 4, Math.round(flameLen * 0.4));
+        }
+
+        // 4. Nuages de fumée pixel-art au niveau du pas de tir
+        if (f >= 40 && padOffsetY < 140) {
+          for (let i = 0; i < 3; i++) {
+            this.smokeParticles.push({
+              x: rx + 28 + (Math.random() - 0.5) * 40,
+              y: 206 + padOffsetY,
+              vx: (Math.random() - 0.5) * 3.8,
+              vy: -0.4 - Math.random() * 0.8,
+              size: 10 + Math.floor(Math.random() * 14),
+              life: 38
+            });
+          }
+        }
+
+        this.smokeParticles.forEach(p => {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.life--;
+          if (p.life > 0) {
+            c.fillStyle = p.life > 20 ? "#f1f5f9" : "#94a3b8";
+            c.fillRect(Math.round(p.x - p.size / 2), Math.round(p.y - p.size / 2), p.size, p.size);
+          }
+        });
+        this.smokeParticles = this.smokeParticles.filter(p => p.life > 0);
+
+        c.restore();
+
+        // Grand compte à rebours T-3, T-2, T-1, LIFTOFF! au centre de l'écran
+        if (f < 95) {
+          c.fillStyle = "rgba(5, 9, 20, 0.72)";
+          c.fillRect(150, 12, 180, 26);
+          c.strokeStyle = f >= 75 ? "#10b981" : "#facc15";
+          c.lineWidth = 2;
+          c.strokeRect(150, 12, 180, 26);
+
+          c.fillStyle = f >= 75 ? "#34d399" : "#fef08a";
+          c.font = "12px 'Press Start 2P', monospace";
+          c.textAlign = "center";
+          const label = f < 25 ? "T - 3" : (f < 50 ? "T - 2" : (f < 75 ? "T - 1" : "LIFTOFF !"));
+          c.fillText(label, 240, 30);
+        }
+      }
+    };
+
+    document.getElementById("replayFullscreenLaunchBtn").addEventListener("click", () => {
+      RetroAudio.launch();
+      FullscreenLaunchCinema.start(OrbitalDraftPhase1.cargoList);
+    });
+
+    document.getElementById("closeFullscreenLaunchBtn").addEventListener("click", () => {
+      RetroAudio.confirm();
+      FullscreenLaunchCinema.stop();
+      MenuRouter.go("main");
+      showToast("Insertion orbitale réussie ! Mission lancée.");
+    });
+
+    // Filtres du Codex
+    document.querySelectorAll(".codex-filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        RetroAudio.move();
+        document.querySelectorAll(".codex-filter-btn").forEach(b => {
+          b.classList.remove("bg-sky-600", "border-sky-300", "text-white");
+          b.classList.add("bg-slate-800", "border-slate-600");
+        });
+        btn.classList.remove("bg-slate-800", "border-slate-600");
+        btn.classList.add("bg-sky-600", "border-sky-300", "text-white");
+        renderCodex(btn.dataset.domain);
+      });
+    });
+
+    // Contrôles des Paramètres
+    document.getElementById("optVolume").addEventListener("input", e => {
+      window.ORBITAL_CONFIG.settings.sfxVolume = Number(e.target.value);
+      syncSettingsUI();
+      saveSettingsToStorage();
+    });
+
+    document.getElementById("optContrastBtn").addEventListener("click", () => {
+      RetroAudio.confirm();
+      window.ORBITAL_CONFIG.settings.highContrast = !window.ORBITAL_CONFIG.settings.highContrast;
+      syncSettingsUI();
+      saveSettingsToStorage();
+    });
+
+    document.getElementById("optFpsBtn").addEventListener("click", () => {
+      RetroAudio.confirm();
+      window.ORBITAL_CONFIG.settings.showFps = !window.ORBITAL_CONFIG.settings.showFps;
+      syncSettingsUI();
+      saveSettingsToStorage();
+    });
+
+    // Copier Config JSON dans le presse-papier
+    document.getElementById("copyConfigJsonBtn").addEventListener("click", () => {
+      RetroAudio.confirm();
+      const jsonStr = JSON.stringify(window.ORBITAL_CONFIG, null, 2);
+      const ta = document.createElement("textarea");
+      ta.value = jsonStr;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      showToast("window.ORBITAL_CONFIG copié dans le presse-papier !");
+    });
+
+    // Navigation Clavier (Flèches Haut/Bas + Entrée + Échap)
+    window.addEventListener("keydown", e => {
+      if (document.activeElement && document.activeElement.isContentEditable) return;
+
+      if (e.key === "Escape" && MenuRouter.current !== "main") {
+        MenuRouter.go("main");
+        return;
+      }
+
+      if (MenuRouter.current === "main") {
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          RetroAudio.move();
+          MenuRouter.setFocusIndex(MenuRouter.focusedIndex + 1);
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          RetroAudio.move();
+          MenuRouter.setFocusIndex(MenuRouter.focusedIndex - 1);
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          const items = document.querySelectorAll("#mainMenuButtons .menu-item");
+          if (items[MenuRouter.focusedIndex]) items[MenuRouter.focusedIndex].click();
+        }
+      }
+    });
+
+    // Initialisation au chargement de la page
+    window.addEventListener("load", () => {
+      loadSettingsFromStorage();
+      syncSettingsUI();
+      renderAgencies();
+      renderDifficulties();
+      renderCodex("ALL");
+      renderTeamCredits();
+      OrbitalDraftPhase1.resetForNewMission();
+      requestAnimationFrame(renderSpaceBackground);
+      requestAnimationFrame(loopPhase1Canvases);
+    });
+  </script>
+</body>
+</html>

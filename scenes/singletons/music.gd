@@ -14,6 +14,7 @@ const TRACKS: Dictionary[StringName, AudioStream] = {
     &"phase_1": preload("res://assets/audio/phase_1.wav"),
     &"phase_2": preload("res://assets/audio/phase_2.wav"),
 }
+const GameSettings := preload("res://classes/game_settings.gd")
 ## Music level, kept under the sound effects.
 const VOLUME_DB: float = -8.0
 const FADE_SECONDS: float = 1.5
@@ -28,8 +29,16 @@ var _tweens: Dictionary[AudioStreamPlayer, Tween] = {}
 
 func _ready() -> void:
     process_mode = Node.PROCESS_MODE_ALWAYS
+    # The music gets its own bus so the options screen can set its volume.
+    if AudioServer.get_bus_index(GameSettings.MUSIC_BUS) == -1:
+        AudioServer.add_bus()
+        var bus := AudioServer.bus_count - 1
+        AudioServer.set_bus_name(bus, GameSettings.MUSIC_BUS)
+        AudioServer.set_bus_send(bus, &"Master")
+    GameSettings.load_and_apply()
     for i in 2:
         var player := AudioStreamPlayer.new()
+        player.bus = GameSettings.MUSIC_BUS
         player.volume_linear = 0.0
         player.finished.connect(_on_finished.bind(player))
         add_child(player)

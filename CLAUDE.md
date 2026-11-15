@@ -57,6 +57,21 @@ Background music is the **`Music`** autoload (`scenes/singletons/music.gd`). Eac
 
 The WAVs loop through their import settings (`edit/loop_mode=2`). Like `TransitionData`, `Music` doesn't exist in `-s` mode.
 
+The music plays on its own `Music` audio bus, which `Music` creates at start-up. `Music._ready()` also loads and applies the player settings from `classes/game_settings.gd`:
+- master volume
+- music volume
+- fullscreen
+
+They are saved in `user://settings.cfg`, and the options screen edits them.
+
+The main menu (`select_scenario`) is built in code, in the intro's pixel-panel style. It has four views:
+- main buttons
+- mission select (from its `SCENARIOS` list)
+- card codex
+- options
+
+`menu_background.gd` draws the 320×180 pixel backdrop.
+
 ### Cards
 
 Cards are **`Augment`** resources (`classes/augment.gd`).

@@ -421,10 +421,11 @@ func _cancel_alert() -> void:
     var bubble := _popup_bubble
     if bubble == null or not state.cancel_event(bubble.event):
         return
+    var title := bubble.event.title
     _close_popup()
     _remove_bubble(bubble)
-    _command("nav --autonav --avoid \"%s\"" % bubble.event.title.to_lower())
-    %Terminal.then(func(): _info("AutoNav re-planned the route: \"%s\" is no longer a problem." % bubble.event.title))
+    _command("nav --autonav --avoid \"%s\"" % title.to_lower())
+    %Terminal.then(func(): _info("AutoNav re-planned the route: \"%s\" is no longer a problem." % title))
 
 
 func _pick_choice(choice: EventChoice) -> void:
@@ -437,10 +438,12 @@ func _pick_choice(choice: EventChoice) -> void:
     _close_popup()
     if not state.begin_event_choice(choice):
         return
+    # The bubble is freed before the terminal reaches the callback: keep the event.
+    var event := bubble.event
     _remove_bubble(bubble)
     _command("transmit --to crew \"%s\"" % choice.label)
     %Terminal.then(func():
-        var result := state.finish_event_choice(bubble.event, choice, null)
+        var result := state.finish_event_choice(event, choice, null)
         _crew_says(state.crew_aboard().pick_random() if not state.crew_aboard().is_empty() else null,
             "Copy. %s" % result["text"], result["success"]))
 
@@ -460,11 +463,14 @@ func _dispatch(member: CrewMember) -> void:
     member.station = ""
     _command("dispatch %s --to %s --task \"%s\"" % [_slug(member), bubble.room, choice.label.to_lower()])
     var sprite := _sprites[member]
-    var target := %ShipView.room_spot(bubble.room) as Vector2
+    # The bubble can be gone by the time the reply prints (night resolves
+    # every alert), so only compare against it, never read from it.
+    var room := bubble.room
+    var target := %ShipView.room_spot(room) as Vector2
     %Terminal.then(func():
-        _reply(member, "On my way to the %s!" % ShipView.room_name(bubble.room).to_lower())
+        _reply(member, "On my way to the %s!" % ShipView.room_name(room).to_lower())
         if _jobs.get(member) == bubble:
-            sprite.walk_to(bubble.room, target))
+            sprite.walk_to(room, target))
 
 
 func _finish_alert(bubble: EventBubble) -> void:

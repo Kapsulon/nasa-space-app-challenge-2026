@@ -16,6 +16,8 @@ const RetroSynth := preload("res://classes/retro_synth.gd")
 const SLOT_PACKED_SCENE: PackedScene = preload("res://scenes/plan_phase/slot.tscn")
 
 const EMPTY_SLOT_COLOR := Color(1, 1, 1, 0.15)
+## Background of a cargo row in the manifest.
+const CARGO_ROW_COLOR := Color(0.059, 0.09, 0.165, 0.95)
 
 ## Actions that need the player to pick card(s) in the manifest.
 const TARGETED_ACTIONS: Array[Augment.PlanAction] = [
@@ -96,7 +98,19 @@ func _process(delta: float) -> void:
             var cards := %CardsHolder.get_children().filter(func(c: Node): return not c.is_queued_for_deletion())
             if not cards.is_empty():
                 cards.pick_random().pick()
-    %TimeLeftProgress.value = time_left / TIME_TO_PICK * 100.0
+    _show_timer()
+
+
+## The pick timer: striped bar going from green to red, seconds on the right.
+func _show_timer() -> void:
+    var ratio := clampf(time_left / TIME_TO_PICK, 0.0, 1.0)
+    var bar := %TimeLeftProgress
+    bar.value = ratio
+    bar.fill_color = ODDS_GRADIENT.sample(ratio)
+    var label: Label = %TimeLeftLabel
+    label.text = "%ds" % ceili(time_left)
+    # The last seconds blink.
+    label.modulate.a = 1.0 if time_left > 10.0 or fmod(time_left, 0.5) > 0.2 else 0.35
 
 
 func used_slots() -> int:
@@ -234,7 +248,7 @@ func update_slots() -> void:
 
 
 func update_manifest() -> void:
-    %SlotsLabel.text = "%d / %d slots filled" % [used_slots(), available_augment_slots]
+    %SlotsLabel.text = "%d / %d SLOTS" % [used_slots(), available_augment_slots]
     for child in %ManifestList.get_children():
         child.queue_free()
     if _pending != null:
@@ -252,16 +266,20 @@ func update_manifest() -> void:
             runs.append([instance.augment, 1])
     for run in runs:
         var augment: Augment = run[0]
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 10)
-        row.add_child(_swatch(augment))
+        var row := PanelContainer.new()
+        row.add_theme_stylebox_override("panel", _pill_style(augment, CARGO_ROW_COLOR))
+        var line := HBoxContainer.new()
+        line.add_theme_constant_override("separation", 10)
+        row.add_child(line)
         var label := Label.new()
-        label.text = ("%dx " % run[1] if run[1] > 1 else "") + augment.card_name()
-        label.add_theme_font_size_override("font_size", 22)
+        label.text = augment.card_name()
+        label.add_theme_font_size_override("font_size", 18)
         label.add_theme_color_override("font_color", Augment.RARITY_COLORS[augment.rarity])
         label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        row.add_child(label)
+        line.add_child(label)
+        if run[1] > 1:
+            line.add_child(_tag("x%d" % run[1], Color("94a3b8")))
         %ManifestList.add_child(row)
         if augment == _highlight and not Engine.is_editor_hint():
             # The line of the card just added flashes, then settles.
@@ -273,7 +291,7 @@ func update_manifest() -> void:
     if overhead_slots > 0:
         var crates := Label.new()
         crates.text = "Crates and gambles: %d slot%s" % [overhead_slots, "" if overhead_slots == 1 else "s"]
-        crates.add_theme_font_size_override("font_size", 18)
+        crates.add_theme_font_size_override("font_size", 16)
         crates.add_theme_color_override("font_color", Augment.DOMAIN_COLORS[Augment.Domain.LOGISTICS])
         %ManifestList.add_child(crates)
     update_balance()
@@ -285,35 +303,98 @@ func _build_target_list() -> void:
     var targets := _targets_for(_pending.augment)
     for instance in selected_augments:
         var augment := instance.augment
-        var row := HBoxContainer.new()
-        row.add_theme_constant_override("separation", 10)
-        row.add_child(_swatch(augment))
         var button := Button.new()
         button.text = augment.card_name()
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-        button.add_theme_font_size_override("font_size", 20)
-        button.add_theme_color_override("font_color", Augment.RARITY_COLORS[augment.rarity])
+        button.add_theme_font_size_override("font_size", 18)
+        var rarity_color: Color = Augment.RARITY_COLORS[augment.rarity]
+        for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
+            button.add_theme_color_override(state, rarity_color)
+        button.add_theme_color_override("font_disabled_color", Color(rarity_color, 0.3))
+        var normal := _pill_style(augment, CARGO_ROW_COLOR)
+        var hover := _pill_style(augment, Color("1e293b"))
+        var picked := _pill_style(augment, Color("0c3b5c"))
+        picked.border_color = Color("38bdf8")
+        picked.border_width_right = 3
+        picked.border_width_top = 3
+        picked.border_width_bottom = 3
+        var disabled := _pill_style(augment, Color(CARGO_ROW_COLOR, 0.4))
+        button.add_theme_stylebox_override("normal", normal)
+        button.add_theme_stylebox_override("hover", hover)
+        button.add_theme_stylebox_override("pressed", picked)
+        button.add_theme_stylebox_override("hover_pressed", picked)
+        button.add_theme_stylebox_override("disabled", disabled)
+        button.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
         button.toggle_mode = true
         button.button_pressed = _pending_targets.has(instance)
         button.disabled = not targets.has(instance)
         button.pressed.connect(_on_target_pressed.bind(instance))
-        row.add_child(button)
-        %ManifestList.add_child(row)
+        %ManifestList.add_child(button)
     var cancel := Button.new()
-    cancel.text = "Cancel: pick another card"
-    cancel.add_theme_font_size_override("font_size", 20)
+    cancel.text = "CANCEL: PICK ANOTHER CARD"
+    cancel.add_theme_font_size_override("font_size", 16)
+    var cancel_style := _box_style(Color("1e293b"), Color("475569"), 2)
+    var cancel_hover := _box_style(Color("1e293b"), Color("38bdf8"), 2)
+    cancel.add_theme_stylebox_override("normal", cancel_style)
+    cancel.add_theme_stylebox_override("hover", cancel_hover)
+    cancel.add_theme_stylebox_override("pressed", cancel_hover)
+    cancel.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
     cancel.pressed.connect(_cancel_pending)
     %ManifestList.add_child(cancel)
 
 
-func _swatch(augment: Augment) -> ColorRect:
-    var swatch := ColorRect.new()
-    swatch.color = Augment.DOMAIN_COLORS[augment.domain]
-    swatch.custom_minimum_size = Vector2(10, 22)
-    swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-    return swatch
+## Cargo row: dark pill with the card's domain color down its left edge.
+func _pill_style(augment: Augment, bg: Color) -> StyleBoxFlat:
+    var style := StyleBoxFlat.new()
+    style.bg_color = bg
+    style.border_color = Augment.DOMAIN_COLORS[augment.domain]
+    style.border_width_left = 6
+    style.content_margin_left = 16
+    style.content_margin_right = 10
+    style.content_margin_top = 7
+    style.content_margin_bottom = 7
+    return style
+
+
+func _box_style(bg: Color, border: Color, width: int) -> StyleBoxFlat:
+    var style := StyleBoxFlat.new()
+    style.bg_color = bg
+    style.border_color = border
+    style.set_border_width_all(width)
+    style.content_margin_left = 12
+    style.content_margin_right = 12
+    style.content_margin_top = 6
+    style.content_margin_bottom = 6
+    return style
+
+
+## Small tinted tag: "x3", "STEADY", "2 DAYS"...
+func _tag(text: String, color: Color) -> PanelContainer:
+    var tag := PanelContainer.new()
+    tag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    tag.size_flags_horizontal = Control.SIZE_SHRINK_END
+    var style := _box_style(Color(color, 0.14), color, 2)
+    style.content_margin_left = 8
+    style.content_margin_right = 8
+    style.content_margin_top = 3
+    style.content_margin_bottom = 3
+    tag.add_theme_stylebox_override("panel", style)
+    var label := Label.new()
+    label.text = text
+    label.add_theme_font_size_override("font_size", 14)
+    label.add_theme_color_override("font_color", color)
+    tag.add_child(label)
+    return tag
+
+
+func _small_label(text: String, font_size: int, color: Color) -> Label:
+    var label := Label.new()
+    label.text = text
+    label.add_theme_font_size_override("font_size", font_size)
+    label.add_theme_color_override("font_color", color)
+    label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    return label
 
 
 ## How long the supplies would last with this cargo, and how the cargo order
@@ -323,27 +404,34 @@ func update_balance() -> void:
         return
     var preview := MissionState.new("", TransitionData.scenario_days, [], selected_augments)
     var forecast := preview.forecast()
-    var t := ""
+    var grid: GridContainer = %Supplies
+    for child in grid.get_children():
+        child.queue_free()
+    # One row per resource: name, stock, change per day, how long it lasts.
     for res_id in ["water", "oxygen", "food", "power"]:
         var stock: int = preview.resources[res_id]
         var net: int = forecast[res_id]
-        var lasts := ""
-        var color := "7be38b"
-        if net >= 0:
-            lasts = "steady"
-        else:
+        var lasts := "STEADY"
+        var color := Color("39ff6a")
+        if net < 0:
             var days := floori(stock / float(-net))
-            lasts = "lasts %d day%s" % [days, "" if days == 1 else "s"]
+            lasts = "%d DAY%s" % [days, "" if days == 1 else "S"]
             if days < preview.mission_days:
-                color = "ff5a6e" if days * 2 < preview.mission_days else "ffb35c"
-        t += "%s %d %s  [color=#8a94a6]%+d/day[/color]  [color=#%s]%s[/color]\n" % [
-            MissionState.resource_name(res_id), stock, MissionState.unit(res_id), net, color, lasts]
+                color = Color("ff3a55") if days * 2 < preview.mission_days else Color("ffb800")
+        var name_label := _small_label(MissionState.resource_name(res_id).to_upper(), 16, Color("cbd5e1"))
+        name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        grid.add_child(name_label)
+        grid.add_child(_small_label("%d %s" % [stock, MissionState.unit(res_id)], 16, Color.WHITE))
+        grid.add_child(_small_label("%+d/DAY" % net, 14, Color("64748b")))
+        grid.add_child(_tag(lasts, color))
+    var t := ""
     var hazard := preview.hazard_change()
     if hazard < 0.0:
-        t += "Hazard alerts  [color=#7be38b]%d%% less likely[/color]\n" % roundi(-hazard * 100.0)
+        t += "Hazard alerts  [color=#39ff6a]%d%% less likely[/color]\n" % roundi(-hazard * 100.0)
     for note in preview.adjacency_notes():
-        t += "[color=#ffb35c][font_size=18]%s[/font_size][/color]\n" % note
-    %Balance.text = t.strip_edges()
+        t += "[color=#ffb800]%s[/color]\n" % note
+    %SupplyNotes.text = t.strip_edges()
+    %SupplyNotes.visible = t != ""
 
 
 ## Fills the details panel with everything about the hovered card.
@@ -387,27 +475,44 @@ func update_launch_odds(preview: Augment = null) -> void:
         _odds_tween.parallel().tween_property(label, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
     var hint: Label = %OddsHint
+    var shown := launch
     if preview != null and not preview.is_consumed():
-        var after := launch.with_augment(preview).success_chance()
+        shown = launch.with_augment(preview)
+        var after := shown.success_chance()
         var delta := roundi(after * 100.0) - roundi(chance * 100.0)
         hint.text = "If picked: %d%% (%s)" % [roundi(after * 100.0), "no change" if delta == 0 else "%+d" % delta]
         hint.add_theme_color_override("font_color", Color("39ff6a") if delta > 0 else (Color("ff3a55") if delta < 0 else Color.WHITE))
+        # White tick on the bar where the odds would land.
+        %OddsBar.marker = after
     else:
         hint.text = launch.advice()
         hint.add_theme_color_override("font_color", ODDS_GRADIENT.sample(chance))
+        %OddsBar.marker = -1.0
 
-    %LaunchStats.text = "Weight %.1f t: thrust %d / needs %d\nFuel %d / engines burn %d" % [
-        launch.total_weight(), roundi(launch.thrust), roundi(launch.thrust_needed()), roundi(launch.fuel_available()), roundi(launch.fuel_needed())]
+    # Thrust and fuel against what the launch needs (the marker); while a card
+    # is hovered they show the cargo with that card.
+    _show_need(%ThrustBar, %ThrustValue, shown.thrust, shown.thrust_needed())
+    _show_need(%FuelBar, %FuelValue, shown.fuel_available(), shown.fuel_needed())
+    %WeightLabel.text = "WEIGHT %.1f T" % shown.total_weight()
+
+
+## A stat bar scaled so the need sits at 80%: green past it, red short of it.
+func _show_need(bar: Control, label: Label, have: float, need: float) -> void:
+    var scale_max := maxf(need / 0.8, 1.0)
+    bar.value = have / scale_max
+    bar.marker = need / scale_max if need > 0.0 else -1.0
+    bar.fill_color = Color("39ff6a") if have >= need else Color("ff3a55")
+    label.text = "%d / %d" % [roundi(have), roundi(need)]
+    label.add_theme_color_override("font_color", Color.WHITE if have >= need else Color("ff7a8a"))
 
 
 func _show_odds(chance: float) -> void:
     _odds_shown = chance
-    var bar: ProgressBar = %OddsBar
-    bar.value = chance * 100.0
-    var fill := bar.get_theme_stylebox("fill").duplicate() as StyleBoxFlat
-    fill.bg_color = ODDS_GRADIENT.sample(chance)
-    bar.add_theme_stylebox_override("fill", fill)
+    var bar := %OddsBar
+    bar.value = chance
+    bar.fill_color = ODDS_GRADIENT.sample(chance)
     %OddsLabel.text = "%d%%" % roundi(chance * 100.0)
+    %OddsLabel.add_theme_color_override("font_color", ODDS_GRADIENT.sample(chance).lerp(Color.WHITE, 0.35))
 
 
 func card_picked(augment_instance: AugmentInstance) -> void:
@@ -640,7 +745,8 @@ func finish() -> void:
     finished = true
     _clear_offers()
     update_launch_odds()
-    %TimeLeftProgress.value = 0.0
+    time_left = 0.0
+    _show_timer()
     TransitionData.selected_augments = selected_augments
     TransitionData.cargo_slots_total = available_augment_slots
     TransitionData.cargo_overhead_slots = overhead_slots
