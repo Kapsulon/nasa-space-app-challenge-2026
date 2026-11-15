@@ -1,14 +1,15 @@
 extends Control
 ## Transition between the plan phase and the mission phase: a mission-control
 ## terminal printout recapping the cargo manifest, the resulting launch
-## configuration and the objective. Click / press a key to skip the typing,
-## then again to launch.
+## configuration, the launch odds and the objective. Click / press a key to
+## skip the typing, then again to go to the launch.
 
-const MISSION_SCENE: String = "res://scenes/mission_phase/mission_phase.tscn"
+const LAUNCH_SCENE: String = "res://scenes/launch_sequence/launch_sequence.tscn"
 
 const GREEN := "39ff6a"
 const DIM := "1f8f3c"
 const AMBER := "ffb800"
+const RED := "ff3a55"
 const PROMPT := "[color=#1f8f3c]houston@mission-control[/color]:[color=#63b1ff]~[/color]$ "
 
 var _launching: bool = false
@@ -53,7 +54,7 @@ func _launch() -> void:
     _launching = true
     var tween := create_tween()
     tween.tween_property(self, "modulate", Color.BLACK, 0.6)
-    tween.tween_callback(func(): get_tree().change_scene_to_file(MISSION_SCENE))
+    tween.tween_callback(func(): get_tree().change_scene_to_file(LAUNCH_SCENE))
 
 
 # --- Report -------------------------------------------------------------------
@@ -116,12 +117,33 @@ func _build_report() -> String:
         t += line + "\n"
     t += "\n"
 
+    var launch := LaunchProfile.from_instances(augments)
+    var chance := launch.success_chance()
+    t += _header("VEHICLE")
+    t += "  TOTAL WEIGHT .... %5.1f T" % launch.total_weight() + _dim("  (CAPSULE %.1f + CARGO %.1f)" % [LaunchProfile.CAPSULE_TONS, launch.cargo_tons]) + "\n"
+    t += "  ENGINE LIFT ..... %5.1f T" % launch.lift_tons + ("  [color=#%s]OVERWEIGHT[/color]" % RED if launch.is_overweight() else "") + "\n"
+    t += "  FUEL ............ %5.0f T" % launch.fuel_tons + _dim("  (NEEDS %.0f T)" % launch.fuel_needed()) + "\n"
+    t += "  LAUNCH ODDS ..... [color=#%s]%d%%[/color]\n\n" % [_odds_color(chance), roundi(chance * 100.0)]
+
     t += _header("OBJECTIVE")
     t += "  %s\n\n" % objective.to_upper()
 
-    t += "> ALL SYSTEMS NOMINAL. GO FOR LAUNCH.\n"
+    if chance >= 0.8:
+        t += "> ALL SYSTEMS NOMINAL. GO FOR LAUNCH.\n"
+    elif chance >= 0.4:
+        t += "> [color=#%s]CAUTION: %s.[/color] GO FOR LAUNCH.\n" % [AMBER, launch.main_problem().to_upper()]
+    else:
+        t += "> [color=#%s]WARNING: %s.[/color] LAUNCHING ANYWAY.\n" % [RED, launch.main_problem().to_upper()]
     t += _dim("> PRESS ANY KEY TO LAUNCH")
     return t
+
+
+func _odds_color(chance: float) -> String:
+    if chance >= 0.8:
+        return GREEN
+    if chance >= 0.4:
+        return AMBER
+    return RED
 
 
 func _header(title: String) -> String:

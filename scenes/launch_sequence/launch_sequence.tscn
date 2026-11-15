@@ -1,0 +1,232 @@
+[gd_scene load_steps=12 format=3]
+
+[ext_resource type="Script" path="res://scenes/launch_sequence/launch_sequence.gd" id="1_seq"]
+[ext_resource type="Theme" uid="uid://dwi8du326v0y2" path="res://assets/theme.tres" id="2_theme"]
+[ext_resource type="Script" path="res://scenes/mission_phase/space_background.gd" id="3_space"]
+[ext_resource type="Script" path="res://scenes/launch_sequence/launch_view.gd" id="4_view"]
+[ext_resource type="Script" path="res://classes/terminal_label.gd" id="5_term"]
+
+[sub_resource type="SystemFont" id="SystemFont_mono"]
+font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono", "Courier New", "Monospace")
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+content_margin_left = 20.0
+content_margin_top = 16.0
+content_margin_right = 20.0
+content_margin_bottom = 16.0
+bg_color = Color(0.0078, 0.0353, 0.0157, 0.82)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2235, 1, 0.4157, 0.7)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_result"]
+content_margin_left = 40.0
+content_margin_top = 32.0
+content_margin_right = 40.0
+content_margin_bottom = 32.0
+bg_color = Color(0.0078, 0.0353, 0.0157, 0.97)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.2235, 1, 0.4157, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0, 0, 0, 0)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2235, 1, 0.4157, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_btn_hover"]
+content_margin_left = 24.0
+content_margin_top = 12.0
+content_margin_right = 24.0
+content_margin_bottom = 12.0
+bg_color = Color(0.2235, 1, 0.4157, 0.15)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.2235, 1, 0.4157, 1)
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
+
+[node name="LaunchSequence" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("2_theme")
+script = ExtResource("1_seq")
+
+[node name="SpaceBackground" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("3_space")
+drift_speed = 2.0
+
+[node name="LaunchView" type="Control" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_view")
+
+[node name="Countdown" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 64.0
+offset_bottom = 214.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 16
+theme_override_font_sizes/font_size = 120
+text = "T-10"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HudPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+offset_left = 48.0
+offset_top = 48.0
+offset_right = 420.0
+offset_bottom = 190.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Hud" type="Label" parent="HudPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2235, 1, 0.4157, 1)
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 22
+text = "T-10
+ALTITUDE    0.0 KM
+SPEED          0 KM/H
+FUEL         100 %"
+
+[node name="TelemetryPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = -330.0
+offset_right = 820.0
+offset_bottom = -48.0
+grow_vertical = 0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Telemetry" type="RichTextLabel" parent="TelemetryPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+mouse_filter = 2
+theme_override_colors/default_color = Color(0.2235, 1, 0.4157, 1)
+theme_override_fonts/normal_font = SubResource("SystemFont_mono")
+theme_override_font_sizes/normal_font_size = 19
+bbcode_enabled = true
+scroll_following = true
+script = ExtResource("5_term")
+print_cps = 500.0
+
+[node name="SkipHint" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -520.0
+offset_top = -96.0
+offset_right = -48.0
+offset_bottom = -48.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 1, 0.7)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 28
+text = "Click to fast-forward"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="ResultPanel" type="PanelContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -480.0
+offset_top = -150.0
+offset_right = 480.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_result")
+
+[node name="VBox" type="VBoxContainer" parent="ResultPanel"]
+layout_mode = 2
+theme_override_constants/separation = 24
+alignment = 1
+
+[node name="ResultTitle" type="Label" parent="ResultPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = "ORBIT REACHED"
+horizontal_alignment = 1
+
+[node name="ResultBody" type="RichTextLabel" parent="ResultPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/default_color = Color(0.85, 0.92, 0.88, 1)
+theme_override_fonts/normal_font = SubResource("SystemFont_mono")
+theme_override_font_sizes/normal_font_size = 22
+bbcode_enabled = true
+text = "Body"
+fit_content = true
+scroll_active = false
+
+[node name="ResultButton" type="Button" parent="ResultPanel/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(360, 0)
+layout_mode = 2
+size_flags_horizontal = 4
+mouse_default_cursor_shape = 2
+theme_override_colors/font_color = Color(0.2235, 1, 0.4157, 1)
+theme_override_colors/font_hover_color = Color(0.2235, 1, 0.4157, 1)
+theme_override_colors/font_focus_color = Color(0.2235, 1, 0.4157, 1)
+theme_override_colors/font_pressed_color = Color(0.0078, 0.0353, 0.0157, 1)
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
+text = "> START THE MISSION"

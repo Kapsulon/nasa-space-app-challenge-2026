@@ -86,6 +86,7 @@ anchor_right = 0.9094823
 anchor_bottom = 0.5769806
 mouse_filter = 0
 texture = ExtResource("2_xxf6o")
+expand_mode = 1
 stretch_mode = 5
 metadata/_edit_use_anchors_ = true
 

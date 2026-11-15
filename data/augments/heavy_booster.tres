@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://c0gwd48bmpci8"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dw74xm0066oj2" path="res://assets/textures/ASSETS/fusee_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Heavy booster"
+description = "Lifts [color=#ffb800]{engine_thrust} t[/color] more and adds [color=#ffb800]{fuel} t[/color] of fuel"
+upgrades = Dictionary[String, String]({
+"engine_thrust": "8",
+"fuel": "30"
+})
+image = ExtResource("2_img")
+weight = 2.5
+type = 1
+rarity = 2
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

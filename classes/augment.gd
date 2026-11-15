@@ -48,6 +48,8 @@ func rarity_name() -> String:
 @export_multiline var description: String = ""
 @export var upgrades: Dictionary[String, String] = {}
 @export var image: CompressedTexture2D
+## Launch mass in tons. Heavier cargo lowers the launch odds (see LaunchProfile).
+@export_range(0.0, 50.0, 0.1, "or_greater", "suffix:t") var weight: float = 0.0
 
 @export var type: Type
 @export var rarity: Rarity

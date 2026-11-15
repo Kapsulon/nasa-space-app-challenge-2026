@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://delwxpbu4xwbc"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://do2q7xdif88ud" path="res://assets/textures/ASSETS/fuel.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Fuel tank"
+description = "Adds [color=#ffb800]{fuel} t[/color] of rocket fuel"
+upgrades = Dictionary[String, String]({
+"fuel": "10"
+})
+image = ExtResource("2_img")
+weight = 0.5
+type = 1
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

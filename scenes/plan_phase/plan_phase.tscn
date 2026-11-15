@@ -23,6 +23,17 @@ expand_margin_bottom = 2.0
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_secnn"]
 bg_color = Color(1, 0.22745098, 0.33333334, 1)
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_odds_bg"]
+bg_color = Color(0.08, 0.08, 0.1, 1)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(1, 1, 1, 0.6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_odds_fill"]
+bg_color = Color(0.2235, 1, 0.4157, 1)
+
 [node name="Main" type="Control" unique_id=187906876]
 layout_mode = 3
 anchors_preset = 15
@@ -409,6 +420,51 @@ layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
 theme_override_font_sizes/font_size = 30
 text = "0 / 30 slots filled"
+
+[node name="OddsTitle" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 36
+text = "Launch odds"
+
+[node name="OddsBar" type="ProgressBar" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 48)
+layout_mode = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_odds_bg")
+theme_override_styles/fill = SubResource("StyleBoxFlat_odds_fill")
+value = 94.0
+show_percentage = false
+
+[node name="OddsLabel" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox/OddsBar"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 32
+text = "94%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="OddsHint" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Looking good!"
+autowrap_mode = 3
+
+[node name="LaunchStats" type="Label" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(0.7, 0.75, 0.82, 1)
+theme_override_font_sizes/font_size = 24
+text = "Weight 8.0 t / engines lift 18.0 t
+Fuel 60 t / needs 40 t"
 
 [node name="HSeparator" type="HSeparator" parent="MarginContainer/HBoxContainer/Control/ManifestMargin/VBox"]
 layout_mode = 2

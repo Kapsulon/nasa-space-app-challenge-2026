@@ -11,4 +11,5 @@ upgrades = Dictionary[String, String]({
 "water_capacity": "10"
 })
 image = ExtResource("1_omlal")
+weight = 0.4
 metadata/_custom_type_script = "uid://cuy5s3hde6jye"
