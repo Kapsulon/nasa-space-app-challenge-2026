@@ -1,7 +1,8 @@
 extends Control
 ## Mission phase (phase 2): a day-by-day survival loop.
-## Each day: read the dashboard, set rations / tasks, answer the event, end the day,
-## then read the recap of what happened overnight.
+## Each day: read the dashboard, set rations / tasks, answer the incoming
+## transmission (mission control types the reply), end the day, then read the
+## overnight report in the mission-control terminal.
 
 const MENU_SCENE: String = "res://scenes/select_scenario/select_scenario.tscn"
 
@@ -9,6 +10,16 @@ const COLOR_GOOD := Color("7be38b")
 const COLOR_BAD := Color("ff5a6e")
 const COLOR_WARN := Color("ffb35c")
 const COLOR_MUTED := Color("8a94a6")
+const COLOR_STRESS := Color("b46cff")
+
+# Terminal palette (hex strings for bbcode).
+const T_GREEN := "39ff6a"
+const T_DIM := "1f8f3c"
+const T_AMBER := "ffb800"
+const T_RED := "ff5a6e"
+const T_BLUE := "63b1ff"
+const PROMPT := "[color=#1f8f3c]houston@mission-control[/color]:[color=#63b1ff]~[/color]$ "
+const SHORT_PROMPT := "[color=#1f8f3c]houston[/color]:[color=#63b1ff]~[/color]$ "
 
 var state: MissionState
 
@@ -24,10 +35,23 @@ func _ready() -> void:
     state = MissionState.new(scenario_name, TransitionData.scenario_days, MissionState.load_event_pool(), TransitionData.selected_augments)
     %EndDayButton.pressed.connect(_on_end_day_pressed)
     %RecapButton.pressed.connect(_on_recap_continue)
+    %RecapTerminal.output_done.connect(_on_recap_printed)
+    %DecisionTerminal.output_done.connect(_refresh_resources)
     _build_resource_rows()
     state.start_day()
     _refresh_all()
     _show_briefing()
+
+
+func _input(event: InputEvent) -> void:
+    # Any key or click while the report is printing reveals it all at once.
+    if not %RecapOverlay.visible or not %RecapTerminal.is_busy():
+        return
+    var pressed: bool = (event is InputEventKey and event.pressed and not event.echo) \
+        or (event is InputEventMouseButton and event.pressed)
+    if pressed:
+        %RecapTerminal.skip()
+        get_viewport().set_input_as_handled()
 
 
 # --- Building / refreshing ----------------------------------------------------
@@ -35,8 +59,7 @@ func _ready() -> void:
 func _refresh_all() -> void:
     %TitleLabel.text = state.scenario_name
     %DayLabel.text = "Day %d / %d" % [state.day, state.mission_days]
-    %MissionProgress.max_value = state.mission_days
-    %MissionProgress.value = state.day - 1
+    %Trajectory.set_day(state.day - 1, state.mission_days)
     %ScienceLabel.text = "Science: %d" % state.science
     _build_crew()
     _build_event()
@@ -62,18 +85,7 @@ func _build_resource_rows() -> void:
         header.add_child(value_label)
         header.add_child(forecast_label)
 
-        var bar := ProgressBar.new()
-        bar.custom_minimum_size.y = 18
-        bar.show_percentage = false
-        var fill := StyleBoxFlat.new()
-        fill.bg_color = info["color"]
-        fill.set_corner_radius_all(4)
-        var bg := StyleBoxFlat.new()
-        bg.bg_color = Color(1, 1, 1, 0.08)
-        bg.set_corner_radius_all(4)
-        bar.add_theme_stylebox_override("fill", fill)
-        bar.add_theme_stylebox_override("background", bg)
-
+        var bar := _bar(info["color"], 18)
         row.add_child(header)
         row.add_child(bar)
         %ResourceList.add_child(row)
@@ -96,8 +108,15 @@ func _refresh_resources() -> void:
         # Warn when tonight would empty the stock.
         row["value"].add_theme_color_override("font_color", COLOR_BAD if amount + delta < 0 or amount == 0 else Color.WHITE)
     %ScienceLabel.text = "Science: %d" % state.science
-    %EndDayButton.disabled = state.needs_decision()
-    %EndDayButton.text = "Answer the event first" if state.needs_decision() else "End day %d" % state.day
+
+    var transmitting: bool = %DecisionTerminal.is_busy()
+    %EndDayButton.disabled = state.needs_decision() or transmitting
+    if state.needs_decision():
+        %EndDayButton.text = "Answer the transmission first"
+    elif transmitting:
+        %EndDayButton.text = "Transmitting..."
+    else:
+        %EndDayButton.text = "End day %d" % state.day
 
 
 func _build_crew() -> void:
@@ -111,37 +130,32 @@ func _make_crew_card(member: CrewMember) -> Control:
     var panel := PanelContainer.new()
     panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-    panel.add_theme_stylebox_override("panel", _card_style(member.is_alive()))
+    panel.add_theme_stylebox_override("panel", _card_style(member.is_aboard()))
     var box := VBoxContainer.new()
     box.add_theme_constant_override("separation", 8)
     panel.add_child(box)
 
     var header := HBoxContainer.new()
-    var name_label := _label(member.display_name, 32)
+    var name_label := _label(member.display_name, 30)
     name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     header.add_child(name_label)
-    header.add_child(_label(member.role, 22, COLOR_MUTED))
+    header.add_child(_label(member.role, 20, COLOR_MUTED))
     box.add_child(header)
 
-    if not member.is_alive():
-        box.add_child(_label("Deceased", 26, COLOR_BAD))
-        panel.modulate = Color(1, 1, 1, 0.5)
+    if not member.is_aboard():
+        box.add_child(_label("Back on Earth", 26, COLOR_GOOD))
+        var reason := _label("Took the return capsule home because they %s. Safe and sound!" % member.left_reason, 20, COLOR_MUTED)
+        reason.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+        box.add_child(reason)
+        panel.modulate = Color(1, 1, 1, 0.6)
         return panel
 
-    var health_bar := ProgressBar.new()
-    health_bar.max_value = CrewMember.MAX_HEALTH
-    health_bar.value = member.health
-    health_bar.custom_minimum_size.y = 16
-    health_bar.show_percentage = false
-    var fill := StyleBoxFlat.new()
-    fill.bg_color = COLOR_GOOD if member.health >= 50 else (COLOR_WARN if member.health >= 25 else COLOR_BAD)
-    fill.set_corner_radius_all(4)
-    health_bar.add_theme_stylebox_override("fill", fill)
-    box.add_child(_label("Health %d / %d" % [member.health, CrewMember.MAX_HEALTH], 22))
-    box.add_child(health_bar)
+    var health_color := COLOR_GOOD if member.health >= 50 else (COLOR_WARN if member.health >= 25 else COLOR_BAD)
+    box.add_child(_stat_row("Health", member.health, CrewMember.MAX_HEALTH, health_color))
+    var stress_color := COLOR_STRESS if member.stress < CrewMember.STRESSED else (COLOR_WARN if member.stress < CrewMember.OVERWHELMED else COLOR_BAD)
+    box.add_child(_stat_row("Stress", member.stress, CrewMember.MAX_STRESS, stress_color))
 
-    var status_color := COLOR_GOOD if member.status_text() == "Healthy" else COLOR_WARN
-    box.add_child(_label(member.status_text(), 22, status_color))
+    box.add_child(_label(member.status_text(), 22, COLOR_GOOD if member.is_doing_great() else COLOR_WARN))
 
     var rations := HBoxContainer.new()
     rations.add_theme_constant_override("separation", 16)
@@ -173,7 +187,7 @@ func _make_crew_card(member: CrewMember) -> Control:
     for task in CrewMember.TASK_NAMES.keys():
         task_option.add_item(CrewMember.TASK_NAMES[task], task)
     task_option.select(task_option.get_item_index(member.task))
-    var task_hint := _label(CrewMember.TASK_HINTS[member.task], 20, COLOR_MUTED)
+    var task_hint := _label(CrewMember.TASK_HINTS[member.task], 18, COLOR_MUTED)
     task_option.item_selected.connect(func(index: int):
         member.task = task_option.get_item_id(index) as CrewMember.Task
         task_hint.text = CrewMember.TASK_HINTS[member.task]
@@ -183,7 +197,7 @@ func _make_crew_card(member: CrewMember) -> Control:
     box.add_child(task_hint)
 
     var medkit_button := Button.new()
-    medkit_button.text = "Use medkit (+%d hp, cure)" % MissionState.MEDKIT_HEAL
+    medkit_button.text = "Use medkit (+%d health)" % MissionState.MEDKIT_HEAL
     medkit_button.add_theme_font_size_override("font_size", 20)
     medkit_button.disabled = not state.can_use_medkit(member)
     medkit_button.pressed.connect(func():
@@ -194,22 +208,34 @@ func _make_crew_card(member: CrewMember) -> Control:
     return panel
 
 
+func _stat_row(title: String, value: int, max_value: int, color: Color) -> Control:
+    var row := HBoxContainer.new()
+    row.add_theme_constant_override("separation", 12)
+    var label := _label("%s %d" % [title, value], 22)
+    label.custom_minimum_size.x = 130
+    row.add_child(label)
+    var bar := _bar(color, 14)
+    bar.max_value = max_value
+    bar.value = value
+    bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+    bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+    row.add_child(bar)
+    return row
+
+
 func _build_event() -> void:
     for child in %EventChoices.get_children():
         child.queue_free()
+    %DecisionBox.hide()
+    %DecisionTerminal.clear_terminal()
 
     var event := state.current_event
     if event == null:
         %EventTitle.text = "Quiet day"
-        %EventDescription.text = "No incidents reported. Use the time to manage rations and assign the crew."
+        %EventDescription.text = "No incidents reported. Use the time to look after the crew and plan the day."
         return
 
     %EventTitle.text = event.title
-    if state.chosen != null:
-        %EventDescription.text = "%s\n\n[color=#%s]Decision: %s[/color]\n[color=#%s]The outcome will be known tomorrow morning.[/color]" % [
-            event.description, COLOR_GOOD.to_html(false), state.chosen.label, COLOR_MUTED.to_html(false)]
-        return
-
     %EventDescription.text = event.description
     for choice in event.choices:
         var button := Button.new()
@@ -220,17 +246,35 @@ func _build_event() -> void:
         if not choice.cost.is_empty():
             button.text += "  (%s)" % _format_cost(choice.cost)
         button.disabled = not state.can_afford(choice.cost)
-        button.pressed.connect(func():
-            state.choose(choice)
-            _build_event.call_deferred()
-            _refresh_resources())
+        button.pressed.connect(_on_choice_pressed.bind(choice))
         %EventChoices.add_child(button)
+
+
+func _on_choice_pressed(choice: EventChoice) -> void:
+    if state.chosen != null:
+        return
+    state.choose(choice)
+    for child in %EventChoices.get_children():
+        child.queue_free()
+    _transmit_decision(choice)
+    _refresh_resources()
+
+
+## Mission control types the reply to the crew in a little terminal.
+func _transmit_decision(choice: EventChoice) -> void:
+    var term: TerminalLabel = %DecisionTerminal
+    %DecisionBox.show()
+    term.clear_terminal()
+    term.print_text(SHORT_PROMPT, 0.35)
+    term.type_text("transmit --to crew \"%s\"\n" % choice.label, 0.4)
+    term.print_text("[color=#%s]uplink .......... [/color][color=#%s][OK][/color]\n" % [T_DIM, T_GREEN], 0.2)
+    term.print_text("[color=#%s]Crew acknowledged. Outcome expected tomorrow morning.[/color]" % T_DIM)
 
 
 # --- Day flow -----------------------------------------------------------------
 
 func _on_end_day_pressed() -> void:
-    if state.needs_decision():
+    if state.needs_decision() or %DecisionTerminal.is_busy():
         return
     var recap := state.end_day()
     _show_recap(recap)
@@ -250,86 +294,150 @@ func _on_recap_continue() -> void:
     %RecapOverlay.hide()
 
 
+func _on_recap_printed() -> void:
+    %RecapButton.show()
+    %RecapButton.grab_focus()
+
+
+# --- Terminal reports ---------------------------------------------------------
+
 func _show_briefing() -> void:
     _recap_mode = RecapMode.BRIEFING
-    var text := "Your crew of %d has launched. Keep them alive for [b]%d days[/b] until the mission is complete.\n\n" % [state.crew.size(), state.mission_days]
-    text += "[b]Each day[/b]\n"
-    text += "• Choose who gets food and water rations.\n"
-    text += "• Assign a task to every crew member. Tasks other than resting cost power.\n"
-    text += "• Respond to unexpected events. Their outcome is revealed the next morning.\n\n"
-    text += "[b]Every night[/b] the ship produces %d power, life support uses %d, each crew member breathes 1 oxygen and the hull loses %d integrity.\n\n" % [
-        MissionState.SOLAR_POWER_PER_DAY, MissionState.LIFE_SUPPORT_POWER, MissionState.HULL_DECAY_PER_DAY]
-    text += "[b]Launch bonuses from your augments[/b]\n"
+    var t := _title_line("MISSION BRIEFING :: %s" % state.scenario_name.to_upper())
+    t += "Your crew of %d has launched. Get them safely to the station in %s.\n\n" % [
+        state.crew.size(), _hl("%d days" % state.mission_days)]
+    t += _section("EACH DAY")
+    t += "  * choose who gets food and water rations\n"
+    t += "  * give every crew member a task (work uses power and adds stress)\n"
+    t += "  * answer incoming transmissions; the outcome arrives next morning\n\n"
+    t += _section("EVERY NIGHT")
+    t += "  * the solar panels make %d power, life support uses %d\n" % [MissionState.SOLAR_POWER_PER_DAY, MissionState.LIFE_SUPPORT_POWER]
+    t += "  * each crew member breathes 1 oxygen\n"
+    t += "  * the hull wears down by %d\n\n" % MissionState.HULL_DECAY_PER_DAY
+    t += _section("CREW WELLBEING")
+    t += "  * health drops when the crew is hungry, thirsty or unwell\n"
+    t += "  * stress rises with hard work, worries and empty stomachs\n"
+    t += "  * resting and calling home help everyone recharge\n"
+    t += "  * at 0 health or 100 stress, a crew member takes the return\n"
+    t += "    capsule home safely and leaves the mission\n\n"
+    t += _section("LAUNCH BONUSES")
     if state.augment_summary.is_empty():
-        text += "[color=#%s]None.[/color]\n" % COLOR_MUTED.to_html(false)
-    for line in state.augment_summary:
-        text += "• %s\n" % line
-    _open_overlay("Mission briefing", text, "Begin day 1")
+        t += _dim("  none") + "\n"
+    else:
+        # Group identical lines: "Water capacity: +10 Water capacity  x3".
+        var counts: Dictionary[String, int] = {}
+        for line in state.augment_summary:
+            counts[line] = counts.get(line, 0) + 1
+        for line in counts.keys():
+            t += "  * %s%s\n" % [line, ("  x%d" % counts[line]) if counts[line] > 1 else ""]
+    _open_terminal("~/missions", "cat briefing.txt", t, "> BEGIN DAY 1")
 
 
 func _show_recap(recap: Dictionary) -> void:
     _recap_mode = RecapMode.DAILY
-    var text := ""
+    var t := _title_line("DAILY REPORT :: %s :: DAY %02d/%02d" % [state.scenario_name.to_upper(), recap["day"], state.mission_days])
 
     if recap["event_title"] != "":
-        text += "[b]%s[/b]\n" % recap["event_title"]
-        text += "You chose: %s\n" % recap["decision"]
+        t += _section("TRANSMISSION")
+        t += "  %s\n" % _hl(recap["event_title"])
+        t += "  decision : %s\n" % recap["decision"]
         if recap["event_result"] != "":
-            text += "[i]%s[/i]\n" % recap["event_result"]
-        text += "\n"
+            t += "  result   : %s\n" % recap["event_result"]
+        t += "\n"
 
-    text += "[b]Ship status[/b]\n[table=4]"
+    t += _section("SHIP")
+    t += _dim("  %-16s %7s %7s %8s" % ["RESOURCE", "BEFORE", "AFTER", "CHANGE"]) + "\n"
     for res_id in MissionState.RESOURCE_IDS:
-        var before: int = recap["resources"][res_id][0]
-        var after: int = recap["resources"][res_id][1]
-        text += _recap_row(MissionState.resource_name(res_id), before, after)
-    text += _recap_row("Science", recap["science"][0], recap["science"][1])
-    text += "[/table]\n\n"
+        t += _resource_line(MissionState.resource_name(res_id).to_lower(), recap["resources"][res_id][0], recap["resources"][res_id][1])
+    t += _resource_line("science", recap["science"][0], recap["science"][1])
+    t += "\n"
 
-    text += "[b]Crew[/b]\n"
+    t += _section("CREW")
+    t += _dim("  %-16s %7s %7s   %s" % ["NAME", "HEALTH", "STRESS", "STATUS"]) + "\n"
     for member in state.crew:
-        if member.display_name in recap["deaths"]:
-            text += "[color=#%s]%s died during the night.[/color]\n" % [COLOR_BAD.to_html(false), member.display_name]
-        elif member.is_alive():
-            text += "• %s: %d health, %s\n" % [member.display_name, member.health, member.status_text().to_lower()]
+        t += _crew_line(member)
+    for entry in recap["sent_home"]:
+        t += "\n  [color=#%s]%s %s and took the return capsule home.\n  They landed safely and are having a well-deserved rest![/color]\n" % [
+            T_AMBER, entry["name"], entry["reason"]]
+    t += "\n"
 
     if not recap["log"].is_empty():
-        text += "\n[b]Log[/b]\n"
+        t += _section("LOG")
         for line in recap["log"]:
-            text += "• %s\n" % line
+            t += "  * %s\n" % line
 
-    var button_text := "Start day %d" % state.day
+    var button_text := "> START DAY %d" % state.day
     if state.outcome != MissionState.Outcome.ONGOING:
-        button_text = "Continue"
-    _open_overlay("Day %d report" % recap["day"], text, button_text)
+        button_text = "> CONTINUE"
+    _open_terminal("~/reports", "cat day_%02d.log" % recap["day"], t, button_text)
 
 
 func _show_end() -> void:
     _recap_mode = RecapMode.END
     var won := state.outcome == MissionState.Outcome.WON
-    var color := COLOR_GOOD if won else COLOR_BAD
-    var text := "[color=#%s]%s[/color]\n\n" % [color.to_html(false), state.outcome_text]
-    text += "Days survived: %d\nCrew alive: %d / %d\nScience collected: %d\n" % [
-        state.day - 1, state.living_crew().size(), state.crew.size(), state.science]
-    _open_overlay("Mission complete" if won else "Mission failed", text, "Back to menu")
+    var t := _title_line("MISSION COMPLETE" if won else "MISSION CALLED OFF")
+    t += "[color=#%s]%s[/color]\n\n" % [T_GREEN if won else T_AMBER, state.outcome_text]
+    t += _section("FINAL STATS")
+    t += "  days in space ..... %d\n" % (state.day - 1)
+    t += "  crew aboard ....... %d / %d\n" % [state.crew_aboard().size(), state.crew.size()]
+    t += "  science ........... %d\n\n" % state.science
+    t += _section("CREW")
+    for member in state.crew:
+        var where := "made it to the station" if member.is_aboard() and won else ("back on Earth, safe and sound" if not member.is_aboard() or not won else "aboard")
+        t += "  %-16s %s\n" % [member.display_name, where]
+    t += "\n" + _dim("Everyone is safe. Thanks for flying with mission control!") + "\n"
+    _open_terminal("~", "./mission_status --final", t, "> BACK TO MENU")
 
 
-func _open_overlay(title: String, body: String, button_text: String) -> void:
-    %RecapTitle.text = title
-    %RecapBody.text = body
-    %RecapBody.scroll_to_line(0)
+func _open_terminal(directory: String, command: String, body: String, button_text: String) -> void:
+    %WindowTitle.text = "houston@mission-control: %s" % directory
     %RecapButton.text = button_text
+    %RecapButton.hide()
+    var term: TerminalLabel = %RecapTerminal
+    term.clear_terminal()
+    term.print_text(PROMPT.replace("~", directory), 0.3)
+    term.type_text(command + "\n", 0.3)
+    # Print section by section so the terminal scrolls as it goes.
+    for chunk in body.split("\n\n", false):
+        term.print_text(chunk + "\n\n", 0.08)
+    term.print_text(PROMPT.replace("~", directory))
     %RecapOverlay.show()
 
 
-# --- Helpers ------------------------------------------------------------------
+func _title_line(title: String) -> String:
+    var bar := "=".repeat(mini(72, title.length() + 8))
+    return "[color=#%s]%s\n    %s\n%s[/color]\n\n" % [T_DIM, bar, title, bar]
 
-func _recap_row(label: String, before: int, after: int) -> String:
+
+func _section(title: String) -> String:
+    return "[color=#%s][%s][/color]\n" % [T_AMBER, title]
+
+
+func _hl(text: String) -> String:
+    return "[color=#%s]%s[/color]" % [T_BLUE, text]
+
+
+func _dim(text: String) -> String:
+    return "[color=#%s]%s[/color]" % [T_DIM, text]
+
+
+func _resource_line(label: String, before: int, after: int) -> String:
     var delta := after - before
-    var color := COLOR_GOOD if delta > 0 else (COLOR_BAD if delta < 0 else COLOR_MUTED)
-    return "[cell]%s[/cell][cell]  %d[/cell][cell]  -> %d[/cell][cell]  [color=#%s]%s[/color][/cell]" % [
-        label, before, after, color.to_html(false), ("%+d" % delta) if delta != 0 else "0"]
+    var change := ("%+d" % delta) if delta != 0 else "0"
+    var color := T_GREEN if delta > 0 else (T_RED if delta < 0 else T_DIM)
+    return "  %-16s %7d %7d [color=#%s]%8s[/color]\n" % [label, before, after, color, change]
 
+
+func _crew_line(member: CrewMember) -> String:
+    if not member.is_aboard():
+        return _dim("  %-16s %7s %7s   back on earth" % [member.display_name, "-", "-"]) + "\n"
+    var health_color := T_GREEN if member.health >= 50 else (T_AMBER if member.health >= 25 else T_RED)
+    var stress_color := T_GREEN if member.stress < CrewMember.STRESSED else (T_AMBER if member.stress < CrewMember.OVERWHELMED else T_RED)
+    return "  %-16s [color=#%s]%7d[/color] [color=#%s]%7d[/color]   %s\n" % [
+        member.display_name, health_color, member.health, stress_color, member.stress, member.status_text().to_lower()]
+
+
+# --- Helpers ------------------------------------------------------------------
 
 func _format_cost(cost: Dictionary) -> String:
     var parts: PackedStringArray = []
@@ -346,11 +454,26 @@ func _label(text: String, font_size: int, color: Color = Color.WHITE) -> Label:
     return label
 
 
-func _card_style(alive: bool) -> StyleBoxFlat:
+func _bar(color: Color, height: float) -> ProgressBar:
+    var bar := ProgressBar.new()
+    bar.custom_minimum_size.y = height
+    bar.show_percentage = false
+    var fill := StyleBoxFlat.new()
+    fill.bg_color = color
+    fill.set_corner_radius_all(4)
+    var bg := StyleBoxFlat.new()
+    bg.bg_color = Color(1, 1, 1, 0.08)
+    bg.set_corner_radius_all(4)
+    bar.add_theme_stylebox_override("fill", fill)
+    bar.add_theme_stylebox_override("background", bg)
+    return bar
+
+
+func _card_style(aboard: bool) -> StyleBoxFlat:
     var sb := StyleBoxFlat.new()
-    sb.bg_color = Color("16202e") if alive else Color("1a1a1a")
+    sb.bg_color = Color(0.086, 0.125, 0.18, 0.92) if aboard else Color(0.1, 0.1, 0.1, 0.85)
     sb.border_color = Color("2c3e57")
     sb.set_border_width_all(2)
     sb.set_corner_radius_all(8)
-    sb.set_content_margin_all(16)
+    sb.set_content_margin_all(14)
     return sb

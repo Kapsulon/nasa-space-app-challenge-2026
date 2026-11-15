@@ -1,6 +1,7 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://scenes/launch_report/launch_report.gd" id="1_script"]
+[ext_resource type="Script" path="res://classes/terminal_label.gd" id="2_terminal"]
 
 [sub_resource type="SystemFont" id="SystemFont_mono"]
 font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono", "Courier New", "Monospace")
@@ -72,10 +73,14 @@ size_flags_vertical = 3
 mouse_filter = 2
 theme_override_colors/default_color = Color(0.2235, 1, 0.4157, 1)
 theme_override_fonts/normal_font = SubResource("SystemFont_mono")
-theme_override_font_sizes/normal_font_size = 22
+theme_override_font_sizes/normal_font_size = 20
 bbcode_enabled = true
 text = "> REPORT"
 scroll_active = false
+script = ExtResource("2_terminal")
+print_cps = 300.0
+type_cps = 30.0
+line_pause = 0.035
 
 [node name="LaunchButton" type="Button" parent="MarginContainer/VBox"]
 unique_name_in_owner = true
@@ -93,5 +98,5 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/pressed = SubResource("StyleBoxFlat_btn_hover")
 theme_override_styles/focus = SubResource("StyleBoxEmpty_focus")
-text = "> LAUNCH_"
+text = "> LAUNCH"
 alignment = 0

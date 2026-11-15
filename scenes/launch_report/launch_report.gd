@@ -6,49 +6,28 @@ extends Control
 
 const MISSION_SCENE: String = "res://scenes/mission_phase/mission_phase.tscn"
 
-const CHARS_PER_SECOND: float = 260.0
-## Pause in seconds at the end of each line, for a "printing" feel.
-const LINE_PAUSE: float = 0.04
-
 const GREEN := "39ff6a"
 const DIM := "1f8f3c"
 const AMBER := "ffb800"
+const PROMPT := "[color=#1f8f3c]houston@mission-control[/color]:[color=#63b1ff]~[/color]$ "
 
-var _typed: float = 0.0
-var _line_pause: float = 0.0
-var _parsed: String = ""
-var _done: bool = false
 var _launching: bool = false
-var _cursor_time: float = 0.0
 
 
 func _ready() -> void:
-    %Terminal.text = _build_report()
-    %Terminal.visible_characters = 0
+    var terminal: TerminalLabel = %Terminal
+    terminal.clear_terminal()
+    terminal.print_text(PROMPT, 0.4)
+    terminal.type_text("./launch_readiness --mission %s\n" % _mission_slug(), 0.3)
+    terminal.print_text(_build_report())
+    terminal.output_done.connect(_on_report_done)
     %LaunchButton.hide()
     %LaunchButton.pressed.connect(_launch)
 
 
-func _process(delta: float) -> void:
-    _cursor_time += delta
-    if _done:
-        %LaunchButton.text = "> LAUNCH" + ("_" if fmod(_cursor_time, 1.0) < 0.5 else " ")
-        return
-    if _line_pause > 0.0:
-        _line_pause -= delta
-        return
-    if _parsed.is_empty():
-        _parsed = %Terminal.get_parsed_text()
-    var before := int(_typed)
-    _typed = minf(_typed + CHARS_PER_SECOND * delta, _parsed.length())
-    # Stop at the end of each printed line for a short "printer" pause.
-    var newline := _parsed.find("\n", before)
-    if newline != -1 and newline < int(_typed):
-        _typed = newline + 1
-        _line_pause = LINE_PAUSE
-    %Terminal.visible_characters = int(_typed)
-    if int(_typed) >= _parsed.length():
-        _finish_typing()
+func _mission_slug() -> String:
+    var scenario_name: String = TransitionData.scenario_name if TransitionData.scenario_name != "" else "Reach the ISS"
+    return scenario_name.to_lower().replace(" ", "_")
 
 
 func _input(event: InputEvent) -> void:
@@ -57,15 +36,13 @@ func _input(event: InputEvent) -> void:
     if not pressed:
         return
     get_viewport().set_input_as_handled()
-    if not _done:
-        _finish_typing()
+    if %Terminal.is_busy():
+        %Terminal.skip()
     else:
         _launch()
 
 
-func _finish_typing() -> void:
-    _done = true
-    %Terminal.visible_characters = -1
+func _on_report_done() -> void:
     %LaunchButton.show()
     %LaunchButton.grab_focus()
 

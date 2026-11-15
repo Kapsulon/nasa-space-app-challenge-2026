@@ -1,6 +1,10 @@
 class_name MissionState extends RefCounted
 ## Pure simulation of the mission phase. The UI reads from it and calls
 ## start_day() / choose() / use_medkit() / end_day(); no nodes involved.
+##
+## Family friendly by design: crew members never die. When their health or
+## stress hits the limit they board the return capsule and fly home safely,
+## which leaves fewer hands aboard for the rest of the mission.
 
 const RESOURCE_IDS: Array[String] = ["oxygen", "water", "food", "power", "hull", "medkits"]
 
@@ -37,11 +41,24 @@ const SICK_REST_HEAL: int = 5
 const MEDKIT_HEAL: int = 40
 const REPAIR_AMOUNT: int = 8
 
+# Stress tuning.
+const WORK_STRESS: int = 6
+const REST_STRESS_RELIEF: int = 10
+const CALL_HOME_STRESS_RELIEF: int = 25
+const HUNGER_STRESS: int = 8
+const THIRST_STRESS: int = 8
+const SICK_STRESS: int = 5
+const HULL_DAMAGE_STRESS: int = 5
+const LOW_AIR_STRESS: int = 20
+## Chance that an overwhelmed crew member can't focus on their task.
+const OVERWHELMED_FAIL_CHANCE: float = 0.4
+
 const TASK_POWER: Dictionary[CrewMember.Task, int] = {
     CrewMember.Task.REST: 0,
     CrewMember.Task.REPAIR: 1,
     CrewMember.Task.RECYCLE: 1,
     CrewMember.Task.RESEARCH: 1,
+    CrewMember.Task.CALL_HOME: 1,
 }
 
 enum Outcome { ONGOING, WON, LOST }
@@ -108,8 +125,8 @@ static func resource_name(res_id: String) -> String:
     return RESOURCE_INFO.get(res_id, {}).get("name", res_id.capitalize())
 
 
-func living_crew() -> Array[CrewMember]:
-    return crew.filter(func(c: CrewMember): return c.is_alive())
+func crew_aboard() -> Array[CrewMember]:
+    return crew.filter(func(c: CrewMember): return c.is_aboard())
 
 
 # --- Day flow -----------------------------------------------------------------
@@ -121,9 +138,9 @@ func start_day() -> void:
     chosen = null
     current_event = null
     for member in crew:
-        member.give_food = member.is_alive()
-        member.give_water = member.is_alive()
-        if not member.is_alive():
+        member.give_food = member.is_aboard()
+        member.give_water = member.is_aboard()
+        if not member.is_aboard():
             member.task = CrewMember.Task.REST
     if day > 1 and randf() < EVENT_CHANCE:
         current_event = _draw_event()
@@ -166,7 +183,7 @@ func choose(choice: EventChoice) -> void:
 
 
 func can_use_medkit(member: CrewMember) -> bool:
-    return member.is_alive() and resources["medkits"] > 0 and (member.sick or member.health < CrewMember.MAX_HEALTH)
+    return member.is_aboard() and resources["medkits"] > 0 and (member.sick or member.health < CrewMember.MAX_HEALTH)
 
 
 func use_medkit(member: CrewMember) -> void:
@@ -175,7 +192,7 @@ func use_medkit(member: CrewMember) -> void:
     resources["medkits"] -= 1
     member.heal(MEDKIT_HEAL)
     member.sick = false
-    _day_log.append("%s was treated with a medkit." % member.display_name)
+    _day_log.append("%s was patched up with a medkit." % member.display_name)
 
 
 ## Expected resource change for tonight given the current decisions
@@ -184,13 +201,13 @@ func forecast() -> Dictionary[String, int]:
     var delta: Dictionary[String, int] = {}
     for res_id in RESOURCE_IDS:
         delta[res_id] = 0
-    var alive := living_crew()
+    var aboard := crew_aboard()
     delta["power"] += SOLAR_POWER_PER_DAY - LIFE_SUPPORT_POWER
-    delta["oxygen"] -= alive.size()
+    delta["oxygen"] -= aboard.size()
     delta["hull"] -= HULL_DECAY_PER_DAY
     if resources["hull"] < HULL_LEAK_THRESHOLD:
         delta["oxygen"] -= 1
-    for member in alive:
+    for member in aboard:
         if member.give_food:
             delta["food"] -= 1
         if member.give_water:
@@ -207,7 +224,8 @@ func forecast() -> Dictionary[String, int]:
 
 ## Resolves the night and returns a recap dictionary for the UI:
 ## { day, event_title, decision, event_result, resources: {id: [before, after]},
-##   science: [before, after], log: PackedStringArray, deaths: PackedStringArray, outcome }
+##   science: [before, after], log: PackedStringArray,
+##   sent_home: Array[{name, reason}], outcome }
 func end_day() -> Dictionary:
     var recap := {
         "day": day,
@@ -225,7 +243,7 @@ func end_day() -> Dictionary:
             apply_effects(chosen.failure_effects)
             recap["event_result"] = chosen.failure_text
 
-    var alive := living_crew()
+    var aboard := crew_aboard()
 
     # 2. Power: solar in, life support out.
     resources["power"] += SOLAR_POWER_PER_DAY
@@ -233,88 +251,113 @@ func end_day() -> Dictionary:
     if life_support_ok:
         resources["power"] -= LIFE_SUPPORT_POWER
     else:
-        _day_log.append("[color=#ff5a6e]Not enough power: life support ran on emergency reserves. Air quality dropped.[/color]")
+        _day_log.append("[color=#ffb35c]Not enough power: life support switched to backup mode and used extra oxygen.[/color]")
 
     # 3. Rations.
-    for member in alive:
+    for member in aboard:
         if member.give_food and resources["food"] > 0:
             resources["food"] -= 1
             member.days_hungry = 0
         else:
             if member.give_food:
-                _day_log.append("There was no food left for %s." % member.display_name)
+                _day_log.append("The pantry ran out before %s got a meal." % member.display_name)
             member.days_hungry += 1
+            member.add_stress(HUNGER_STRESS)
         if member.give_water and resources["water"] > 0:
             resources["water"] -= 1
             member.days_thirsty = 0
         else:
             if member.give_water:
-                _day_log.append("There was no water left for %s." % member.display_name)
+                _day_log.append("The water tank ran dry before %s got a drink." % member.display_name)
             member.days_thirsty += 1
+            member.add_stress(THIRST_STRESS)
 
     # 4. Crew tasks.
-    for member in alive:
+    for member in aboard:
+        var task_name := CrewMember.TASK_NAMES[member.task].to_lower()
         var power_needed: int = TASK_POWER[member.task]
         if power_needed > resources["power"]:
-            _day_log.append("%s couldn't %s: not enough power." % [member.display_name, CrewMember.TASK_NAMES[member.task].to_lower()])
+            _day_log.append("%s couldn't %s: not enough power." % [member.display_name, task_name])
+            continue
+        if member.task != CrewMember.Task.REST and member.task != CrewMember.Task.CALL_HOME \
+                and member.is_overwhelmed() and randf() < OVERWHELMED_FAIL_CHANCE:
+            _day_log.append("%s felt too overwhelmed to focus on \"%s\" today." % [member.display_name, task_name])
             continue
         resources["power"] -= power_needed
         match member.task:
             CrewMember.Task.REST:
                 member.heal(REST_HEAL if not member.sick else SICK_REST_HEAL)
+                member.add_stress(-REST_STRESS_RELIEF)
             CrewMember.Task.REPAIR:
                 resources["hull"] += REPAIR_AMOUNT
+                member.add_stress(WORK_STRESS)
             CrewMember.Task.RECYCLE:
                 resources["oxygen"] += 2
                 resources["water"] += 2
+                member.add_stress(WORK_STRESS)
             CrewMember.Task.RESEARCH:
                 science += 1
+                member.add_stress(WORK_STRESS)
+            CrewMember.Task.CALL_HOME:
+                member.add_stress(-CALL_HOME_STRESS_RELIEF)
+                _day_log.append("%s had a lovely video call with their family." % member.display_name)
 
     # 5. Breathing, hull wear.
-    var oxygen_needed := alive.size() + (0 if life_support_ok else 2)
+    var oxygen_needed := aboard.size() + (0 if life_support_ok else 2)
     if resources["hull"] < HULL_LEAK_THRESHOLD:
         oxygen_needed += 1
-        _day_log.append("[color=#ffb35c]The damaged hull is leaking air.[/color]")
+        _day_log.append("[color=#ffb35c]The worn-out hull is leaking a little air. The crew is getting nervous.[/color]")
+        for member in aboard:
+            member.add_stress(HULL_DAMAGE_STRESS)
     resources["oxygen"] -= oxygen_needed
     if resources["oxygen"] < 0:
         resources["oxygen"] = 0
-        _day_log.append("[color=#ff5a6e]Oxygen ran out! The crew is suffocating.[/color]")
-        for member in alive:
-            member.damage(30)
+        _day_log.append("[color=#ff5a6e]The oxygen tanks ran low! The air feels thin and everyone is short of breath.[/color]")
+        for member in aboard:
+            member.damage(15)
+            member.add_stress(LOW_AIR_STRESS)
     resources["hull"] -= HULL_DECAY_PER_DAY
 
     # 6. Body condition.
-    for member in alive:
+    for member in aboard:
         if member.days_hungry >= 2:
-            member.damage(15)
+            member.damage(10)
         if member.days_thirsty >= 2:
-            member.damage(20)
+            member.damage(15)
         elif member.days_thirsty == 1:
             member.damage(5)
         if member.sick:
-            member.damage(8)
+            member.damage(6)
+            member.add_stress(SICK_STRESS)
         elif member.health < 50 and randf() < 0.15:
             member.sick = true
-            _day_log.append("%s fell sick." % member.display_name)
+            _day_log.append("%s is feeling unwell." % member.display_name)
 
     _clamp_resources()
 
-    var deaths: PackedStringArray = []
-    for member in alive:
-        if not member.is_alive():
-            deaths.append(member.display_name)
+    # 7. Anyone at their limit flies home safely.
+    var sent_home: Array[Dictionary] = []
+    for member in aboard:
+        var reason := ""
+        if member.health <= 0:
+            reason = "needed to see a doctor back on Earth"
+        elif member.stress >= CrewMember.MAX_STRESS:
+            reason = "needed a break from space"
+        if reason != "":
+            member.send_home(reason)
+            sent_home.append({"name": member.display_name, "reason": reason})
 
-    # 7. Mission state.
-    if living_crew().is_empty():
+    # 8. Mission state.
+    if crew_aboard().is_empty():
         outcome = Outcome.LOST
-        outcome_text = "The entire crew has perished. Mission control lost contact on day %d." % day
+        outcome_text = "The whole crew flew home in the return capsule on day %d. The mission was called off, but everyone is safe and sound back on Earth." % day
     elif resources["hull"] <= 0:
         outcome = Outcome.LOST
-        outcome_text = "The hull failed catastrophically on day %d." % day
+        outcome_text = "On day %d the ship became too damaged to continue. The crew climbed into the return capsule and splashed down safely in the ocean." % day
     elif day >= mission_days:
         outcome = Outcome.WON
-        outcome_text = "%s complete! %d of %d crew members made it, with %d science collected." % [
-            scenario_name, living_crew().size(), crew.size(), science]
+        outcome_text = "%s complete! %d of %d crew members made it all the way, with %d science collected." % [
+            scenario_name, crew_aboard().size(), crew.size(), science]
 
     var res_changes := {}
     for res_id in RESOURCE_IDS:
@@ -322,7 +365,7 @@ func end_day() -> Dictionary:
     recap["resources"] = res_changes
     recap["science"] = [_day_start_science, science]
     recap["log"] = _day_log
-    recap["deaths"] = deaths
+    recap["sent_home"] = sent_home
     recap["outcome"] = outcome
 
     day += 1
@@ -339,23 +382,35 @@ func apply_effects(effects: Dictionary) -> void:
         elif key == "mission_days":
             mission_days = maxi(day, mission_days + amount)
         elif key == "crew_health":
-            for member in living_crew():
+            for member in crew_aboard():
                 _change_health(member, amount)
+        elif key == "crew_stress":
+            for member in crew_aboard():
+                member.add_stress(amount)
         elif key == "random_crew_health":
-            var alive := living_crew()
-            if not alive.is_empty():
-                var member: CrewMember = alive.pick_random()
+            var member := _random_aboard()
+            if member:
                 _change_health(member, amount)
-                _day_log.append("%s %s." % [member.display_name, "felt better" if amount > 0 else "was hurt"])
+                _day_log.append("%s %s." % [member.display_name, "feels better" if amount > 0 else "is worn out"])
+        elif key == "random_crew_stress":
+            var member := _random_aboard()
+            if member:
+                member.add_stress(amount)
+                _day_log.append("%s %s." % [member.display_name, "is feeling more relaxed" if amount < 0 else "is feeling stressed"])
         elif key == "random_crew_sick":
-            var healthy := living_crew().filter(func(c: CrewMember): return not c.sick)
+            var healthy := crew_aboard().filter(func(c: CrewMember): return not c.sick)
             if not healthy.is_empty():
                 var member: CrewMember = healthy.pick_random()
                 member.sick = true
-                _day_log.append("%s fell sick." % member.display_name)
+                _day_log.append("%s is feeling unwell." % member.display_name)
         else:
             push_warning("Unknown event effect key: %s" % key)
     _clamp_resources()
+
+
+func _random_aboard() -> CrewMember:
+    var aboard := crew_aboard()
+    return null if aboard.is_empty() else aboard.pick_random()
 
 
 func _change_health(member: CrewMember, amount: int) -> void:

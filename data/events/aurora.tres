@@ -5,28 +5,28 @@
 
 [sub_resource type="Resource" id="Resource_choice0"]
 script = ExtResource("2_choice")
-label = "Run the observation campaign"
+label = "Run an observation campaign"
 cost = Dictionary[String, int]({"power": 2})
 success_chance = 1.0
-success_effects = Dictionary[String, int]({"science": 2})
-success_text = "Stunning data collected. Mission control is thrilled."
+success_effects = Dictionary[String, int]({"science": 2, "crew_stress": -10})
+success_text = "Amazing data, and the crew loved the view."
 failure_effects = Dictionary[String, int]({})
 failure_text = ""
 
 [sub_resource type="Resource" id="Resource_choice1"]
 script = ExtResource("2_choice")
-label = "Conserve power"
+label = "Save power"
 cost = Dictionary[String, int]({})
 success_chance = 1.0
-success_effects = Dictionary[String, int]({})
-success_text = "The crew watched through the window instead."
+success_effects = Dictionary[String, int]({"crew_stress": -5})
+success_text = "The crew watched through the window instead. Still beautiful."
 failure_effects = Dictionary[String, int]({})
 failure_text = ""
 
 [resource]
 script = ExtResource("1_event")
 title = "Aurora sighting"
-description = "A spectacular aurora is visible below. The science team would love to record it for atmospheric research."
+description = "Beautiful green and purple lights are dancing over the Earth below. The science team would love to record them."
 min_day = 2
 weight = 0.7
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

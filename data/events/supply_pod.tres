@@ -5,13 +5,13 @@
 
 [sub_resource type="Resource" id="Resource_choice0"]
 script = ExtResource("2_choice")
-label = "Capture it with the robotic arm"
+label = "Catch it with the robotic arm"
 cost = Dictionary[String, int]({"power": 3})
 success_chance = 0.65
 success_effects = Dictionary[String, int]({"food": 5, "water": 5, "medkits": 1})
-success_text = "Capture successful! The pod contained food, water and a medkit."
+success_text = "Got it! The pod was full of food, water and a medkit."
 failure_effects = Dictionary[String, int]({})
-failure_text = "The pod slipped out of the arm's grip and tumbled away."
+failure_text = "The pod slipped out of the arm's grip and floated away."
 
 [sub_resource type="Resource" id="Resource_choice1"]
 script = ExtResource("2_choice")
@@ -26,7 +26,7 @@ failure_text = ""
 [resource]
 script = ExtResource("1_event")
 title = "Drifting supply pod"
-description = "A supply pod lost during a previous resupply mission is drifting within reach of the robotic arm."
+description = "A supply pod lost during an earlier delivery is floating within reach of the robotic arm."
 min_day = 2
 weight = 0.8
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

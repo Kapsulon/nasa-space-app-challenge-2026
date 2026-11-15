@@ -8,8 +8,8 @@ script = ExtResource("2_choice")
 label = "Shelter in the shielded core"
 cost = Dictionary[String, int]({"power": 1})
 success_chance = 1.0
-success_effects = Dictionary[String, int]({"science": -1})
-success_text = "Everyone rode out the flare safely, but some experiments were ruined."
+success_effects = Dictionary[String, int]({"science": -1, "crew_stress": 5})
+success_text = "Everyone hunkered down and played cards until the flare passed. A few experiments have to be restarted."
 failure_effects = Dictionary[String, int]({})
 failure_text = ""
 
@@ -19,14 +19,14 @@ label = "Keep working through it"
 cost = Dictionary[String, int]({})
 success_chance = 0.5
 success_effects = Dictionary[String, int]({"science": 2})
-success_text = "The flare was weaker than predicted. The extra work paid off."
-failure_effects = Dictionary[String, int]({"crew_health": -20, "random_crew_sick": 1})
-failure_text = "The radiation dose was severe. The whole crew feels it."
+success_text = "The flare was weaker than predicted. The extra work paid off!"
+failure_effects = Dictionary[String, int]({"crew_health": -10, "crew_stress": 20})
+failure_text = "The flare was stronger than expected and everyone had to rush to the shelter. The crew is tired and a little shaken."
 
 [resource]
 script = ExtResource("1_event")
 title = "Solar flare warning"
-description = "Space weather forecast: a strong solar flare will hit in six hours. Radiation levels outside the shielded core will spike."
+description = "Space weather forecast: the Sun is about to send out a big burst of energy. The shielded core of the ship is the safest place to be."
 min_day = 2
 weight = 1.0
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])
