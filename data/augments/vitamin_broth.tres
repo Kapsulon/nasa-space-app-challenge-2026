@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://doeepkuub1nde"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://gncbjard0kld" path="res://assets/textures/ASSETS/nourriture.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Vitamin-Enriched Broth Packet"
+short_name = "Vitamin Broth"
+image = ExtResource("2_img")
+weight = 0.3
+type = 0
+rarity = 1
+domain = 3
+card_type = 0
+upgrades = Dictionary[String, String]({"food": "12"})
+daily = Dictionary[String, int]({"crew_stress": -3})
+gives_text = "Quickly restores morale (+10%)"
+lore = "In the absence of gravity, bodily fluids shift upward toward the head, altering taste and smell (similar to a permanent cold). NASA enriches meals with spices and vitamins D and K to compensate."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

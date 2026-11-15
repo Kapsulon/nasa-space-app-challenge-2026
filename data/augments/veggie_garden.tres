@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cvv0f6ei1wmt8"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://def65247dtasf" path="res://assets/textures/ASSETS/nourriture_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Autonomous \"Veggie\" Hydroponic Garden"
+short_name = "Veggie Garden"
+image = ExtResource("2_img")
+weight = 1.2
+type = 0
+rarity = 2
+domain = 3
+card_type = 3
+daily = Dictionary[String, int]({"food": 2, "oxygen": 1, "crew_stress": -1})
+synergy_daily = Dictionary[String, int]({"food": 1})
+synergy_domain = 0
+synergy_max = 2
+gives_text = "Provides fresh food for free each turn (ex: 2/5 of the mission's total food)"
+synergy_text = "Strong synergy with Water and Oxygen (absorbs CO2 and purifies the air)"
+lore = "The \"Veggie\" system tested on the ISS uses red, blue, and green LEDs to grow romaine lettuce or radishes. Beyond nutrition, light therapy and gardening provide major psychological support."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

@@ -1,0 +1,36 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://b6cceuwqxrorq"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://gncbjard0kld" path="res://assets/textures/ASSETS/nourriture.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 6
+chance = 0.5
+threshold = 8
+effects = {"food_percent": -40}
+blocked_by = &"pure_water"
+short_text = "50%: spoils 40% of the food on day 8"
+log_text = "The mint candies from the {module} leaked all over the pantry. 40% of the food now tastes like toothpaste and had to go."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "NASA's Care Package"
+short_name = "Care Package"
+image = ExtResource("2_img")
+weight = 0.3
+type = 2
+rarity = 0
+domain = 3
+card_type = 0
+slot_override = 2
+upgrades = Dictionary[String, String]({"food": "8"})
+daily = Dictionary[String, int]({"crew_stress": -4})
+daily_days = 2
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "+15% Morale for the next 2 days when you receive it"
+costs_text = "Takes up inventory space"
+risks_text = "Your choices can contaminate 40% of the rations starting on day 10 (your birthday cake now tastes like toothpaste because of your choice of mint candies)"
+lore = "Astronauts are sometimes treated to \"fresh food packages\" during resupply missions (SpaceX Dragon/Cygnus). While vital for combating \"space anorexia\" (loss of appetite in microgravity), non-lyophilized foods spoil quickly without a strict cold chain."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

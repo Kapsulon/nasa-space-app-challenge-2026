@@ -192,25 +192,37 @@ static func load_event_pool(dir_path: String = "res://data/events") -> Array[Mis
 
 
 func _apply_augments(augments: Array[AugmentInstance]) -> void:
+    var cargo: Array[Augment] = []
     for i in augments.size():
         modules.append(ShipModule.new(augments[i].augment, i))
+        cargo.append(augments[i].augment)
+    # [key, amount] pairs: the upgrades, plus the launch synergies of cards
+    # whose partner is in the cargo (same rule as LaunchProfile).
+    var changes: Array[Array] = []
+    for instance in augments:
+        var augment := instance.augment
+        for key in augment.upgrades.keys():
+            changes.append([key, instance.upgrade_amount(key)])
+        if not augment.launch_synergy.is_empty() and cargo.any(func(a: Augment): return a != augment and augment.is_synergy_partner(a)):
+            for key in augment.launch_synergy.keys():
+                changes.append([key, Augment.parse_range(augment.launch_synergy[key]).x])
     # Stock first, one-time costs after, so the order of the cards
     # doesn't matter.
     for pass_costs: bool in [false, true]:
-        for instance in augments:
-            for key in instance.augment.upgrades.keys():
-                var amount := instance.upgrade_amount(key)
-                if (amount < 0) != pass_costs:
-                    continue
-                if key.ends_with("_capacity") and capacities.has(key.trim_suffix("_capacity")):
-                    capacities[key.trim_suffix("_capacity")] += amount
-                elif resources.has(key):
-                    if amount > 0:
-                        capacities[key] += amount
-                    resources[key] = maxi(0, resources[key] + amount)
-                elif key == "mission_days":
-                    mission_days = maxi(1, mission_days + amount)
-                # "fuel" / "engine_thrust" only matter for the launch.
+        for change in changes:
+            var key: String = change[0]
+            var amount: int = change[1]
+            if (amount < 0) != pass_costs:
+                continue
+            if key.ends_with("_capacity") and capacities.has(key.trim_suffix("_capacity")):
+                capacities[key.trim_suffix("_capacity")] += amount
+            elif resources.has(key):
+                if amount > 0:
+                    capacities[key] += amount
+                resources[key] = maxi(0, resources[key] + amount)
+            elif key == "mission_days":
+                mission_days = maxi(1, mission_days + amount)
+            # "fuel" / "engine_thrust" only matter for the launch.
 
 
 static func resource_name(res_id: String) -> String:
@@ -268,8 +280,11 @@ func synergy_count(module: ShipModule) -> int:
     return mini(count, augment.synergy_max)
 
 
-## What the module does tonight if it works: its daily effects plus synergy.
+## What the module does tonight if it works: its daily effects plus synergy
+## (nothing once its `daily_days` are over).
 func module_daily(module: ShipModule) -> Dictionary[String, int]:
+    if module.augment.daily_days > 0 and day > module.augment.daily_days:
+        return {}
     var effects: Dictionary[String, int] = module.augment.daily.duplicate()
     var bonus := synergy_count(module)
     for key in module.augment.synergy_daily.keys():
@@ -281,8 +296,14 @@ func extra_water_per_crew() -> int:
     var extra := 0
     for module in modules:
         if module.working():
-            extra += module.augment.daily.get("crew_water", 0)
+            extra += module_daily(module).get("crew_water", 0)
     return extra
+
+
+## A working, powered "infinite_food" module feeds the crew: no meals are
+## taken from the pantry.
+func feeds_crew() -> bool:
+    return modules.any(func(m: ShipModule): return m.working() and not m.unpowered and m.augment.has_flag(&"infinite_food"))
 
 
 func water_need(member: CrewMember) -> int:
@@ -354,6 +375,8 @@ func _night_risks() -> void:
                     condition_met = resources["power"] >= capacities["power"]
                 CardRisk.Condition.WATER_BELOW:
                     condition_met = resources["water"] < risk.threshold
+                CardRisk.Condition.ON_DAY:
+                    condition_met = day == risk.threshold
             if condition_met and randf() < risk_chance(module, risk):
                 _trigger_risk(module, risk)
                 if module.lost or module.broken:
@@ -712,8 +735,10 @@ func forecast() -> Dictionary[String, int]:
     delta["hull"] -= HULL_DECAY_PER_DAY
     if resources["hull"] < HULL_LEAK_THRESHOLD:
         delta["oxygen"] -= 1
+    var fed := feeds_crew()
     for member in aboard:
-        delta["food"] -= FOOD_PER_CREW
+        if not fed:
+            delta["food"] -= FOOD_PER_CREW
         delta["water"] -= water_need(member)
     return delta
 
@@ -787,8 +812,11 @@ func end_day() -> Dictionary:
         _log("[color=#ffb35c]Not enough power: life support switched to backup mode and used extra oxygen.[/color]")
 
     # 2. Meals and water, then a night's sleep.
+    var fed := feeds_crew()
     for member in aboard:
-        if resources["food"] >= FOOD_PER_CREW:
+        if fed:
+            member.days_hungry = 0
+        elif resources["food"] >= FOOD_PER_CREW:
             resources["food"] -= FOOD_PER_CREW
             member.days_hungry = 0
         else:
@@ -883,6 +911,9 @@ func apply_effects(effects: Dictionary) -> void:
         var amount: int = effects[key]
         if resources.has(key):
             resources[key] += amount
+        elif key.ends_with("_percent") and resources.has(key.trim_suffix("_percent")):
+            var res_id: String = key.trim_suffix("_percent")
+            resources[res_id] += roundi(resources[res_id] * amount / 100.0)
         elif key == "science":
             science = maxi(0, science + amount)
         elif key == "mission_days":

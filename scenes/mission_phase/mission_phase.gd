@@ -817,6 +817,8 @@ func _make_module_row(module: ShipModule) -> Control:
             parts.append(Augment.daily_line(key, effects[key]))
     if augment.hazard_reduction > 0.0:
         parts.append("hazards -%d%%" % roundi(augment.hazard_reduction * 100.0))
+    if augment.has_flag(&"infinite_food"):
+        parts.append("feeds the crew")
     var detail := ", ".join(parts) + " / night" if not parts.is_empty() else "Supplies loaded at launch"
     var status_color := COLOR_MUTED
     if not module.working() or module.unpowered:

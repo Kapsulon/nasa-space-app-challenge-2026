@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bg8vfhanlvruk"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://gncbjard0kld" path="res://assets/textures/ASSETS/nourriture.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 0
+chance = 0.1
+effects = {"water": -5}
+short_text = "Can clog the water filters (-5 L)"
+log_text = "The crew's upset stomachs from the {module} overloaded the water filters (-5 L water)."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Expired Survival Rations of Apollo's Program (1972 Vintage)"
+short_name = "Apollo Rations"
+image = ExtResource("2_img")
+weight = 0.5
+type = 0
+rarity = 0
+domain = 3
+card_type = 0
+upgrades = Dictionary[String, String]({"food": "30"})
+daily = Dictionary[String, int]({"crew_stress": 2, "crew_water": 1})
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "Halts hunger"
+costs_text = "-10% Morale per turn (found behind a box, cardboard taste, suspicious texture)"
+synergy_text = "Doubles Water consumption (the astronauts spend the day in the bathroom) and overloads the Water filters"
+lore = "On long-duration exploration missions, MRE (Meal, Ready-to-Eat) packaging expiration dates pose a challenge for conserving nutrients and vitamins, which degrade under cosmic radiation."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

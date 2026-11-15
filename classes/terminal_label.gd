@@ -26,7 +26,9 @@ var _target: int = 0
 var _progress: float = 0.0
 var _wait: float = 0.0
 var _busy: bool = false
-## The content without the cursor.
+## The content without the cursor. The cursor glyph always sits at the end
+## of `text`; blinking only changes `visible_characters`, so the text is never
+## re-parsed and the scroll position doesn't jump.
 var _content: String = ""
 var _cursor_time: float = 0.0
 var _cursor_on: bool = false
@@ -34,6 +36,11 @@ var _cursor_on: bool = false
 
 func _ready() -> void:
     bbcode_enabled = true
+    # Lay out the whole text, hidden characters included, so revealing
+    # characters (or blinking the cursor) never reflows the lines.
+    visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
+    _set_text(_content)
+    visible_characters = 0
 
 
 func is_busy() -> bool:
@@ -48,7 +55,7 @@ func clear_terminal() -> void:
     _content = ""
     _progress = 0.0
     _target = 0
-    _set_text("", false)
+    _set_text("")
     visible_characters = 0
 
 
@@ -86,6 +93,7 @@ func skip() -> void:
         callback.call()
     _current = {}
     _wait = 0.0
+    _set_text(_content)
     _complete()
 
 
@@ -96,9 +104,18 @@ func _enqueue(bbcode: String, human: bool, pause_after: float) -> void:
 
 func _complete() -> void:
     _busy = false
-    _set_text(_content, _cursor_on)
-    visible_characters = -1
+    _show_all()
     output_done.emit()
+
+
+## Characters of the content, without the cursor.
+func _content_length() -> int:
+    return get_parsed_text().length() - (1 if show_cursor else 0)
+
+
+## Everything visible, plus the cursor when it is in its "on" phase.
+func _show_all() -> void:
+    visible_characters = _content_length() + (1 if show_cursor and _cursor_on else 0)
 
 
 func _process(delta: float) -> void:
@@ -107,7 +124,7 @@ func _process(delta: float) -> void:
         var on := fmod(_cursor_time, 1.0) < 0.5
         if on != _cursor_on and not _busy:
             _cursor_on = on
-            _set_text(_content, _cursor_on)
+            _show_all()
 
     if not _busy:
         return
@@ -126,14 +143,15 @@ func _process(delta: float) -> void:
             callback.call()
             return
         _trim()
-        # Work out how much is already on screen (-1 means "everything").
+        # Work out how much is already on screen (-1 means "everything"),
+        # without the cursor, which stays hidden while text comes in.
         _cursor_on = false
-        _set_text(_content, false)
-        var shown := visible_characters if visible_characters >= 0 else get_parsed_text().length()
+        var length := _content_length()
+        var shown := length if visible_characters < 0 else mini(visible_characters, length)
         _content += _current["text"]
-        _set_text(_content, false)
+        _set_text(_content)
         visible_characters = shown
-        _target = get_parsed_text().length()
+        _target = _content_length()
         _progress = float(shown)
         return
 
@@ -161,11 +179,11 @@ func _trim() -> void:
     if lines.size() <= max_lines:
         return
     _content = "\n".join(lines.slice(lines.size() - max_lines))
-    _set_text(_content, false)
-    visible_characters = -1
+    _set_text(_content)
+    visible_characters = _content_length()
 
 
-func _set_text(content: String, with_cursor: bool) -> void:
+func _set_text(content: String) -> void:
     var shown := visible_characters
-    text = content + (CURSOR if with_cursor else "")
+    text = content + (CURSOR if show_cursor else "")
     visible_characters = shown

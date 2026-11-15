@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bv4kxg2it1r3u"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://gncbjard0kld" path="res://assets/textures/ASSETS/nourriture.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "ISS Special Rehydratable Menu"
+short_name = "ISS Menu"
+image = ExtResource("2_img")
+weight = 0.6
+type = 0
+rarity = 1
+domain = 3
+card_type = 0
+upgrades = Dictionary[String, String]({"food": "35"})
+daily = Dictionary[String, int]({"water": -1, "crew_stress": -1})
+synergy_domain = 0
+synergy_min_rarity = 1
+launch_synergy = Dictionary[String, String]({"food": "5"})
+gives_text = "Balanced complete meal"
+synergy_text = "Synergy bonus with the Water system: if the water filter is high-end, the effectiveness of rations increases by 15%"
+lore = "Most space food is freeze-dried (dehydrated at low temperatures) to reduce launch weight. Water must be reinjected via a special needle before consumption."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

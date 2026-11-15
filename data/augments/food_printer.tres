@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://beqji28akx054"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://def65247dtasf" path="res://assets/textures/ASSETS/nourriture_mythique.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 5
+chance = 1.0
+every_days = 4
+effects = {}
+breaks_module = true
+short_text = "Needs maintenance every 4 days"
+log_text = "The {module} jammed on a protein cartridge and needs maintenance at the power core."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Molecular Food 3D Printer"
+short_name = "Food Printer"
+image = ExtResource("2_img")
+weight = 1.0
+type = 1
+rarity = 2
+domain = 3
+card_type = 3
+upgrades = Dictionary[String, String]({"food": "20"})
+daily = Dictionary[String, int]({"crew_stress": -5, "power": -2})
+toggleable = true
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "Allows choosing the ideal meal each turn (+25% Morale)"
+costs_text = "Consumes Energy. Requires a Rocket maintenance component"
+lore = "A pioneering concept studied for long-duration missions to Mars. It assembles basic nutrient cartridges (powdered protein, lipids, carbs) to print customized textures and meals."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

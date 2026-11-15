@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://2cyglrgy1s8f"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://gncbjard0kld" path="res://assets/textures/ASSETS/nourriture.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "JSC Thermostabilized Standard Rations"
+short_name = "JSC Rations"
+image = ExtResource("2_img")
+weight = 0.8
+type = 0
+rarity = 1
+domain = 3
+card_type = 0
+upgrades = Dictionary[String, String]({"food": "45"})
+gives_text = "+2 points of rations"
+risks_text = "No penalties"
+synergy_text = "Neutral synergy with Water (consumes a standard amount of water for rehydration)"
+lore = "Developed by the Johnson Space Center (JSC), these rations use thermostabilization technology to preserve food at room temperature for years without refrigeration."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

@@ -17,6 +17,8 @@ enum Condition {
     ## Every `every_days` days, checked in the morning before modules run
     ## (every_days = 1: every morning).
     EVERY_N_DAYS,
+    ## Only on the night of day `threshold` (a one-off).
+    ON_DAY,
 }
 
 @export var condition: Condition = Condition.ANY_DAY
@@ -27,12 +29,13 @@ enum Condition {
 ## When >= 0, the chance used instead of `chance` while the module sits next
 ## to a card of `domain` (e.g. a radio next to a power module).
 @export_range(-1.0, 1.0, 0.01) var adjacent_chance: float = -1.0
-## For WATER_BELOW.
+## For WATER_BELOW (liters) and ON_DAY (the day).
 @export var threshold: int = 0
 ## For EVERY_N_DAYS.
 @export var every_days: int = 3
 
 ## Same keys as event effects (MissionState.apply_effects): resource ids,
+## "<resource>_percent" (e.g. food_percent: -40 spoils 40% of the food),
 ## crew_health, crew_stress, random_crew_health, random_crew_stress,
 ## random_crew_sick.
 @export var effects: Dictionary = {}

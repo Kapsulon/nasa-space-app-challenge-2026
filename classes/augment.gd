@@ -129,6 +129,7 @@ const FLAG_TEXT: Dictionary[StringName, String] = {
     &"morale_floor": "Crew stress never goes above 75",
     &"isolation_relief": "Homesick alerts cost 25% less stress",
     &"comms_relay": "Halves Common comms interference",
+    &"infinite_food": "Feeds the whole crew while it runs",
 }
 
 ## Crew stress can't go above this with a "morale_floor" module aboard.
@@ -174,6 +175,10 @@ const PLAN_ACTION_TEXT: Dictionary[PlanAction, String] = {
 ## crew_stress (each crew member) and crew_water (extra liters each crew
 ## member drinks).
 @export var daily: Dictionary[String, int] = {}
+## The daily effects (and synergy) stop after this many days of mission
+## (0 = the whole mission), e.g. a care package that cheers the crew up for
+## the first 2 days.
+@export var daily_days: int = 0
 ## The crew can switch this module off for the night (no output, no costs).
 @export var toggleable: bool = false
 @export var risks: Array[CardRisk] = []
@@ -190,7 +195,8 @@ const PLAN_ACTION_TEXT: Dictionary[PlanAction, String] = {
 @export var synergy_max: int = 1
 ## Only related cards of at least this rarity count.
 @export var synergy_min_rarity: Rarity = Rarity.COMMON
-## Launch keys (like `upgrades`) added when a related card is in the cargo.
+## Keys (like `upgrades`) added at launch when a related card is in the
+## cargo: launch keys, and resource ids for extra stock.
 @export var launch_synergy: Dictionary[String, String] = {}
 
 @export_group("Navigation")
@@ -314,7 +320,8 @@ func summary_entries() -> Array[Dictionary]:
     for key in daily.keys():
         var amount: int = daily[key]
         var good := amount < 0 if key in ["crew_stress", "crew_water"] else amount > 0
-        entries.append({"text": daily_line(key, amount) + " / day", "kind": "good" if good else "bad"})
+        var per_day := " / day" if daily_days <= 0 else " / day (first %d day%s)" % [daily_days, "" if daily_days == 1 else "s"]
+        entries.append({"text": daily_line(key, amount) + per_day, "kind": "good" if good else "bad"})
     if hazard_reduction > 0.0:
         entries.append({"text": "Hazard alerts %d%% less likely" % roundi(hazard_reduction * 100.0), "kind": "good"})
     if event_rerolls > 0:
@@ -332,7 +339,10 @@ func summary_entries() -> Array[Dictionary]:
     if not launch_synergy.is_empty():
         var parts: PackedStringArray = []
         for key in launch_synergy.keys():
-            parts.append("%+d %s" % [int(launch_synergy[key]), key.replace("_", " ")])
+            if MissionState.RESOURCE_INFO.has(key):
+                parts.append(MissionState.amount_text(key, int(launch_synergy[key])))
+            else:
+                parts.append("%+d %s" % [int(launch_synergy[key]), key.replace("_", " ")])
         entries.append({"text": "%s with a %s" % [", ".join(parts), related], "kind": "good"})
     for flag in flags:
         entries.append({"text": FLAG_TEXT.get(flag, String(flag)), "kind": "good"})

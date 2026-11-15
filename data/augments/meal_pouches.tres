@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://ohjb3yh6m2sr"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://gncbjard0kld" path="res://assets/textures/ASSETS/nourriture.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 0
+chance = 0.1
+effects = {"random_crew_sick": 1}
+blocked_by = &"pure_water"
+short_text = "Can give a crew member diarrhea"
+log_text = "A {module} meal did not agree with someone. Sick crew drink twice as much water."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Bargain Freeze-Dried Meal Pouches"
+short_name = "Meal Pouches"
+image = ExtResource("2_img")
+weight = 0.4
+type = 0
+rarity = 0
+domain = 3
+card_type = 0
+upgrades = Dictionary[String, String]({"food": "25", "water": "-12"})
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "+25 meals"
+costs_text = "-12 L water to rehydrate the pouches"
+risks_text = "Risk of diarrhea"
+lore = "Freeze-drying removes almost all the water from food, which makes it light to launch, but every pouch has to be rehydrated before it can be eaten. Space food must meet strict safety rules: the HACCP food-safety system used worldwide today was first developed with NASA for the Apollo program. Bargain pouches don't always follow it."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

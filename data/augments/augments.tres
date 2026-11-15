@@ -61,7 +61,16 @@ _uids_to_string_ids = Dictionary[StringName, StringName]({
 &"uid://cmhbmypf7r3ut": &"rp1_tank",
 &"uid://8skuomxh3s28": &"cryo_tank",
 &"uid://cnpthywhuxkk2": &"composite_tank",
-&"uid://cafd5tsmo45o3": &"depot_stage"
+&"uid://cafd5tsmo45o3": &"depot_stage",
+&"uid://bg8vfhanlvruk": &"apollo_rations",
+&"uid://b6cceuwqxrorq": &"care_package",
+&"uid://ohjb3yh6m2sr": &"meal_pouches",
+&"uid://2cyglrgy1s8f": &"jsc_rations",
+&"uid://doeepkuub1nde": &"vitamin_broth",
+&"uid://bv4kxg2it1r3u": &"iss_menu",
+&"uid://d2u2f411h3xkc": &"algae_biosynthesizer",
+&"uid://beqji28akx054": &"food_printer",
+&"uid://cvv0f6ei1wmt8": &"veggie_garden"
 })
 _string_ids_to_uids = Dictionary[StringName, StringName]({
 &"humidity_condenser": &"uid://1mkrix07xq3k",
@@ -111,5 +120,14 @@ _string_ids_to_uids = Dictionary[StringName, StringName]({
 &"rp1_tank": &"uid://cmhbmypf7r3ut",
 &"cryo_tank": &"uid://8skuomxh3s28",
 &"composite_tank": &"uid://cnpthywhuxkk2",
-&"depot_stage": &"uid://cafd5tsmo45o3"
+&"depot_stage": &"uid://cafd5tsmo45o3",
+&"apollo_rations": &"uid://bg8vfhanlvruk",
+&"care_package": &"uid://b6cceuwqxrorq",
+&"meal_pouches": &"uid://ohjb3yh6m2sr",
+&"jsc_rations": &"uid://2cyglrgy1s8f",
+&"vitamin_broth": &"uid://doeepkuub1nde",
+&"iss_menu": &"uid://bv4kxg2it1r3u",
+&"algae_biosynthesizer": &"uid://d2u2f411h3xkc",
+&"food_printer": &"uid://beqji28akx054",
+&"veggie_garden": &"uid://cvv0f6ei1wmt8"
 })
