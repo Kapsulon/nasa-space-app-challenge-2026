@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://blls4xalgq31a"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
-[ext_resource type="Texture2D" uid="uid://dpt1rap27ed8b" path="res://assets/textures/ASSETS/communication.jpeg" id="2_img"]
+[ext_resource type="Texture2D" uid="uid://btcsbttukp0ca" path="res://assets/textures/cards/ham_radio.png" id="2_img"]
 [ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
 
 [sub_resource type="Resource" id="Risk_0"]

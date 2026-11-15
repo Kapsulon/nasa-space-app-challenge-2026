@@ -52,6 +52,7 @@ func update_display() -> void:
 
     %FamilyImage.texture = Augment.TYPE_ICONS[augment.type]
     %AugmentImage.texture = augment.image
+    %Foil.visible = augment.rarity == Augment.Rarity.MYTHIC
 
     var desc: String = augment.description
     if desc == "":

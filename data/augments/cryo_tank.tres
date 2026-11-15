@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://8skuomxh3s28"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
-[ext_resource type="Texture2D" uid="uid://do2q7xdif88ud" path="res://assets/textures/ASSETS/fuel.jpeg" id="2_img"]
+[ext_resource type="Texture2D" uid="uid://el2cp6h1xm32" path="res://assets/textures/cards/cryo_tank.png" id="2_img"]
 
 [resource]
 script = ExtResource("1_aug")

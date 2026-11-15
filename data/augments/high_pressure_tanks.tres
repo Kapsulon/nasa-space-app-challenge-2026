@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bbmhyxdctkpao"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
-[ext_resource type="Texture2D" uid="uid://b8hmmgmv6uemx" path="res://assets/textures/ASSETS/oxygen.jpeg" id="2_img"]
+[ext_resource type="Texture2D" uid="uid://d00d88ibsmxej" path="res://assets/textures/cards/high_pressure_tanks.png" id="2_img"]
 
 [resource]
 script = ExtResource("1_aug")

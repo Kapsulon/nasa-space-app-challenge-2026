@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bkjhadsi82wn2"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
-[ext_resource type="Texture2D" uid="uid://b14ldaxpyr27e" path="res://assets/textures/ASSETS/eau_mythique.jpeg" id="2_img"]
+[ext_resource type="Texture2D" uid="uid://djgxac768baxi" path="res://assets/textures/cards/quantum_condenser.png" id="2_img"]
 
 [resource]
 script = ExtResource("1_aug")
