@@ -273,7 +273,7 @@ func update_manifest() -> void:
         row.add_child(line)
         var label := Label.new()
         label.text = augment.card_name()
-        label.add_theme_font_size_override("font_size", 18)
+        label.add_theme_font_size_override("font_size", 35)
         label.add_theme_color_override("font_color", Augment.RARITY_COLORS[augment.rarity])
         label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -291,7 +291,7 @@ func update_manifest() -> void:
     if overhead_slots > 0:
         var crates := Label.new()
         crates.text = "Crates and gambles: %d slot%s" % [overhead_slots, "" if overhead_slots == 1 else "s"]
-        crates.add_theme_font_size_override("font_size", 16)
+        crates.add_theme_font_size_override("font_size", 34)
         crates.add_theme_color_override("font_color", Augment.DOMAIN_COLORS[Augment.Domain.LOGISTICS])
         %ManifestList.add_child(crates)
     update_balance()
@@ -307,7 +307,7 @@ func _build_target_list() -> void:
         button.text = augment.card_name()
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        button.add_theme_font_size_override("font_size", 18)
+        button.add_theme_font_size_override("font_size", 35)
         var rarity_color: Color = Augment.RARITY_COLORS[augment.rarity]
         for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
             button.add_theme_color_override(state, rarity_color)
@@ -333,7 +333,7 @@ func _build_target_list() -> void:
         %ManifestList.add_child(button)
     var cancel := Button.new()
     cancel.text = "CANCEL: PICK ANOTHER CARD"
-    cancel.add_theme_font_size_override("font_size", 16)
+    cancel.add_theme_font_size_override("font_size", 34)
     var cancel_style := _box_style(Color("1e293b"), Color("475569"), 2)
     var cancel_hover := _box_style(Color("1e293b"), Color("38bdf8"), 2)
     cancel.add_theme_stylebox_override("normal", cancel_style)
@@ -382,7 +382,7 @@ func _tag(text: String, color: Color) -> PanelContainer:
     tag.add_theme_stylebox_override("panel", style)
     var label := Label.new()
     label.text = text
-    label.add_theme_font_size_override("font_size", 14)
+    label.add_theme_font_size_override("font_size", 34)
     label.add_theme_color_override("font_color", color)
     tag.add_child(label)
     return tag
@@ -418,11 +418,11 @@ func update_balance() -> void:
             lasts = "%d DAY%s" % [days, "" if days == 1 else "S"]
             if days < preview.mission_days:
                 color = Color("ff3a55") if days * 2 < preview.mission_days else Color("ffb800")
-        var name_label := _small_label(MissionState.resource_name(res_id).to_upper(), 16, Color("cbd5e1"))
+        var name_label := _small_label(MissionState.resource_name(res_id).to_upper(), 34, Color("cbd5e1"))
         name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         grid.add_child(name_label)
-        grid.add_child(_small_label("%d %s" % [stock, MissionState.unit(res_id)], 16, Color.WHITE))
-        grid.add_child(_small_label("%+d/DAY" % net, 14, Color("64748b")))
+        grid.add_child(_small_label("%d %s" % [stock, MissionState.unit(res_id)], 34, Color.WHITE))
+        grid.add_child(_small_label("%+d/DAY" % net, 34, Color("64748b")))
         grid.add_child(_tag(lasts, color))
     var t := ""
     var hazard := preview.hazard_change()
@@ -450,9 +450,15 @@ func show_details(augment: Augment) -> void:
     for row in rows:
         if row[1] != "":
             t += "[color=#%s]%s:[/color] %s\n" % [row[2], row[0], row[1]]
-    if augment.lore != "":
-        t += "[color=#8a94a6][font_size=18]%s[/font_size][/color]" % augment.lore
     %CardDetails.text = t
+    # The flavor text only shows when there is room: the numbers come first
+    # and must stay big enough to read.
+    if augment.lore != "":
+        var label: RichTextLabel = %CardDetails
+        var with_lore := t + "[color=#8a94a6][font_size=34]%s[/font_size][/color]" % augment.lore
+        label.text = with_lore
+        if label.get_content_height() > label.size.y:
+            label.text = t
 
 
 ## Refreshes the launch odds bar. While a card is hovered, `preview` is its

@@ -84,13 +84,13 @@ func _draw() -> void:
 
     var font := get_theme_default_font()
     var glyph := "..." if assigned else "!"
-    var font_size := 26 if not assigned else 20
+    var font_size := 40 if not assigned else 30
     var w := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
     draw_string(font, center + Vector2(-w.x * 0.5, w.y * 0.3), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color.lerp(Color.WHITE, 0.3))
 
     # Title under the bubble.
-    var title_size := 16
+    var title_size := 26
     var tw := font.get_string_size(event.title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size).x
-    var title_pos := Vector2(center.x - tw * 0.5, center.y + r + 26)
-    draw_rect(Rect2(title_pos - Vector2(5, 15), Vector2(tw + 10, 20)), Color(0, 0, 0, 0.7))
+    var title_pos := Vector2(center.x - tw * 0.5, center.y + r + 34)
+    draw_rect(Rect2(title_pos - Vector2(8, 25), Vector2(tw + 16, 34)), Color(0, 0, 0, 0.8))
     draw_string(font, title_pos, event.title, HORIZONTAL_ALIGNMENT_LEFT, -1, title_size, Color.WHITE)
