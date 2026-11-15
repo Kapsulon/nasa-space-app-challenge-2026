@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Dismantle the bulkhead immediately"
+cost = Dictionary[String, int]({})
+needs_crew = true
+work_hours = 2.0
+success_chance = 0.6
+success_effects = Dictionary[String, int]({"crew_stress": -8})
+success_text = "Just a squeaky fan bearing. No cat, but everyone sleeps better now."
+failure_effects = Dictionary[String, int]({"oxygen": -3, "break_oxygen": 1, "crew_stress": -4})
+failure_text = "Found the squeak... and knocked a cable loose in the air system."
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Ignore the noises and put on headphones"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": 12})
+success_text = "The meowing never stops. Nobody is sleeping well."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Schrödinger's Space Cat"
+description = "A meowing sound echoes from behind the living module's bulkheads. Nobody brought an animal aboard, yet the CO2 detector signals an abnormal biological presence... or a short circuit in the ventilation fan."
+min_day = 2
+weight = 1.0
+skill = "engineering"
+location = "life_support"
+tags = Array[StringName]([])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1")])

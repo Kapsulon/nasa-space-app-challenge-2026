@@ -1,0 +1,52 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Plug it into the power grid to see what it is"
+cost = Dictionary[String, int]({})
+needs_crew = true
+work_hours = 1.5
+success_chance = 0.35
+success_effects = Dictionary[String, int]({"gain_mythic": 1})
+success_text = "It whirs to life: a prototype nobody knew existed! It's now part of the ship."
+failure_effects = Dictionary[String, int]({"power": -8, "break_energy": 1})
+failure_text = "ZAP! A massive short circuit drained the batteries and fried a power module."
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Analyze it with the star tracker"
+requires_domain = 7
+cost = Dictionary[String, int]({})
+needs_crew = true
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"offline_navigation": 1, "repair_module": 1, "hull": 8})
+success_text = "The star tracker identified a standard repair kit. Spare parts for everyone!"
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_2"]
+script = ExtResource("2_choice")
+label = "Jettison it into deep space"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": 6})
+success_text = "Safe, but nobody can stop wondering what was inside."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Parcel Delivered in Orbit"
+description = "A small unidentified object gently taps against the porthole. Retrieving it through the airlock, the crew finds a sealed package with a 3-year-expired Earth delivery logo, containing a mysterious electronic device not listed on the flight manifest."
+min_day = 3
+weight = 0.8
+skill = "engineering"
+location = "outside"
+tags = Array[StringName]([])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1"), SubResource("Choice_2")])

@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Broadcast a distress loop across all frequencies"
+cost = Dictionary[String, int]({"power": 6})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": -12})
+success_text = "Ham radio fans all over the world answer the call. Hope is back!"
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Accept the silence and switch to autonomous mode"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": 10, "comms_down_days": 2})
+success_text = "The power is saved for the modules. The silence is heavy."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Houston Goes Silent"
+description = "The final radio signals from Houston confirm that Earth's Mission Control has shut down following major crises. You are officially alone in space."
+min_day = 5
+weight = 0.8
+skill = "command"
+location = "comms"
+tags = Array[StringName]([&"isolation"])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1")])

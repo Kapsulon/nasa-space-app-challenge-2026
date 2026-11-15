@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Hold a crew meeting and keep everyone focused"
+cost = Dictionary[String, int]({})
+needs_crew = true
+work_hours = 1.5
+success_chance = 0.7
+success_effects = Dictionary[String, int]({"crew_stress": -5})
+success_text = "\"Our job is up here.\" The crew is shaken, but focused."
+failure_effects = Dictionary[String, int]({"crew_stress": 8})
+failure_text = "The meeting turned into an argument about politics."
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Let everyone follow the news"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": 10, "sluggish_days": 1})
+success_text = "The crew spends the day glued to the news feeds instead of working."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "The Government Collapses"
+description = "Breaking news from Earth: the government that funds the mission has collapsed overnight. Mission control is in turmoil, the budget is frozen, and the crew can't stop refreshing the news feeds."
+min_day = 4
+weight = 0.8
+skill = "command"
+location = "comms"
+tags = Array[StringName]([&"isolation"])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1")])

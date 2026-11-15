@@ -32,13 +32,13 @@ const DEFAULT_CAPACITIES: Dictionary[String, int] = {
     "oxygen": 30, "water": 60, "food": 50, "power": 20, "hull": 100, "medkits": 5,
 }
 const DEFAULT_START: Dictionary[String, int] = {
-    "oxygen": 16, "water": 30, "food": 40, "power": 12, "hull": 100, "medkits": 2,
+    "oxygen": 12, "water": 24, "food": 24, "power": 12, "hull": 100, "medkits": 2,
 }
 
 ## Daily needs of each crew member (roughly real ISS figures).
 const WATER_PER_CREW: int = 3
 const OXYGEN_PER_CREW: int = 1
-const FOOD_PER_CREW: int = 1
+const FOOD_PER_CREW: int = 2
 
 ## name, role, skill, starting station.
 const DEFAULT_CREW: Array[Array] = [
@@ -80,15 +80,15 @@ const DAY_START_HOUR: float = 8.0
 const DAY_HOURS: float = 12.0
 
 # Station rates, per hour.
-const REST_HEAL_PER_HOUR: float = 1.5
-const REST_STRESS_PER_HOUR: float = 1.2
-const MEDBAY_HEAL_PER_HOUR: float = 3.0
+const REST_HEAL_PER_HOUR: float = 1.0
+const REST_STRESS_PER_HOUR: float = 0.8
+const MEDBAY_HEAL_PER_HOUR: float = 1.5
 const MEDBAY_CURE_HOURS: float = 4.0
-const COMMS_STRESS_PER_HOUR: float = 3.0
-const CUPOLA_STRESS_PER_HOUR: float = 1.5
+const COMMS_STRESS_PER_HOUR: float = 2.0
+const CUPOLA_STRESS_PER_HOUR: float = 1.0
 const WORK_STRESS_PER_HOUR: float = 0.6
 const SCIENCE_PER_HOUR: float = 0.12
-const HULL_REPAIR_PER_HOUR: float = 1.0
+const HULL_REPAIR_PER_HOUR: float = 0.5
 const MODULE_REPAIR_HOURS: float = 4.0
 const RECYCLE_WATER_PER_HOUR: float = 0.2
 const RECYCLE_OXYGEN_PER_HOUR: float = 0.08
@@ -100,12 +100,21 @@ const SKILL_BONUS: float = 1.5
 const SOLAR_POWER_PER_DAY: int = 4
 const LIFE_SUPPORT_POWER: int = 3
 ## Extra oxygen used when life support falls back to backup mode.
-const BACKUP_OXYGEN: int = 2
-const HULL_DECAY_PER_DAY: int = 2
+const BACKUP_OXYGEN: int = 3
+const HULL_DECAY_PER_DAY: int = 3
 const HULL_LEAK_THRESHOLD: int = 30
 const SLEEP_HEAL: int = 4
 const SLEEP_STRESS_RELIEF: int = 4
+## The ship can't fly with fewer crew than this: the last ones fly home too.
+const MIN_CREW: int = 2
+## Being far from home wears on everyone a little every night.
+const HOMESICK_STRESS: int = 3
 const MEDKIT_HEAL: int = 40
+
+# Going without. Damage per night: the first night, then every night after.
+const HUNGER_DAMAGE: Array[int] = [5, 12]
+const THIRST_DAMAGE: Array[int] = [8, 18]
+const NO_AIR_DAMAGE: int = 50
 
 # Stress tuning.
 const HUNGER_STRESS: int = 8
@@ -116,8 +125,8 @@ const LOW_AIR_STRESS: int = 20
 
 # Events.
 ## Chance of an alert in the morning, and of a second one in the afternoon.
-const EVENT_CHANCE: float = 0.8
-const SECOND_EVENT_CHANCE: float = 0.45
+const EVENT_CHANCE: float = 1.0
+const SECOND_EVENT_CHANCE: float = 0.7
 ## Hours an alert waits for someone before the crew falls back on the last
 ## (passive) option.
 const EVENT_DEADLINE_HOURS: float = 4.0
@@ -127,6 +136,27 @@ const EVENT_SICK_PENALTY: float = 0.15
 const EVENT_WORK_STRESS: int = 4
 ## Stress from homesick alerts with an "isolation_relief" module aboard.
 const ISOLATION_RELIEF: float = 0.75
+
+## Ship-wide conditions set by alerts with a "<name>_days" effect. They last
+## that many nights, tonight included ("night": effects applied every night).
+const CONDITIONS: Dictionary[String, Dictionary] = {
+    "blackout": {"name": "Blackout", "start": "Main power is off: modules that need power stay dark and life support runs on backup.",
+        "end": "Main power is back on."},
+    "rationing": {"name": "Rationing", "start": "Strict rationing: half meals and half water for everyone.",
+        "end": "Rationing is over.", "night": {"crew_stress": 2}},
+    "sluggish": {"name": "Sluggish crew", "start": "The crew is sluggish: everything takes twice as long.",
+        "end": "The crew is back up to speed."},
+    "comms_down": {"name": "Radio down", "start": "The radio is down: calls home won't get through.",
+        "end": "The radio is working again."},
+    "cold": {"name": "Freezing", "start": "The heating is off and the cabin is freezing.",
+        "end": "The heating is back on.", "night": {"crew_stress": 3, "crew_health": -3}},
+}
+
+## Event effects that pick modules by domain: "break_energy",
+## "lose_communication_or_navigation", "offline_navigation", "break_any".
+const MODULE_EFFECTS: Array[String] = ["break_", "lose_", "offline_"]
+
+const AUGMENT_REGISTRY_PATH: String = "res://data/augments/augments.tres"
 
 enum Outcome { ONGOING, WON, LOST }
 
@@ -149,6 +179,15 @@ var hazard_up_today: float = 0.0
 var rerolls_left: int = 0
 ## Day from which a bad alert can be cancelled again (AutoNav).
 var _cancel_ready_day: int = 1
+## Active CONDITIONS: name -> nights left (tonight included).
+var conditions: Dictionary[String, int] = {}
+## Modules were added or lost during the day (the view rebuilds its list).
+var modules_changed: bool = false
+
+## The crew member resolving the current event choice ("worker_*" effects).
+var _worker: CrewMember = null
+## Crew members going into cryosleep tonight.
+var _cryosleep: Array[CrewMember] = []
 
 var _event_pool: Array[MissionEvent] = []
 var _all_events: Array[MissionEvent] = []
@@ -307,7 +346,8 @@ func feeds_crew() -> bool:
 
 
 func water_need(member: CrewMember) -> int:
-    return WATER_PER_CREW + extra_water_per_crew() + (WATER_PER_CREW if member.sick else 0)
+    var need := WATER_PER_CREW + extra_water_per_crew() + (WATER_PER_CREW if member.sick else 0)
+    return ceili(need / 2.0) if has_condition("rationing") else need
 
 
 func _risk_blocked(risk: CardRisk) -> bool:
@@ -436,12 +476,27 @@ func start_day() -> void:
     _day_start_resources = resources.duplicate()
     _day_start_science = science
     _stations_used.clear()
-    comms_down = false
+    comms_down = has_condition("comms_down") or has_condition("blackout")
     hazard_up_today = 0.0
     for module in modules:
         module.offline_today = false
     _morning_risks()
     _update_stress_cap()
+
+
+## Today's alerts: [{hour, event}]. Always one on day 1, then a morning one
+## (EVENT_CHANCE) and an afternoon one (SECOND_EVENT_CHANCE).
+func plan_alerts() -> Array[Dictionary]:
+    var schedule: Array[Dictionary] = []
+    if day == 1 or randf() < EVENT_CHANCE:
+        var event := draw_event()
+        if event != null:
+            schedule.append({"hour": randf_range(9.5, 12.5) if day > 1 else 9.5, "event": event})
+    if day > 1 and randf() < SECOND_EVENT_CHANCE:
+        var event := draw_event()
+        if event != null:
+            schedule.append({"hour": randf_range(13.0, 15.5), "event": event})
+    return schedule
 
 
 ## Picks a random alert for today, or null. Events don't repeat until every
@@ -544,6 +599,20 @@ func can_afford(cost: Dictionary) -> bool:
     return true
 
 
+## The choice can be picked: its cost can be paid and the module it needs
+## (if any) is working.
+func can_choose(choice: EventChoice) -> bool:
+    return can_afford(choice.cost) and (choice.requires_domain < 0 or has_working_domain(choice.requires_domain))
+
+
+func has_working_domain(domain: int) -> bool:
+    return modules.any(func(m: ShipModule): return m.working() and m.augment.domain == domain)
+
+
+func has_condition(name: String) -> bool:
+    return conditions.get(name, 0) > 0
+
+
 func can_use_medkit(member: CrewMember) -> bool:
     return member.is_aboard() and resources["medkits"] > 0 and (member.sick or member.health < CrewMember.MAX_HEALTH)
 
@@ -573,6 +642,8 @@ func work_rate(member: CrewMember, station: String) -> float:
     var rate := SKILL_BONUS if is_skilled_at(member, station) else 1.0
     if member.is_overwhelmed():
         rate *= OVERWHELMED_EFFICIENCY
+    if has_condition("sluggish"):
+        rate *= 0.5
     return rate
 
 
@@ -684,12 +755,14 @@ func event_hours(event: MissionEvent, choice: EventChoice, member: CrewMember) -
         hours /= SKILL_BONUS
     if member.is_overwhelmed():
         hours /= OVERWHELMED_EFFICIENCY
+    if has_condition("sluggish"):
+        hours *= 2.0
     return hours
 
 
 ## Pays the choice's cost. False if the ship can't afford it.
 func begin_event_choice(choice: EventChoice) -> bool:
-    if not can_afford(choice.cost):
+    if not can_choose(choice):
         return false
     for key in choice.cost.keys():
         resources[key] -= choice.cost[key]
@@ -704,9 +777,12 @@ func finish_event_choice(event: MissionEvent, choice: EventChoice, member: CrewM
         for key in ["crew_stress", "random_crew_stress"]:
             if effects.get(key, 0) > 0:
                 effects[key] = roundi(effects[key] * ISOLATION_RELIEF)
+    _worker = member
     apply_effects(effects)
+    _worker = null
     if member != null:
         member.add_stress(EVENT_WORK_STRESS)
+    _clamp_resources()
     return {"success": success, "text": choice.success_text if success else choice.failure_text}
 
 
@@ -737,9 +813,12 @@ func forecast() -> Dictionary[String, int]:
         delta["oxygen"] -= 1
     var fed := feeds_crew()
     for member in aboard:
-        if not fed:
-            delta["food"] -= FOOD_PER_CREW
         delta["water"] -= water_need(member)
+    if not fed:
+        var meals := aboard.size() * FOOD_PER_CREW
+        delta["food"] -= ceili(meals / 2.0) if has_condition("rationing") else meals
+    if has_condition("blackout"):
+        delta["power"] = -resources["power"]
     return delta
 
 
@@ -766,6 +845,9 @@ func _run_modules() -> void:
     running.sort_custom(func(a: ShipModule, b: ShipModule): return _cost_count(a) < _cost_count(b))
     for module: ShipModule in running:
         var effects := module_daily(module)
+        if has_condition("blackout") and effects.get("power", 0) < 0:
+            module.unpowered = true
+            continue
         var missing := ""
         for key in effects.keys():
             if resources.has(key) and effects[key] < 0 and resources[key] < -effects[key]:
@@ -803,21 +885,28 @@ func end_day() -> Dictionary:
 
     # 1. Ship modules, then the capsule's own solar wings and life support.
     _run_modules()
-    resources["power"] += SOLAR_POWER_PER_DAY
-    var station_power := _powered_stations_used()
-    resources["power"] = maxi(0, resources["power"] - station_power)
-    _power_short = resources["power"] < LIFE_SUPPORT_POWER and not has_flag(&"stable_power")
-    resources["power"] = maxi(0, resources["power"] - LIFE_SUPPORT_POWER)
+    if has_condition("blackout"):
+        resources["power"] = 0
+        _power_short = true
+    else:
+        resources["power"] += SOLAR_POWER_PER_DAY
+        var station_power := _powered_stations_used()
+        resources["power"] = maxi(0, resources["power"] - station_power)
+        _power_short = resources["power"] < LIFE_SUPPORT_POWER and not has_flag(&"stable_power")
+        resources["power"] = maxi(0, resources["power"] - LIFE_SUPPORT_POWER)
     if _power_short:
         _log("[color=#ffb35c]Not enough power: life support switched to backup mode and used extra oxygen.[/color]")
 
     # 2. Meals and water, then a night's sleep.
     var fed := feeds_crew()
     for member in aboard:
-        if fed:
+        var meal := FOOD_PER_CREW
+        if has_condition("rationing"):
+            meal = _accumulate("ration_meal", FOOD_PER_CREW * 0.5)
+        if fed or meal == 0:
             member.days_hungry = 0
-        elif resources["food"] >= FOOD_PER_CREW:
-            resources["food"] -= FOOD_PER_CREW
+        elif resources["food"] >= meal:
+            resources["food"] -= meal
             member.days_hungry = 0
         else:
             _log("The pantry ran out before %s got a meal." % member.display_name)
@@ -831,8 +920,10 @@ func end_day() -> Dictionary:
             _log("The water tank ran dry before %s got a drink." % member.display_name)
             member.days_thirsty += 1
             member.add_stress(THIRST_STRESS)
-        member.heal(SLEEP_HEAL if not member.sick else 0)
-        member.add_stress(-SLEEP_STRESS_RELIEF)
+        # Nobody sleeps well hungry, thirsty or sick.
+        if not member.sick and member.days_hungry == 0 and member.days_thirsty == 0:
+            member.heal(SLEEP_HEAL)
+            member.add_stress(-SLEEP_STRESS_RELIEF)
 
     # 3. Breathing, hull wear.
     var oxygen_needed := aboard.size() * OXYGEN_PER_CREW + (BACKUP_OXYGEN if _power_short else 0)
@@ -846,7 +937,7 @@ func end_day() -> Dictionary:
         resources["oxygen"] = 0
         _log("[color=#ff5a6e]The oxygen tanks ran low! The air feels thin and everyone is short of breath.[/color]")
         for member in aboard:
-            member.damage(15)
+            member.damage(NO_AIR_DAMAGE)
             member.add_stress(LOW_AIR_STRESS)
     resources["hull"] -= HULL_DECAY_PER_DAY
     _clamp_resources()
@@ -856,12 +947,10 @@ func end_day() -> Dictionary:
 
     # 5. Body condition.
     for member in aboard:
-        if member.days_hungry >= 2:
-            member.damage(10)
-        if member.days_thirsty >= 2:
-            member.damage(15)
-        elif member.days_thirsty == 1:
-            member.damage(5)
+        if member.days_hungry > 0:
+            member.damage(HUNGER_DAMAGE[mini(member.days_hungry, 2) - 1])
+        if member.days_thirsty > 0:
+            member.damage(THIRST_DAMAGE[mini(member.days_thirsty, 2) - 1])
         if member.sick:
             member.damage(6)
             member.add_stress(SICK_STRESS)
@@ -870,11 +959,21 @@ func end_day() -> Dictionary:
             _log("%s is feeling unwell." % member.display_name)
     _clamp_resources()
 
+    for member in aboard:
+        member.add_stress(HOMESICK_STRESS)
+
+    # Conditions that weigh on the crew every night.
+    for name in conditions.keys():
+        if conditions[name] > 0 and CONDITIONS[name].has("night"):
+            apply_effects(CONDITIONS[name]["night"])
+
     # 6. Anyone at their limit flies home safely.
     var sent_home: Array[Dictionary] = []
     for member in aboard:
         var reason := ""
-        if member.health <= 0:
+        if _cryosleep.has(member):
+            reason = "went into cryosleep to recover"
+        elif member.health <= 0:
             reason = "needed to see a doctor back on Earth"
         elif member.stress >= CrewMember.MAX_STRESS:
             reason = "needed a break from space"
@@ -882,10 +981,20 @@ func end_day() -> Dictionary:
             member.send_home(reason)
             sent_home.append({"name": member.display_name, "reason": reason})
 
+    _cryosleep.clear()
+    for name in conditions.keys():
+        conditions[name] -= 1
+        if conditions[name] <= 0:
+            conditions.erase(name)
+            _log(CONDITIONS[name]["end"])
+
     # 7. Mission state.
-    if crew_aboard().is_empty():
+    if crew_aboard().size() < MIN_CREW:
+        for member in crew_aboard():
+            member.send_home("couldn't fly the ship alone")
+            sent_home.append({"name": member.display_name, "reason": "couldn't fly the ship alone"})
         outcome = Outcome.LOST
-        outcome_text = "The whole crew flew home in the return capsule on day %d. The mission was called off, but everyone is safe and sound back on Earth." % day
+        outcome_text = "On day %d there weren't enough hands left to fly the ship, so the last of the crew flew home in the return capsule. The mission was called off, but everyone is safe and sound back on Earth." % day
     elif resources["hull"] <= 0:
         outcome = Outcome.LOST
         outcome_text = "On day %d the ship became too damaged to continue. The crew climbed into the return capsule and splashed down safely in the ocean." % day
@@ -911,6 +1020,54 @@ func apply_effects(effects: Dictionary) -> void:
         var amount: int = effects[key]
         if resources.has(key):
             resources[key] += amount
+        elif key.ends_with("_days") and CONDITIONS.has(key.trim_suffix("_days")):
+            var name: String = key.trim_suffix("_days")
+            if not has_condition(name):
+                _log("[color=#ffb35c]%s[/color]" % CONDITIONS[name]["start"])
+            conditions[name] = maxi(conditions.get(name, 0), amount)
+            if name in ["comms_down", "blackout"]:
+                comms_down = true
+        elif MODULE_EFFECTS.any(func(prefix: String): return key.begins_with(prefix)):
+            _module_effect(key, amount)
+        elif key == "repair_module":
+            for i in amount:
+                var broken := _broken_module()
+                if broken == null:
+                    break
+                broken.broken = false
+                _log("The %s is fixed and working again." % broken.augment.card_name())
+        elif key == "gain_mythic":
+            for i in amount:
+                _gain_random_card(Augment.Rarity.MYTHIC)
+        elif key == "random_resource":
+            var res_id: String = ["oxygen", "water", "food", "power"].pick_random()
+            resources[res_id] += amount
+            _log("%s: %s." % [resource_name(res_id), amount_text(res_id, amount)])
+        elif key == "sick_all":
+            for member in crew_aboard():
+                if not member.sick:
+                    member.sick = true
+            _log("[color=#ff5a6e]The whole crew is feeling unwell.[/color]")
+        elif key == "cryosleep":
+            var member := _most_stressed()
+            if member != null and not _cryosleep.has(member):
+                _cryosleep.append(member)
+                _log("%s will go into cryosleep tonight." % member.display_name)
+        elif key == "worker_health" or key == "worker_stress":
+            var member := _worker if _worker != null and _worker.is_aboard() else _random_aboard()
+            if member:
+                if key == "worker_health":
+                    _change_health(member, amount)
+                else:
+                    member.add_stress(amount)
+        elif key == "most_stressed_stress":
+            var member := _most_stressed()
+            if member:
+                member.add_stress(amount)
+        elif key.begins_with("stress_") and SKILL_NAMES.has(key.trim_prefix("stress_")):
+            for member in crew_aboard():
+                if member.skill == key.trim_prefix("stress_"):
+                    member.add_stress(amount)
         elif key.ends_with("_percent") and resources.has(key.trim_suffix("_percent")):
             var res_id: String = key.trim_suffix("_percent")
             resources[res_id] += roundi(resources[res_id] * amount / 100.0)
@@ -943,6 +1100,77 @@ func apply_effects(effects: Dictionary) -> void:
         else:
             push_warning("Unknown event effect key: %s" % key)
     _clamp_resources()
+
+
+func _most_stressed() -> CrewMember:
+    var best: CrewMember = null
+    for member in crew_aboard():
+        if not _cryosleep.has(member) and (best == null or member.stress > best.stress):
+            best = member
+    return best
+
+
+## "break_energy" (needs a repair), "lose_any" (gone for good),
+## "offline_navigation" (no output today). Domains can be joined with "_or_".
+func _module_effect(key: String, count: int) -> void:
+    var prefix := ""
+    for p in MODULE_EFFECTS:
+        if key.begins_with(p):
+            prefix = p
+    var domains: Array[int] = []
+    var any := false
+    for part in key.trim_prefix(prefix).split("_or_"):
+        if part == "any":
+            any = true
+        elif Augment.Domain.has(part.to_upper()):
+            domains.append(Augment.Domain[part.to_upper()])
+        else:
+            push_warning("Unknown domain in event effect: %s" % key)
+    for i in maxi(count, 1):
+        var targets := ship_modules().filter(func(m: ShipModule): return m.working() and (any or domains.has(m.augment.domain)))
+        if targets.is_empty():
+            return
+        var module: ShipModule = targets.pick_random()
+        var name := module.augment.card_name()
+        match prefix:
+            "break_":
+                module.broken = true
+                _log("[color=#ffb35c]The %s broke down. Someone needs to repair it at the power core.[/color]" % name)
+            "lose_":
+                module.lost = true
+                _log("[color=#ff5a6e]The %s is gone for good.[/color]" % name)
+            "offline_":
+                module.offline_today = true
+                _log("The %s is busy and offline for the rest of the day." % name)
+        modules_changed = true
+
+
+## A random card (not launch-only) joins the ship as a new module, with its
+## supplies.
+func _gain_random_card(rarity: Augment.Rarity) -> void:
+    var registry: Registry = load(AUGMENT_REGISTRY_PATH)
+    var pool: Array[Augment] = []
+    for id in registry.get_all_string_ids():
+        var augment: Augment = registry.load_entry(id)
+        if augment != null and augment.rarity == rarity and not augment.is_launch_only():
+            pool.append(augment)
+    if pool.is_empty():
+        return
+    var instance := AugmentInstance.new(pool.pick_random(), "")
+    instance.roll()
+    var module := ShipModule.new(instance.augment, modules.size())
+    modules.append(module)
+    for key in instance.augment.upgrades.keys():
+        var amount := instance.upgrade_amount(key)
+        if resources.has(key):
+            if amount > 0:
+                capacities[key] += amount
+            resources[key] = maxi(0, resources[key] + amount)
+        elif key.ends_with("_capacity") and capacities.has(key.trim_suffix("_capacity")):
+            capacities[key.trim_suffix("_capacity")] += amount
+    rerolls_left += instance.augment.event_rerolls
+    modules_changed = true
+    _log("[color=#ffb800]New module aboard: %s![/color]" % instance.augment.card_name())
 
 
 func _random_aboard() -> CrewMember:

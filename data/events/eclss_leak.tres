@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Send an astronaut to mop it up with towels"
+cost = Dictionary[String, int]({})
+needs_crew = true
+work_hours = 1.5
+success_chance = 0.7
+success_effects = Dictionary[String, int]({"water": -3})
+success_text = "Every floating drop is caught. Only a little water lost."
+failure_effects = Dictionary[String, int]({"water": -3, "break_water_or_navigation": 1})
+failure_text = "A blob slipped past the towels and shorted a module."
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Isolate the area and shut off the water for 24 hours"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": 10})
+success_text = "The water is saved, but a day of forced rationing makes everyone grumpy."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_2"]
+script = ExtResource("2_choice")
+label = "Run the automatic purge protocol"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"water": -10})
+success_text = "The purge vented the contaminated water, and a lot of clean water with it."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Icy Leak in the ECLSS System"
+description = "The water recycling system (VCD) shows signs of fatigue. A blob of contaminated water escaped and is floating in zero-G in the main compartment, threatening to short-circuit the navigation control panel."
+min_day = 2
+weight = 1.0
+skill = "engineering"
+location = "life_support"
+tags = Array[StringName]([])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1"), SubResource("Choice_2")])
