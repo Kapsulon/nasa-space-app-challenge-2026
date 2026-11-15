@@ -68,6 +68,25 @@ var _last_pick: AugmentInstance = null
 var _last_pick_slot: int = -1
 var _highlight: Augment = null
 
+# --- Target hand ---
+## While a Logistics card waits for targets, the cards it can pick are dealt
+## as a fanned hand where the offers usually sit.
+var _hand: Control
+var _hand_cards: Control
+var _hand_cancel: Button
+## Hand cards in cargo order (hover moves a card to the front of its parent).
+var _hand_list: Array[AugmentCard] = []
+
+# --- Reveal ---
+## Emitted once the reveal popup is dismissed.
+signal reveal_closed
+## Popup showing the cards a Logistics card added (or took away).
+var _reveal: Control = null
+## Seconds before the popup closes on its own (paused while a card is hovered).
+var _reveal_time: float = 0.0
+var _reveal_hovered: int = 0
+var _reveal_age: float = 0.0
+
 
 func _ready() -> void:
     if not Engine.is_editor_hint():
@@ -83,6 +102,14 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
     if Engine.is_editor_hint() or finished:
+        return
+    if _reveal != null:
+        # The pick timer waits for the player to see what they got.
+        _reveal_age += delta
+        if _reveal_hovered == 0:
+            _reveal_time -= delta
+            if _reveal_time <= 0.0:
+                _close_reveal()
         return
     time_left -= delta
     if time_left <= 0.0:
@@ -331,17 +358,6 @@ func _build_target_list() -> void:
         button.disabled = not targets.has(instance)
         button.pressed.connect(_on_target_pressed.bind(instance))
         %ManifestList.add_child(button)
-    var cancel := Button.new()
-    cancel.text = "CANCEL: PICK ANOTHER CARD"
-    cancel.add_theme_font_size_override("font_size", 16)
-    var cancel_style := _box_style(Color("1e293b"), Color("475569"), 2)
-    var cancel_hover := _box_style(Color("1e293b"), Color("38bdf8"), 2)
-    cancel.add_theme_stylebox_override("normal", cancel_style)
-    cancel.add_theme_stylebox_override("hover", cancel_hover)
-    cancel.add_theme_stylebox_override("pressed", cancel_hover)
-    cancel.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
-    cancel.pressed.connect(_cancel_pending)
-    %ManifestList.add_child(cancel)
 
 
 ## Cargo row: dark pill with the card's domain color down its left edge.
@@ -517,7 +533,7 @@ func _show_odds(chance: float) -> void:
 
 func card_picked(augment_instance: AugmentInstance) -> void:
     var augment := augment_instance.augment
-    if finished or _pending != null or augment.slot_cost() > remaining_slots():
+    if finished or _pending != null or _reveal != null or augment.slot_cost() > remaining_slots():
         return
     time_left = TIME_TO_PICK
     if augment.plan_action in TARGETED_ACTIONS:
@@ -526,6 +542,7 @@ func card_picked(augment_instance: AugmentInstance) -> void:
         %CardsHolder.hide()
         _set_prompt(_target_prompt(augment), 34)
         update_manifest()
+        _open_hand()
         return
     _apply_card(augment_instance, [])
 
@@ -571,9 +588,9 @@ func _targets_needed(augment: Augment) -> int:
 func _target_prompt(augment: Augment) -> String:
     match augment.plan_action:
         Augment.PlanAction.REMOVE:
-            return "%s: pick a card in the manifest to throw away" % augment.card_name()
+            return "%s: pick a card to throw away" % augment.card_name()
         Augment.PlanAction.SWAP:
-            return "%s: pick a card in the manifest to swap" % augment.card_name()
+            return "%s: pick a card to swap" % augment.card_name()
         Augment.PlanAction.DUPLICATE:
             return "%s: pick a Common card to print a copy of" % augment.card_name()
         Augment.PlanAction.TRADE_UP:
@@ -592,11 +609,13 @@ func _on_target_pressed(instance: AugmentInstance) -> void:
         _resolve_pending()
     else:
         update_manifest()
+        _update_hand_marks()
 
 
 func _cancel_pending() -> void:
     _pending = null
     _pending_targets.clear()
+    _close_hand([])
     %CardsHolder.show()
     _set_prompt(PROMPT_TEXT)
     update_manifest()
@@ -607,6 +626,7 @@ func _resolve_pending() -> void:
     var targets := _pending_targets.duplicate()
     _pending = null
     _pending_targets.clear()
+    _close_hand(targets)
     %CardsHolder.show()
     _set_prompt(PROMPT_TEXT)
     if instance != null and targets.size() >= _targets_needed(instance.augment):
@@ -633,6 +653,10 @@ func _apply_card(instance: AugmentInstance, targets: Array) -> void:
         available_augment_slots += augment.bonus_slots
         message = "+%d cargo slots!" % augment.bonus_slots
 
+    # Cards the action brought in or took out, shown in the reveal popup.
+    var gained: Array[AugmentInstance] = []
+    var lost: Array[AugmentInstance] = []
+    var reveal_title := ""
     match augment.plan_action:
         Augment.PlanAction.REMOVE:
             var target: AugmentInstance = targets[0]
@@ -645,12 +669,17 @@ func _apply_card(instance: AugmentInstance, targets: Array) -> void:
                 other.slots = target.slots_taken()
                 selected_augments[selected_augments.find(target)] = other
                 message = "Swapped the %s for: %s" % [target.augment.card_name(), other.augment.card_name()]
+                lost.append(target)
+                gained.append(other)
+                reveal_title = "SWAPPED!"
         Augment.PlanAction.DUPLICATE:
             var target: AugmentInstance = targets[0]
             var copy := AugmentInstance.new(target.augment, "")
             copy.roll()
             selected_augments.insert(selected_augments.find(target) + 1, copy)
             message = "Printed a second %s!" % target.augment.card_name()
+            gained.append(copy)
+            reveal_title = "PRINTED A COPY!"
         Augment.PlanAction.TRADE_UP:
             var index := selected_augments.find(targets[0])
             var freed := 0
@@ -662,24 +691,36 @@ func _apply_card(instance: AugmentInstance, targets: Array) -> void:
                 rare.slots = freed
                 selected_augments.insert(mini(index, selected_augments.size()), rare)
                 message = "Traded up for: %s" % rare.augment.card_name()
+                for target: AugmentInstance in targets:
+                    lost.append(target)
+                gained.append(rare)
+                reveal_title = "TRADED UP!"
         Augment.PlanAction.CRATE:
             var found: Array[AugmentInstance] = [_random_card(Augment.Rarity.RARE), _random_card(-1), _random_card(-1)]
             message = "Inside the crate: %s" % _add_free_cards(found)
+            gained = _non_null(found)
+            reveal_title = "INSIDE THE CRATE"
         Augment.PlanAction.DOUBLE_OR_NOTHING:
             if randf() < 0.5:
                 var won: Array[AugmentInstance] = [_random_card(Augment.Rarity.RARE), _random_card(Augment.Rarity.RARE)]
                 message = "Double! You won: %s" % _add_free_cards(won)
+                gained = _non_null(won)
+                reveal_title = "DOUBLE!"
             else:
                 var pool := selected_augments.filter(func(i: AugmentInstance): return i.augment.domain != Augment.Domain.LOGISTICS)
                 pool.shuffle()
-                var lost: PackedStringArray = []
+                var names: PackedStringArray = []
                 for target: AugmentInstance in pool.slice(0, 2):
                     selected_augments.erase(target)
-                    lost.append(target.augment.card_name())
-                message = "Nothing! You lost: %s" % (", ".join(lost) if not lost.is_empty() else "nothing, the cargo was empty")
+                    names.append(target.augment.card_name())
+                    lost.append(target)
+                message = "Nothing! You lost: %s" % (", ".join(names) if not names.is_empty() else "nothing, the cargo was empty")
+                reveal_title = "NOTHING!"
         Augment.PlanAction.LOTTERY:
             var found: Array[AugmentInstance] = [_random_card(Augment.Rarity.MYTHIC)]
             message = "The prototype is: %s" % _add_free_cards(found)
+            gained = _non_null(found)
+            reveal_title = "THE PROTOTYPE IS..."
 
     launch = LaunchProfile.from_instances(selected_augments)
     update_slots()
@@ -687,6 +728,14 @@ func _apply_card(instance: AugmentInstance, targets: Array) -> void:
     update_launch_odds()
     if message.strip_edges() != "":
         _flash(message.strip_edges())
+
+    if not gained.is_empty() or not lost.is_empty():
+        # Clear the table, show what changed, then deal the next offers.
+        _clear_offers()
+        _show_reveal(reveal_title, gained, lost)
+        await reveal_closed
+        if finished:
+            return
 
     if remaining_slots() <= 0 or available_augments().is_empty():
         finish()
@@ -704,6 +753,14 @@ func _add_free_cards(instances: Array[AugmentInstance]) -> String:
         selected_augments.append(instance)
         names.append(instance.augment.card_name())
     return ", ".join(names)
+
+
+func _non_null(instances: Array[AugmentInstance]) -> Array[AugmentInstance]:
+    var result: Array[AugmentInstance] = []
+    for instance in instances:
+        if instance != null:
+            result.append(instance)
+    return result
 
 
 ## A random card that can fly (no Logistics), of `rarity` (-1 = any, rarer
@@ -754,6 +811,338 @@ func finish() -> void:
     get_tree().change_scene_to_file(LAUNCH_REPORT_SCENE)
 
 
+# --- Target hand ----------------------------------------------------------------
+
+## Badge text and color on the cards a Logistics action has picked.
+func _target_mark(augment: Augment) -> Array:
+    match augment.plan_action:
+        Augment.PlanAction.REMOVE:
+            return ["THROW AWAY", Color("ff3a55")]
+        Augment.PlanAction.SWAP:
+            return ["SWAP", Color("38bdf8")]
+        Augment.PlanAction.DUPLICATE:
+            return ["COPY", Color("39ff6a")]
+        Augment.PlanAction.TRADE_UP:
+            return ["TRADE", Color("ffb800")]
+    return ["PICKED", Color.WHITE]
+
+
+## The hand sits over the offer row, in the same container.
+func _build_hand() -> void:
+    _hand = Control.new()
+    _hand.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    %CardsHolder.get_parent().add_child(_hand)
+    _hand_cards = Control.new()
+    _hand_cards.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _hand_cards.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _hand.add_child(_hand_cards)
+    _hand_cancel = Button.new()
+    _hand_cancel.text = "CANCEL: PICK ANOTHER CARD"
+    _hand_cancel.add_theme_font_size_override("font_size", 18)
+    var cancel_style := _box_style(Color("1e293b"), Color("475569"), 2)
+    var cancel_hover := _box_style(Color("1e293b"), Color("38bdf8"), 2)
+    cancel_style.content_margin_left = 20
+    cancel_style.content_margin_right = 20
+    cancel_hover.content_margin_left = 20
+    cancel_hover.content_margin_right = 20
+    _hand_cancel.add_theme_stylebox_override("normal", cancel_style)
+    _hand_cancel.add_theme_stylebox_override("hover", cancel_hover)
+    _hand_cancel.add_theme_stylebox_override("pressed", cancel_hover)
+    _hand_cancel.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
+    _hand_cancel.pressed.connect(_cancel_pending)
+    _hand_cancel.hide()
+    _hand.add_child(_hand_cancel)
+    _hand_cancel.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM, Control.PRESET_MODE_MINSIZE)
+    _hand_cancel.grow_horizontal = Control.GROW_DIRECTION_BOTH
+    _hand_cancel.grow_vertical = Control.GROW_DIRECTION_BEGIN
+    _hand.resized.connect(_layout_hand.bind(false))
+
+
+## Deals the cards the pending Logistics card can pick, in cargo order.
+func _open_hand() -> void:
+    if _hand == null:
+        return
+    for card in _hand_list:
+        card.queue_free()
+    _hand_list.clear()
+    var targets := _targets_for(_pending.augment)
+    for i in targets.size():
+        var instance := targets[i]
+        var card: AugmentCard = AUGMENT_CARD_PACKED_SCENE.instantiate()
+        card.augment_instance = instance
+        _hand_cards.add_child(card)
+        card.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+        card.picked.connect(_on_target_pressed.bind(instance))
+        card.hover_changed.connect(_on_hand_hover.bind(card))
+        _hand_list.append(card)
+    _layout_hand(false)
+    for i in _hand_list.size():
+        var delay := 0.05 + i * minf(0.06, 0.6 / _hand_list.size())
+        _hand_list[i].deal_in(delay)
+        if i < 8:
+            _synth.word_tick(480.0 + i * 70.0, delay + 0.05)
+    _hand_cancel.show()
+
+
+## Fans the hand out: cards overlap when there are many, tilt away from the
+## middle and sit a little lower towards the edges. Picked ones rise.
+func _layout_hand(animate: bool = true) -> void:
+    var n := _hand_list.size()
+    if n == 0 or _hand == null:
+        return
+    var area := _hand_cards.size
+    var bottom_room := _hand_cancel.get_combined_minimum_size().y + 24.0
+    var card_h := clampf(area.y - bottom_room - 70.0, 160.0, 440.0)
+    var card_w := card_h * 0.71
+    var spread := minf(n * 2.5, 18.0)
+    # The outer cards tilt outwards: keep their corners on screen.
+    var usable := area.x - 2.0 * (card_h * sin(deg_to_rad(spread * 0.5)) + 8.0)
+    var step := card_w + 18.0
+    if n > 1 and step * (n - 1) + card_w > usable:
+        step = (usable - card_w) / (n - 1)
+    var total := step * (n - 1) + card_w
+    var x0 := (area.x - total) * 0.5
+    for i in n:
+        var card := _hand_list[i]
+        var t := 0.0 if n == 1 else i / float(n - 1) * 2.0 - 1.0
+        var picked := _pending_targets.has(card.augment_instance)
+        var pos := Vector2(x0 + i * step, 46.0 + t * t * spread * 1.8 - (40.0 if picked else 0.0))
+        var rot := deg_to_rad(t * spread * 0.5)
+        card.size = Vector2(card_w, card_h)
+        card.pivot_offset = Vector2(card_w * 0.5, card_h)
+        if animate:
+            var tween := card.create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+            tween.tween_property(card, "position", pos, 0.28)
+            tween.tween_property(card, "rotation", rot, 0.28)
+        else:
+            card.position = pos
+            card.rotation = rot
+
+
+func _update_hand_marks() -> void:
+    if _pending == null:
+        return
+    var mark := _target_mark(_pending.augment)
+    for card in _hand_list:
+        card.set_mark(mark[0] if _pending_targets.has(card.augment_instance) else "", mark[1])
+    _layout_hand()
+    _synth.word_tick(900.0)
+
+
+## The hovered card comes to the front so it can be read in full, and fills
+## the details panel.
+func _on_hand_hover(hovering: bool, card: AugmentCard) -> void:
+    if not _hand_list.has(card):
+        return
+    if hovering:
+        _hand_cards.move_child(card, -1)
+        show_details(card.augment_instance.augment)
+    else:
+        _hand_cards.move_child(card, _hand_list.find(card))
+        show_details(null)
+
+
+## Puts the hand away: the cards the action used burst, the others drop.
+func _close_hand(used: Array) -> void:
+    if _hand == null:
+        return
+    var dropped := 0
+    for card in _hand_list:
+        card.retire()
+        if used.has(card.augment_instance):
+            card.set_mark("")
+            card.fly_to(Vector2.ZERO, false)
+        else:
+            card.drop_away(minf(dropped * 0.02, 0.3))
+            dropped += 1
+    _hand_list.clear()
+    _hand_cancel.hide()
+    show_details(null)
+
+
+# --- Reveal ---------------------------------------------------------------------
+
+## Pops the cards a Logistics card added (and the ones it took away) in the
+## middle of the screen so the player sees what happened. Closes on a click,
+## or by itself after a few seconds; emits `reveal_closed` then.
+func _show_reveal(title: String, gained: Array[AugmentInstance], lost: Array[AugmentInstance]) -> void:
+    _reveal = Control.new()
+    _reveal.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _reveal.mouse_filter = Control.MOUSE_FILTER_STOP
+    _reveal.gui_input.connect(func(event: InputEvent):
+        if event is InputEventMouseButton and event.pressed:
+            _close_reveal())
+    add_child(_reveal)
+    _reveal_hovered = 0
+    _reveal_age = 0.0
+    _reveal_time = 2.4 + 0.5 * (gained.size() + lost.size())
+
+    var dim := ColorRect.new()
+    dim.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    dim.color = Color(0.008, 0.016, 0.04, 0.0)
+    dim.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _reveal.add_child(dim)
+    dim.create_tween().tween_property(dim, "color:a", 0.78, 0.25)
+
+    var screen := size
+    var card_h := minf(screen.y * 0.44, 470.0)
+    var card_w := card_h * 0.71
+    var gap := 44.0
+    var arrow_w := 70.0 if not gained.is_empty() and not lost.is_empty() else 0.0
+    var count := gained.size() + lost.size()
+    var total := count * card_w + (count - 1) * gap + arrow_w
+    var x := (screen.x - total) * 0.5
+    var y := (screen.y - card_h) * 0.5 + 30.0
+
+    var title_label := Label.new()
+    title_label.text = title
+    title_label.add_theme_font_size_override("font_size", 72)
+    var title_color := Color("ff3a55") if gained.is_empty() else Color("ffb800")
+    title_label.add_theme_color_override("font_color", title_color)
+    title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
+    title_label.add_theme_constant_override("shadow_offset_y", 6)
+    title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    title_label.size = Vector2(screen.x, 100.0)
+    title_label.position = Vector2(0.0, y - 150.0)
+    title_label.pivot_offset = title_label.size * 0.5
+    title_label.scale = Vector2(0.4, 0.4)
+    title_label.modulate.a = 0.0
+    _reveal.add_child(title_label)
+    var title_tween := title_label.create_tween().set_parallel(true)
+    title_tween.tween_property(title_label, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    title_tween.tween_property(title_label, "modulate:a", 1.0, 0.15)
+
+    var hint := Label.new()
+    hint.text = "CLICK TO CONTINUE"
+    hint.add_theme_font_size_override("font_size", 22)
+    hint.add_theme_color_override("font_color", Color("8a94a6"))
+    hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+    hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    hint.size = Vector2(screen.x, 40.0)
+    hint.position = Vector2(0.0, y + card_h + 60.0)
+    hint.modulate.a = 0.0
+    _reveal.add_child(hint)
+    var hint_tween := hint.create_tween().set_loops()
+    hint_tween.tween_property(hint, "modulate:a", 1.0, 0.6).set_delay(0.3)
+    hint_tween.tween_property(hint, "modulate:a", 0.3, 0.6)
+
+    var entries: Array = []
+    for instance in lost:
+        entries.append([instance, false])
+    for instance in gained:
+        entries.append([instance, true])
+    for i in entries.size():
+        var instance: AugmentInstance = entries[i][0]
+        var is_new: bool = entries[i][1]
+        if is_new and i > 0 and not entries[i - 1][1]:
+            var arrow := Label.new()
+            arrow.text = ">>"
+            arrow.add_theme_font_size_override("font_size", 56)
+            arrow.add_theme_color_override("font_color", Color("cbd5e1"))
+            arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+            arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+            arrow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+            arrow.size = Vector2(arrow_w + gap, card_h)
+            arrow.position = Vector2(x - gap, y)
+            _reveal.add_child(arrow)
+            x += arrow_w
+        _reveal_card(instance, is_new, Rect2(x, y, card_w, card_h), 0.2 + i * 0.3)
+        x += card_w + gap
+
+
+## One card of the reveal: a glow in its rarity color, then the card pops in.
+func _reveal_card(instance: AugmentInstance, is_new: bool, rect: Rect2, delay: float) -> void:
+    var augment := instance.augment
+    var color: Color = Augment.RARITY_COLORS[augment.rarity] if is_new else Color("ff3a55")
+
+    var glow := Panel.new()
+    glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var glow_style := StyleBoxFlat.new()
+    glow_style.bg_color = Color(color, 0.18)
+    glow_style.set_corner_radius_all(26)
+    glow_style.shadow_color = Color(color, 0.5)
+    glow_style.shadow_size = 46
+    glow.add_theme_stylebox_override("panel", glow_style)
+    glow.position = rect.position - Vector2(10, 10)
+    glow.size = rect.size + Vector2(20, 20)
+    glow.pivot_offset = glow.size * 0.5
+    glow.modulate.a = 0.0
+    glow.scale = Vector2(0.6, 0.6)
+    _reveal.add_child(glow)
+    var glow_tween := glow.create_tween().set_parallel(true)
+    glow_tween.tween_property(glow, "modulate:a", 1.0, 0.3).set_delay(delay)
+    glow_tween.tween_property(glow, "scale", Vector2.ONE, 0.5).set_delay(delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    glow_tween.chain().tween_property(glow, "modulate:a", 0.55, 0.9).set_trans(Tween.TRANS_SINE)
+
+    var card: AugmentCard = AUGMENT_CARD_PACKED_SCENE.instantiate()
+    card.augment_instance = instance
+    _reveal.add_child(card)
+    card.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+    card.size = rect.size
+    card.position = rect.position
+    card.pivot_offset = rect.size * 0.5
+    card.set_mark("NEW" if is_new else "LOST", color)
+    card.scale = Vector2(0.15, 0.15)
+    card.rotation = deg_to_rad(randf_range(-30.0, 30.0))
+    card.modulate = Color(3.0, 3.0, 3.0, 0.0)
+    var final_tint := Color.WHITE if is_new else Color(0.75, 0.55, 0.58)
+    var tween := card.create_tween().set_parallel(true)
+    tween.tween_property(card, "scale", Vector2.ONE, 0.5).set_delay(delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    tween.tween_property(card, "rotation", 0.0, 0.5).set_delay(delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    tween.tween_property(card, "modulate", final_tint, 0.45).set_delay(delay)
+    card.set_meta(&"tween", tween)
+    card.set_meta(&"new", is_new)
+    card.set_meta(&"tint", final_tint)
+    card.picked.connect(_close_reveal)
+    card.hover_changed.connect(func(hovering: bool): _reveal_hovered += 1 if hovering else -1)
+
+    if is_new:
+        _synth.word_tick(560.0 + rect.position.x * 0.2, delay + 0.05)
+        _synth.bass_hit(110.0, 0.2, delay)
+        if augment.rarity == Augment.Rarity.MYTHIC:
+            get_tree().create_timer(delay).timeout.connect(_synth.title_chord)
+        elif augment.rarity == Augment.Rarity.RARE:
+            _synth.word_tick(880.0, delay + 0.12)
+    else:
+        _synth.bass_hit(70.0, 0.3, delay)
+
+
+## Dismisses the reveal: new cards fly into the manifest, lost ones drop.
+func _close_reveal() -> void:
+    if _reveal == null or _reveal_age < 0.35:
+        return
+    var reveal := _reveal
+    _reveal = null
+    reveal.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    var manifest: Control = $MarginContainer/HBoxContainer/Manifest
+    var target := manifest.get_global_rect().get_center()
+    var dropped := 0
+    for child in reveal.get_children():
+        if child is AugmentCard:
+            var card: AugmentCard = child
+            var entry: Tween = card.get_meta(&"tween")
+            if entry != null and entry.is_valid():
+                entry.kill()
+            card.scale = Vector2.ONE
+            card.rotation = 0.0
+            card.modulate = card.get_meta(&"tint")
+            card.retire()
+            if card.get_meta(&"new"):
+                card.fly_to(target, true)
+            else:
+                card.drop_away(dropped * 0.06)
+                dropped += 1
+        else:
+            (child as CanvasItem).create_tween().tween_property(child, "modulate:a", 0.0, 0.25)
+    _synth.word_tick(700.0)
+    var tween := reveal.create_tween()
+    tween.tween_interval(0.3)
+    tween.tween_callback(reveal_closed.emit)
+    tween.tween_interval(0.6)
+    tween.tween_callback(reveal.queue_free)
+
+
 # --- Juice ----------------------------------------------------------------------
 
 func _build_fx() -> void:
@@ -770,6 +1159,7 @@ func _build_fx() -> void:
     _synth.volume_db = -4.0
     add_child(_synth)
     $MarginContainer.offset_transform_enabled = true
+    _build_hand()
 
 
 ## The weight of a pick: a thump for Commons, a flash for Rares, a flash,

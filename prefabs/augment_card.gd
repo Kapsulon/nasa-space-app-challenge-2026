@@ -26,6 +26,9 @@ const FACE_COLORS: Dictionary[String, String] = {
 var _retired: bool = false
 var _hover_tween: Tween
 var _motion_tween: Tween
+## Glowing outline and badge ("SWAP", "NEW"...), built on first use.
+var _outline: Panel
+var _badge: PanelContainer
 
 @onready var _box: Control = $AspectRatioContainer
 
@@ -81,6 +84,54 @@ func _fit_name() -> void:
             label.add_theme_font_size_override("font_size", font_size)
             return
     label.add_theme_font_size_override("font_size", 12)
+
+
+## Marks the card with a glowing outline and a badge on its top edge, e.g.
+## "THROW AWAY" on a picked target or "NEW" on a revealed card. An empty
+## text removes the mark.
+func set_mark(text: String, color: Color = Color.WHITE) -> void:
+    if text == "":
+        if _outline != null:
+            _outline.hide()
+            _badge.hide()
+        return
+    if _outline == null:
+        _outline = Panel.new()
+        _outline.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        _outline.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+        %Card.add_child(_outline)
+        _badge = PanelContainer.new()
+        _badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+        _badge.anchor_left = 0.5
+        _badge.anchor_right = 0.5
+        _badge.grow_horizontal = Control.GROW_DIRECTION_BOTH
+        _badge.offset_top = -18.0
+        var label := Label.new()
+        label.add_theme_font_size_override("font_size", 20)
+        label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+        _badge.add_child(label)
+        %Card.add_child(_badge)
+    var line := StyleBoxFlat.new()
+    line.draw_center = false
+    line.border_color = color
+    line.set_border_width_all(5)
+    line.set_corner_radius_all(14)
+    line.shadow_color = Color(color, 0.55)
+    line.shadow_size = 16
+    _outline.add_theme_stylebox_override("panel", line)
+    var tag := StyleBoxFlat.new()
+    tag.bg_color = color
+    tag.set_corner_radius_all(4)
+    tag.content_margin_left = 12
+    tag.content_margin_right = 12
+    tag.content_margin_top = 3
+    tag.content_margin_bottom = 3
+    _badge.add_theme_stylebox_override("panel", tag)
+    var badge_label: Label = _badge.get_child(0)
+    badge_label.text = text
+    badge_label.add_theme_color_override("font_color", Color("0b1220"))
+    _outline.show()
+    _badge.show()
 
 
 func pick() -> void:
