@@ -21,8 +21,22 @@ const FACE_COLORS: Dictionary[String, String] = {
 }
 
 
+## Set once the card leaves the offer row (picked or discarded): it only
+## plays its exit animation and ignores the mouse.
+var _retired: bool = false
+var _hover_tween: Tween
+var _motion_tween: Tween
+
+@onready var _box: Control = $AspectRatioContainer
+
+
 func _ready() -> void:
     %NameLabel.resized.connect(_fit_name)
+    # The offer row lays the card out; the motion runs on the inner box's
+    # offset transform so it never fights the container.
+    _box.offset_transform_enabled = true
+    _box.offset_transform_pivot_ratio = Vector2(0.5, 0.5)
+    %Card.offset_transform_pivot_ratio = Vector2(0.5, 0.5)
 
 
 func update_display() -> void:
@@ -77,16 +91,86 @@ func _on_button_pressed() -> void:
 
 
 func _on_button_mouse_entered() -> void:
-    if not is_inside_tree() or is_queued_for_deletion():
+    if not is_inside_tree() or is_queued_for_deletion() or _retired:
         return
     hover_changed.emit(true)
-    var tween: Tween = create_tween()
-    tween.tween_property(%Card, "offset_transform_scale", Vector2(1.1, 1.1), 0.5).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+    _hover(Vector2(1.08, 1.08), Vector2(0, -22), deg_to_rad(randf_range(-1.5, 1.5)))
 
 
 func _on_button_mouse_exited() -> void:
-    if not is_inside_tree() or is_queued_for_deletion():
+    if not is_inside_tree() or is_queued_for_deletion() or _retired:
         return
     hover_changed.emit(false)
-    var tween: Tween = create_tween()
-    tween.tween_property(%Card, "offset_transform_scale", Vector2(1, 1), 0.5).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+    _hover(Vector2.ONE, Vector2.ZERO, 0.0)
+
+
+## Lifts the card towards the player (or settles it back).
+func _hover(scale_to: Vector2, lift: Vector2, tilt: float) -> void:
+    if _hover_tween != null:
+        _hover_tween.kill()
+    _hover_tween = create_tween().set_parallel(true).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    _hover_tween.tween_property(%Card, "offset_transform_scale", scale_to, 0.3)
+    _hover_tween.tween_property(%Card, "offset_transform_position", lift, 0.3)
+    _hover_tween.tween_property(%Card, "offset_transform_rotation", tilt, 0.3)
+
+
+# --- Plan phase motion ----------------------------------------------------------
+
+## Deals the card in: it flies up from below the screen, tilted, and snaps
+## into place with a little overshoot.
+func deal_in(delay: float) -> void:
+    _box.offset_transform_position = Vector2(randf_range(-60.0, 60.0), 520.0)
+    _box.offset_transform_rotation = deg_to_rad(randf_range(-14.0, 14.0))
+    _box.offset_transform_scale = Vector2(0.75, 0.75)
+    _box.modulate.a = 0.0
+    _motion_tween = create_tween().set_parallel(true)
+    _motion_tween.tween_property(_box, "offset_transform_position", Vector2.ZERO, 0.55) \
+        .set_delay(delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    _motion_tween.tween_property(_box, "offset_transform_rotation", 0.0, 0.6) \
+        .set_delay(delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    _motion_tween.tween_property(_box, "offset_transform_scale", Vector2.ONE, 0.55) \
+        .set_delay(delay).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+    _motion_tween.tween_property(_box, "modulate:a", 1.0, 0.2).set_delay(delay)
+
+
+## The card leaves the offer row: no more hover or clicks.
+func retire() -> void:
+    _retired = true
+    if _hover_tween != null:
+        _hover_tween.kill()
+    if _motion_tween != null:
+        _motion_tween.kill()
+    _box.modulate.a = 1.0
+    for node in find_children("*", "Control", true, false):
+        (node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+    mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+## Picked: a quick punch and flash, then the card shrinks into the cargo slot
+## at `target` (global position). Without a target (a Logistics card used up
+## on the spot) it bursts in place.
+func fly_to(target: Vector2, has_target: bool) -> void:
+    var tween := create_tween()
+    tween.set_parallel(true)
+    tween.tween_property(_box, "offset_transform_scale", Vector2(1.18, 1.18), 0.12).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+    tween.tween_property(_box, "modulate", Color(1.8, 1.8, 1.8, 1.0), 0.12)
+    tween.chain().tween_interval(0.06)
+    if has_target:
+        var travel := target - _box.get_global_rect().get_center()
+        tween.chain().tween_property(_box, "offset_transform_position", travel, 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+        tween.tween_property(_box, "offset_transform_scale", Vector2(0.1, 0.1), 0.45).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN)
+        tween.tween_property(_box, "offset_transform_rotation", deg_to_rad(randf_range(-25.0, 25.0)), 0.45)
+        tween.tween_property(_box, "modulate", Color(1.4, 1.4, 1.4, 0.6), 0.45)
+    else:
+        tween.chain().tween_property(_box, "offset_transform_scale", Vector2(1.6, 1.6), 0.35).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
+        tween.tween_property(_box, "modulate", Color(2.5, 2.5, 2.5, 0.0), 0.35)
+    tween.chain().tween_callback(queue_free)
+
+
+## Not picked: the card drops away and fades.
+func drop_away(delay: float) -> void:
+    var tween := create_tween().set_parallel(true).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+    tween.tween_property(_box, "offset_transform_position", Vector2(randf_range(-40.0, 40.0), 380.0), 0.38).set_delay(delay)
+    tween.tween_property(_box, "offset_transform_rotation", deg_to_rad(randf_range(-18.0, 18.0)), 0.38).set_delay(delay)
+    tween.tween_property(_box, "modulate:a", 0.0, 0.3).set_delay(delay + 0.08)
+    tween.chain().tween_callback(queue_free)

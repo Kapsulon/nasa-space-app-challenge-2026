@@ -65,6 +65,7 @@ var _ending: bool = false
 
 
 func _ready() -> void:
+    Music.play(&"phase_2")
     var scenario_name := TransitionData.scenario_name if TransitionData.scenario_name != "" else "Reach the ISS"
     var cargo: Array[AugmentInstance] = TransitionData.selected_augments
     if cargo.is_empty():

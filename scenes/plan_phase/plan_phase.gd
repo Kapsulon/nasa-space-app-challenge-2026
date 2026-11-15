@@ -12,9 +12,8 @@ const PROMPT_TEXT: String = "Choose wisely:"
 @export_tool_button("Generate cards") var gen = gen_cards
 
 const AUGMENT_CARD_PACKED_SCENE: PackedScene = preload("res://prefabs/augment_card.tscn")
+const RetroSynth := preload("res://classes/retro_synth.gd")
 const SLOT_PACKED_SCENE: PackedScene = preload("res://scenes/plan_phase/slot.tscn")
-
-const AUGMENTS: Registry = preload("res://data/augments/augments.tres")
 
 const EMPTY_SLOT_COLOR := Color(1, 1, 1, 0.15)
 
@@ -53,8 +52,25 @@ var _pending: AugmentInstance = null
 var _pending_targets: Array[AugmentInstance] = []
 var _message_tween: Tween
 
+# --- Juice ---
+## Layer above everything: cards on their way out, the impact flash.
+var _fx_layer: Control
+var _impact_flash: ColorRect
+var _synth: AudioStreamPlayer
+var _odds_shown: float = -1.0
+var _odds_tween: Tween
+## Filled slots after the last update (new ones pop).
+var _slots_shown: int = 0
+## The card just picked, its slot, and the manifest line to highlight.
+var _last_pick: AugmentInstance = null
+var _last_pick_slot: int = -1
+var _highlight: Augment = null
+
 
 func _ready() -> void:
+    if not Engine.is_editor_hint():
+        Music.play(&"phase_1")
+        _build_fx()
     if not Engine.is_editor_hint() and TransitionData.scenario_base_slot_count > 0:
         available_augment_slots = TransitionData.scenario_base_slot_count
     gen_cards()
@@ -104,28 +120,56 @@ func available_augments() -> Array[Augment]:
 
 
 func _all_augments() -> Array[Augment]:
-    var result: Array[Augment] = []
-    for id in AUGMENTS.get_all_string_ids():
-        var augment: Augment = AUGMENTS.load_entry(id)
-        if augment != null:
-            result.append(augment)
-    return result
+    return Augment.all_cards()
 
 
 func gen_cards() -> void:
-    for child in %CardsHolder.get_children():
-        child.queue_free()
+    _clear_offers()
     update_launch_odds()
     show_details(null)
-    for augment in draw_offers(available_augments(), 3):
+    var offers := draw_offers(available_augments(), 3)
+    for i in offers.size():
         var card: AugmentCard = AUGMENT_CARD_PACKED_SCENE.instantiate()
-        card.augment_instance = AugmentInstance.new(augment, "")
+        card.augment_instance = AugmentInstance.new(offers[i], "")
         card.connect("picked", func(): card_picked(card.augment_instance))
         card.hover_changed.connect(func(hovering: bool):
             update_launch_odds(card.augment_instance.augment if hovering else null)
             show_details(card.augment_instance.augment if hovering else null))
         %CardsHolder.add_child(card)
         card.owner = get_tree().edited_scene_root
+        if not Engine.is_editor_hint():
+            # Wait for the previous offers to clear the table.
+            var delay := (0.32 if _fx_layer.get_child_count() > 1 else 0.12) + i * 0.09
+            card.deal_in(delay)
+            _synth.word_tick(560.0 + i * 120.0, delay + 0.05)
+
+
+## Takes the current offers off the table: the picked one flies into its
+## cargo slot, the others drop away. They move to the effects layer so the
+## new offers can take their place right away.
+func _clear_offers() -> void:
+    var cards := %CardsHolder.get_children().filter(func(c: Node): return not c.is_queued_for_deletion())
+    if Engine.is_editor_hint() or _fx_layer == null:
+        for card in cards:
+            card.queue_free()
+        return
+    var dropped := 0
+    for card: AugmentCard in cards:
+        var rect := card.get_global_rect()
+        card.reparent(_fx_layer, false)
+        card.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+        card.global_position = rect.position
+        card.size = rect.size
+        card.retire()
+        if _last_pick != null and card.augment_instance == _last_pick:
+            var slots := %Slots.get_children()
+            var has_slot := _last_pick_slot >= 0 and _last_pick_slot < slots.size()
+            var target: Vector2 = (slots[_last_pick_slot] as Control).get_global_rect().get_center() if has_slot else Vector2.ZERO
+            card.fly_to(target, has_slot)
+        else:
+            card.drop_away(dropped * 0.05)
+            dropped += 1
+    _last_pick = null
 
 
 ## Up to `count` different cards, rarer cards showing up less often
@@ -171,7 +215,22 @@ func update_slots() -> void:
         colors.append(Augment.DOMAIN_COLORS[Augment.Domain.LOGISTICS])
     var slots := %Slots.get_children().filter(func(c: Node): return not c.is_queued_for_deletion())
     for i in slots.size():
-        slots[i].modulate = colors[i] if i < colors.size() else EMPTY_SLOT_COLOR
+        var slot: Control = slots[i]
+        var color: Color = colors[i] if i < colors.size() else EMPTY_SLOT_COLOR
+        if Engine.is_editor_hint() or i < _slots_shown or i >= colors.size():
+            slot.modulate = color
+            continue
+        # Newly filled: pops in once the flying card gets there.
+        slot.pivot_offset = slot.size * 0.5
+        var tween := slot.create_tween()
+        tween.tween_interval(0.62 + (i - _slots_shown) * 0.04)
+        tween.tween_callback(func():
+            slot.modulate = Color(2.2, 2.2, 2.2)
+            slot.scale = Vector2(1.7, 1.7))
+        tween.set_parallel(true)
+        tween.chain().tween_property(slot, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+        tween.tween_property(slot, "modulate", color, 0.5)
+    _slots_shown = colors.size()
 
 
 func update_manifest() -> void:
@@ -204,6 +263,13 @@ func update_manifest() -> void:
         label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         row.add_child(label)
         %ManifestList.add_child(row)
+        if augment == _highlight and not Engine.is_editor_hint():
+            # The line of the card just added flashes, then settles.
+            row.modulate = Color(2.5, 2.5, 2.5, 0.0)
+            var tween := row.create_tween()
+            tween.tween_interval(0.35)
+            tween.tween_property(row, "modulate", Color.WHITE, 0.5).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+    _highlight = null
     if overhead_slots > 0:
         var crates := Label.new()
         crates.text = "Crates and gambles: %d slot%s" % [overhead_slots, "" if overhead_slots == 1 else "s"]
@@ -307,12 +373,18 @@ func update_launch_odds(preview: Augment = null) -> void:
     if Engine.is_editor_hint():
         return
     var chance := launch.success_chance()
-    var bar: ProgressBar = %OddsBar
-    bar.value = chance * 100.0
-    var fill := bar.get_theme_stylebox("fill").duplicate() as StyleBoxFlat
-    fill.bg_color = ODDS_GRADIENT.sample(chance)
-    bar.add_theme_stylebox_override("fill", fill)
-    %OddsLabel.text = "%d%%" % roundi(chance * 100.0)
+    if _odds_shown < 0.0:
+        _show_odds(chance)
+    elif not is_equal_approx(chance, _odds_shown):
+        # Slide and count to the new odds.
+        if _odds_tween != null:
+            _odds_tween.kill()
+        _odds_tween = create_tween()
+        _odds_tween.tween_method(_show_odds, _odds_shown, chance, 0.6).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+        var label: Label = %OddsLabel
+        label.pivot_offset = label.size * 0.5
+        label.scale = Vector2(1.25, 1.25)
+        _odds_tween.parallel().tween_property(label, "scale", Vector2.ONE, 0.4).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
     var hint: Label = %OddsHint
     if preview != null and not preview.is_consumed():
@@ -326,6 +398,16 @@ func update_launch_odds(preview: Augment = null) -> void:
 
     %LaunchStats.text = "Weight %.1f t: thrust %d / needs %d\nFuel %d / engines burn %d" % [
         launch.total_weight(), roundi(launch.thrust), roundi(launch.thrust_needed()), roundi(launch.fuel_available()), roundi(launch.fuel_needed())]
+
+
+func _show_odds(chance: float) -> void:
+    _odds_shown = chance
+    var bar: ProgressBar = %OddsBar
+    bar.value = chance * 100.0
+    var fill := bar.get_theme_stylebox("fill").duplicate() as StyleBoxFlat
+    fill.bg_color = ODDS_GRADIENT.sample(chance)
+    bar.add_theme_stylebox_override("fill", fill)
+    %OddsLabel.text = "%d%%" % roundi(chance * 100.0)
 
 
 func card_picked(augment_instance: AugmentInstance) -> void:
@@ -432,6 +514,11 @@ func _resolve_pending() -> void:
 func _apply_card(instance: AugmentInstance, targets: Array) -> void:
     var augment := instance.augment
     var message := ""
+    _last_pick = instance
+    # Cargo cards fill the bar first, crates and gambles sit at its end.
+    _last_pick_slot = -1 if augment.is_consumed() else used_slots() - overhead_slots
+    _highlight = augment
+    _impact(augment)
     if augment.is_consumed():
         overhead_slots += augment.slot_cost()
     else:
@@ -551,8 +638,7 @@ func _flash(text: String) -> void:
 ## All slots are filled: hand the selection over and go to the launch report.
 func finish() -> void:
     finished = true
-    for child in %CardsHolder.get_children():
-        child.queue_free()
+    _clear_offers()
     update_launch_odds()
     %TimeLeftProgress.value = 0.0
     TransitionData.selected_augments = selected_augments
@@ -560,3 +646,54 @@ func finish() -> void:
     TransitionData.cargo_overhead_slots = overhead_slots
     await get_tree().create_timer(1.0).timeout
     get_tree().change_scene_to_file(LAUNCH_REPORT_SCENE)
+
+
+# --- Juice ----------------------------------------------------------------------
+
+func _build_fx() -> void:
+    _fx_layer = Control.new()
+    _fx_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _fx_layer.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    add_child(_fx_layer)
+    _impact_flash = ColorRect.new()
+    _impact_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
+    _impact_flash.color = Color(1, 1, 1, 0)
+    _impact_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+    _fx_layer.add_child(_impact_flash)
+    _synth = RetroSynth.new()
+    _synth.volume_db = -4.0
+    add_child(_synth)
+    $MarginContainer.offset_transform_enabled = true
+
+
+## The weight of a pick: a thump for Commons, a flash for Rares, a flash,
+## chord and screen shake for Mythics.
+func _impact(augment: Augment) -> void:
+    var color: Color = Augment.RARITY_COLORS[augment.rarity]
+    match augment.rarity:
+        Augment.Rarity.COMMON:
+            _synth.bass_hit(120.0, 0.18)
+        Augment.Rarity.RARE:
+            _synth.bass_hit(100.0, 0.26)
+            _synth.word_tick(660.0, 0.05)
+            _synth.word_tick(880.0, 0.11)
+            _flash_screen(color, 0.12)
+        Augment.Rarity.MYTHIC:
+            _synth.title_chord()
+            _flash_screen(color, 0.25)
+            _shake(14.0)
+
+
+func _flash_screen(color: Color, strength: float) -> void:
+    _impact_flash.color = Color(color, strength)
+    var tween := _impact_flash.create_tween()
+    tween.tween_property(_impact_flash, "color:a", 0.0, 0.45).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+
+func _shake(strength: float) -> void:
+    var root: Control = $MarginContainer
+    var tween := root.create_tween()
+    for i in 6:
+        var falloff := strength * (1.0 - i / 6.0)
+        tween.tween_property(root, "offset_transform_position", Vector2(randf_range(-1, 1), randf_range(-1, 1)) * falloff, 0.045)
+    tween.tween_property(root, "offset_transform_position", Vector2.ZERO, 0.06)

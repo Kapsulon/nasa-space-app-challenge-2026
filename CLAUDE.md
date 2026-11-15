@@ -50,11 +50,18 @@ Data passes between scenes through the **`TransitionData`** autoload (`scenes/si
 - `selected_augments`
 - the final cargo slot counts
 
+Background music is the **`Music`** autoload (`scenes/singletons/music.gd`). Each scene calls `Music.play(&"track")` in `_ready()`. Asking for the track that is already playing does nothing, and other tracks crossfade. Tracks:
+- `menu`: mission select
+- `phase_1`: plan phase, launch report and launch
+- `phase_2`: mission
+
+The WAVs loop through their import settings (`edit/loop_mode=2`). Like `TransitionData`, `Music` doesn't exist in `-s` mode.
+
 ### Cards
 
 Cards are **`Augment`** resources (`classes/augment.gd`).
 - **Card data:** each card is a `.tres` in `data/augments/`.
-- **Registry:** cards are registered in the yard `Registry` `data/augments/augments.tres` (addon in `addons/yard`). Code loads cards through it with `get_all_string_ids()` and `load_entry(id)`.
+- **Registry:** cards are registered in the yard `Registry` `data/augments/augments.tres` (addon in `addons/yard`). Code gets the cards from **`Augment.all_cards()`**, not from the registry directly. Loading a card takes about 50 ms (the `.tres` and its image), and Godot frees cards nobody holds, so `all_cards()` loads them once and keeps them. `Augment.preload_library()` starts that loading in the background; the intro and the menu call it.
 - **Source text:** the designers' text lives in CSVs at the project root (columns Domain, Rarity, Card Name, …). The gameplay numbers are set by hand in each `.tres`. The CSV text is shown as-is (`gives_text`, `lore`…), while the card face is generated from the data (`summary_entries()`).
 - **Picked card:** a picked card becomes an `AugmentInstance`, which holds random amounts rolled once (e.g. `"20-60"`) and the slots it takes.
 - **Field types:**

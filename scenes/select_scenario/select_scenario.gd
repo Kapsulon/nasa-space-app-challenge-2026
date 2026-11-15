@@ -1,6 +1,11 @@
 extends Control
 
 
+func _ready() -> void:
+    Augment.preload_library()
+    Music.play(&"menu")
+
+
 func _scenario01_pressed() -> void:
     TransitionData.scenario_name = "Reach the ISS"
     TransitionData.scenario_base_slot_count = 27

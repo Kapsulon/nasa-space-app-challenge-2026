@@ -16,6 +16,7 @@ var _launching: bool = false
 
 
 func _ready() -> void:
+    Music.play(&"phase_1")
     var terminal: TerminalLabel = %Terminal
     terminal.clear_terminal()
     terminal.get_v_scroll_bar().modulate = Color.TRANSPARENT

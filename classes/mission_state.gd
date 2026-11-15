@@ -156,8 +156,6 @@ const CONDITIONS: Dictionary[String, Dictionary] = {
 ## "lose_communication_or_navigation", "offline_navigation", "break_any".
 const MODULE_EFFECTS: Array[String] = ["break_", "lose_", "offline_"]
 
-const AUGMENT_REGISTRY_PATH: String = "res://data/augments/augments.tres"
-
 enum Outcome { ONGOING, WON, LOST }
 
 var scenario_name: String = "Mission"
@@ -1148,11 +1146,9 @@ func _module_effect(key: String, count: int) -> void:
 ## A random card (not launch-only) joins the ship as a new module, with its
 ## supplies.
 func _gain_random_card(rarity: Augment.Rarity) -> void:
-    var registry: Registry = load(AUGMENT_REGISTRY_PATH)
     var pool: Array[Augment] = []
-    for id in registry.get_all_string_ids():
-        var augment: Augment = registry.load_entry(id)
-        if augment != null and augment.rarity == rarity and not augment.is_launch_only():
+    for augment in Augment.all_cards():
+        if augment.rarity == rarity and not augment.is_launch_only():
             pool.append(augment)
     if pool.is_empty():
         return

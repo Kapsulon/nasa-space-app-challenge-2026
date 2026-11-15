@@ -39,6 +39,7 @@ var _leaving: bool = false
 
 
 func _ready() -> void:
+    Music.play(&"phase_1")
     profile = LaunchProfile.from_instances(TransitionData.selected_augments)
     chance = profile.success_chance()
     failure = profile.roll() if forced_outcome < 0 else forced_outcome as LaunchProfile.Failure

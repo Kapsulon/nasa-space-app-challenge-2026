@@ -74,6 +74,13 @@ enum PlanAction {
 ## Cards that only matter before the mission (never ship modules).
 const LAUNCH_ONLY_DOMAINS: Array[Domain] = [Domain.PROPULSION, Domain.FUEL, Domain.LOGISTICS]
 
+const REGISTRY_PATH: String = "res://data/augments/augments.tres"
+
+## Every card, loaded once and kept in memory (see all_cards()).
+static var _library: Array[Augment] = []
+## Card paths being loaded in the background (see preload_library()).
+static var _loading: PackedStringArray = []
+
 ## Total hazard reduction allowed from Navigation cards (unless a card
 ## raises it with `hazard_cap`).
 const DEFAULT_HAZARD_CAP: float = 0.75
@@ -222,6 +229,42 @@ const PLAN_ACTION_TEXT: Dictionary[PlanAction, String] = {
 @export_multiline var risks_text: String = ""
 @export_multiline var synergy_text: String = ""
 @export_multiline var lore: String = ""
+
+
+## Starts loading every card in the background, so all_cards() doesn't stall
+## later. Safe to call more than once. Called from the intro and the menu.
+static func preload_library() -> void:
+    if not _library.is_empty() or not _loading.is_empty():
+        return
+    var registry: Registry = load(REGISTRY_PATH)
+    for id in registry.get_all_string_ids():
+        var path := ResourceUID.uid_to_path(registry.get_uid(id))
+        if path != "" and ResourceLoader.load_threaded_request(path, "", true) == OK:
+            _loading.append(path)
+
+
+## Every card in the registry. Loading a card means reading its .tres and its
+## image, about 50 ms each, so they are loaded once and kept: nothing else
+## holds on to the cards that aren't in the cargo, and Godot would free them.
+static func all_cards() -> Array[Augment]:
+    if Engine.is_editor_hint():
+        # In the editor, don't pin the cards in memory (the editor would
+        # re-save them, see CLAUDE.md).
+        var fresh: Array[Augment] = []
+        var registry: Registry = load(REGISTRY_PATH)
+        for id in registry.get_all_string_ids():
+            var augment := registry.load_entry(id) as Augment
+            if augment != null:
+                fresh.append(augment)
+        return fresh
+    if _library.is_empty():
+        preload_library()
+        for path in _loading:
+            var augment := ResourceLoader.load_threaded_get(path) as Augment
+            if augment != null:
+                _library.append(augment)
+        _loading.clear()
+    return _library
 
 
 func card_name() -> String:

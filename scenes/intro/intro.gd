@@ -8,7 +8,7 @@ extends Control
 
 const MENU_SCENE: String = "res://scenes/select_scenario/select_scenario.tscn"
 const WarpStarfield := preload("res://scenes/intro/warp_starfield.gd")
-const IntroSynth := preload("res://scenes/intro/intro_synth.gd")
+const IntroSynth := preload("res://classes/retro_synth.gd")
 const PixelBadge := preload("res://scenes/intro/pixel_badge.gd")
 const CRT_SHADER := preload("res://assets/shaders/crt.gdshader")
 
@@ -75,6 +75,7 @@ var _start_button: Button
 
 
 func _ready() -> void:
+    Augment.preload_library()
     _mono = SystemFont.new()
     _mono.font_names = PackedStringArray(["Menlo", "Consolas", "DejaVu Sans Mono", "Courier New", "Monospace"])
     _build()

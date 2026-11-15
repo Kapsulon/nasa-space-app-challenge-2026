@@ -1,5 +1,5 @@
 extends AudioStreamPlayer
-## Tiny 8-bit synth for the intro, mixed live into an AudioStreamGenerator:
+## Tiny 8-bit synth (intro, plan phase), mixed live into an AudioStreamGenerator:
 ## sawtooth bass hits with a falling pitch, and short square-wave ticks.
 
 const MIX_RATE: float = 22050.0
