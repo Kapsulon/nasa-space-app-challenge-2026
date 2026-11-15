@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Launch a thorough investigation"
+cost = Dictionary[String, int]({"power": 1})
+needs_crew = true
+work_hours = 2.5
+success_chance = 0.5
+success_effects = Dictionary[String, int]({"food": -3, "stress_command": 8, "crew_stress": 3})
+success_text = "Case closed: a sleepwalking crewmate! Half the stash turned up behind the bunks, but the Commander is fuming."
+failure_effects = Dictionary[String, int]({"food": -6, "stress_command": 10, "crew_stress": 5})
+failure_text = "No culprit, no rations, and a very grumpy Commander."
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Blame the onboard computer for miscounting"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 0.6
+success_effects = Dictionary[String, int]({"food": -6})
+success_text = "The computer takes the blame without complaining. The rations are still gone, though."
+failure_effects = Dictionary[String, int]({"food": -6, "break_communication_or_navigation": 1})
+failure_text = "Poking around in the software to \"fix the count\" crashed an avionics module!"
+
+[sub_resource type="Resource" id="Choice_2"]
+script = ExtResource("2_choice")
+label = "Tighten belts and laugh it off"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"food": -6, "crew_stress": -8})
+success_text = "\"Space Ghost\" is now the crew's favorite joke. A good laugh is worth a few meals."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "The Interstellar Midnight Snack"
+description = "While checking the food supplies, the crew discovers that a mysterious astronaut consumed half of the emergency freeze-dried rations in a single night, leaving behind a note: \"It was too good, signed the Space Ghost.\" The security camera shows... a strange reflection or a colleague sleepwalking."
+min_day = 2
+weight = 1.0
+skill = "command"
+location = "galley"
+tags = Array[StringName]([&"isolation"])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1"), SubResource("Choice_2")])

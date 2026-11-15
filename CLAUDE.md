@@ -22,7 +22,13 @@ $GODOT --headless --path . --quit-after 600 res://scenes/mission_phase/mission_p
 # Run a throwaway test script (extends SceneTree, must call quit()).
 # In -s mode the TransitionData autoload does not exist.
 $GODOT --headless --path . -s path/to/script.gd
+
+# Balance simulation: plays the whole scenario N times with a bot and prints
+# the win rate. Player: casual (the balance target, ~60%), careful or idle.
+$GODOT --headless --path . -s tools/balance_sim.gd -- 1000 casual
 ```
+
+After changing balance numbers, cards or events, re-run the simulation. Results move by about ±1.5 points at 1000 runs. `tools/balance_sim.gd` copies the mission loop timing and the plan-phase offer rules, so keep it in sync when those change.
 
 When run on its own, `mission_phase.tscn` uses its `test_cargo` export as the cargo.
 
@@ -94,3 +100,9 @@ The mission is split into simulation and view:
 - `location`: a station id or a `ShipView.ROOMS` key.
 - `tags`: `hazard` (Navigation cards make these rarer), `isolation` (softened by some Communication cards), `good` (can't be cancelled).
 - The event pool loads every `.tres` in the folder automatically.
+- **Source text:** `nasa_space_app_events_en.csv` holds the designers' text. The numbers were set by hand in each `.tres`.
+- **Effect keys:** listed in `classes/event_choice.gd`. Beyond resources and crew stats:
+  - timed ship conditions `<name>_days` (`MissionState.CONDITIONS`: blackout, rationing, sluggish, comms_down, cold)
+  - module effects by domain (`break_energy`, `lose_communication_or_navigation`, `offline_navigation`, `break_any`)
+  - `gain_mythic`, `cryosleep`, `worker_*` (applies to the crew member who did the job)
+- `requires_domain` on a choice: only available with a working module of that domain.

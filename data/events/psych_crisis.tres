@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Put them in emergency cryosleep"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"cryosleep": 1})
+success_text = "They will sleep it off in the return capsule and fly home tonight. One pair of hands less."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Talk them through it with comfort and calls home"
+cost = Dictionary[String, int]({"power": 2})
+needs_crew = true
+work_hours = 2.0
+success_chance = 0.5
+success_effects = Dictionary[String, int]({"most_stressed_stress": -30})
+success_text = "A long talk and a call home worked. They're feeling much better."
+failure_effects = Dictionary[String, int]({"random_resource": -8, "crew_stress": 5})
+failure_text = "They wrecked part of the stores before calming down."
+
+[sub_resource type="Resource" id="Choice_2"]
+script = ExtResource("2_choice")
+label = "Lock the control panel and wait"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"random_resource": -8, "crew_stress": 8})
+success_text = "They calmed down eventually, but not before trashing part of the stores."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Major Psychological Crisis"
+description = "Isolation, stress, and no news from Earth have gotten the better of a crew member, who starts hallucinating and sabotaging the control panel."
+min_day = 4
+weight = 0.9
+skill = "medical"
+location = "comms"
+tags = Array[StringName]([&"isolation"])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1"), SubResource("Choice_2")])

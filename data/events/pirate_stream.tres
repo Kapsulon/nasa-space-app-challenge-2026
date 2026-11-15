@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Cut the signal immediately"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": 6})
+success_text = "Network secured. The crew misses the 90s ballads more than they'd admit."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Let it play: morale needs a boost"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": -10, "science": -1, "comms_down_days": 1})
+success_text = "Everyone sings along! But the bandwidth is full: no science data and no calls home today."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Pirate Stream from Earth"
+description = "The communication antenna picks up an unauthorized signal: someone is broadcasting a 90s Earth singing competition on loop directly onto the spacecraft's control screens."
+min_day = 2
+weight = 1.0
+skill = "command"
+location = "comms"
+tags = Array[StringName]([&"isolation"])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1")])

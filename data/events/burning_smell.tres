@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Search for the source with a fire extinguisher"
+cost = Dictionary[String, int]({})
+needs_crew = true
+work_hours = 1.5
+success_chance = 0.75
+success_effects = Dictionary[String, int]({})
+success_text = "Found it: a melting cable behind a panel. The incident is resolved."
+failure_effects = Dictionary[String, int]({"hull": -8, "worker_health": -15, "crew_stress": 8})
+failure_text = "A small fire flared up before it was put out. Some smoke burns and a scorched wall."
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Cut the oxygen to the module to smother any fire"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"oxygen": -3, "crew_stress": 10})
+success_text = "No fire can survive without air. Neither can calm nerves."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Burning Smell"
+description = "A smell of hot plastic spreads through the living module. An invisible short circuit threatens to spark a confined fire."
+min_day = 2
+weight = 1.0
+skill = "engineering"
+location = "bunks"
+tags = Array[StringName]([])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1")])

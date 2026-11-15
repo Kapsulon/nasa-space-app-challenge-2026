@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Isolate the patient in the airlock"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"random_crew_stress": 25})
+success_text = "The outbreak is contained. The patient spent a miserable, lonely day."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Treat them with NASA emergency medical kits"
+cost = Dictionary[String, int]({"medkits": 1, "food": 3, "water": 5})
+needs_crew = true
+work_hours = 1.5
+success_chance = 1.0
+success_effects = Dictionary[String, int]({})
+success_text = "Cured, with no loss! The supplies took a hit."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_2"]
+script = ExtResource("2_choice")
+label = "Ignore the symptoms and hope it passes"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 0.3
+success_effects = Dictionary[String, int]({})
+success_text = "Just a cold! It passed."
+failure_effects = Dictionary[String, int]({"sick_all": 1})
+failure_text = "The fever spread through the whole cabin."
+
+[resource]
+script = ExtResource("1_event")
+title = "Space Fever"
+description = "A crew member starts coughing and runs a high fever. In microgravity, respiratory micro-droplets don't fall to the floor—they float in the air and threaten to infect the entire living module within hours."
+min_day = 3
+weight = 1.0
+skill = "medical"
+location = "medbay"
+tags = Array[StringName]([])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1"), SubResource("Choice_2")])

@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Spend hours decoding the message"
+cost = Dictionary[String, int]({"power": 3})
+needs_crew = true
+work_hours = 4.0
+success_chance = 0.6
+success_effects = Dictionary[String, int]({"mission_days": -1})
+success_text = "The numbers were a shortcut through a gravity assist! The trip is one day shorter."
+failure_effects = Dictionary[String, int]({"crew_stress": 5})
+failure_text = "Hours of work, and it was just a weather report from 1987."
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Delete the data to free up bandwidth"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"crew_stress": 5})
+success_text = "Deleted. Everyone keeps wondering what it said."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "The Interfering Message"
+description = "The communication antenna picks up a scrambled message reciting incomprehensible sequences of numbers on loop."
+min_day = 3
+weight = 1.0
+skill = "science"
+location = "comms"
+tags = Array[StringName]([])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1")])

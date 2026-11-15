@@ -117,6 +117,9 @@ func _process(delta: float) -> void:
     # The clock stops at night, but the crew still floats to bed.
     %ShipView.speed = 3.0 if night and not _ending else gs
     _flush_log()
+    if state.modules_changed:
+        state.modules_changed = false
+        _build_modules()
     if gs > 0.0:
         _advance(delta * gs / HOUR_SECONDS)
     _ui_timer -= delta
@@ -152,15 +155,7 @@ func _advance(hours: float) -> void:
 
 
 func _schedule_events() -> void:
-    _schedule.clear()
-    if state.day == 1 or randf() < MissionState.EVENT_CHANCE:
-        var event := state.draw_event()
-        if event != null:
-            _schedule.append({"hour": randf_range(9.5, 12.5) if state.day > 1 else 9.5, "event": event})
-    if state.day > 1 and randf() < MissionState.SECOND_EVENT_CHANCE:
-        var event := state.draw_event()
-        if event != null:
-            _schedule.append({"hour": randf_range(13.0, 15.5), "event": event})
+    _schedule = state.plan_alerts()
 
 
 func _build_speed_controls() -> void:
@@ -334,8 +329,10 @@ func _fill_popup() -> void:
                 parts.append("radio order")
             if choice.success_chance < 1.0:
                 parts.append("risky")
+            if choice.requires_domain >= 0:
+                parts.append("needs a %s module" % Augment.Domain.keys()[choice.requires_domain].capitalize())
             button.text = "%s   (%s)" % [choice.label, ", ".join(parts)]
-            button.disabled = not state.can_afford(choice.cost)
+            button.disabled = not state.can_choose(choice)
             button.pressed.connect(_pick_choice.bind(choice))
             %PopupChoices.add_child(button)
         _add_navigation_buttons(event)
@@ -556,6 +553,12 @@ func _morning() -> void:
         _sprites[member].walk_to(station)
     _build_modules()
     %Terminal.print_text("\n[color=#%s]==== DAY %d / %d  -  08:00 ====[/color]\n" % [T_AMBER, state.day, state.mission_days])
+    var active: PackedStringArray = []
+    for name in state.conditions.keys():
+        var nights: int = state.conditions[name]
+        active.append("%s (%s)" % [MissionState.CONDITIONS[name]["name"], "rest of the trip" if nights > state.mission_days else "%d day%s" % [nights, "" if nights == 1 else "s"]])
+    if not active.is_empty():
+        %Terminal.print_text("[color=#%s]Ship status: %s[/color]\n" % [T_AMBER, ", ".join(active)])
     _flush_log()
 
 

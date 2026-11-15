@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Activate the automatic emergency sealing"
+cost = Dictionary[String, int]({"power": 5})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"hull": -5})
+success_text = "Foam sealant fills the hole in seconds. The leak is stopped."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Send someone on a spacewalk to patch the breach"
+cost = Dictionary[String, int]({})
+needs_crew = true
+work_hours = 3.0
+success_chance = 0.7
+success_effects = Dictionary[String, int]({"hull": -5})
+success_text = "Patched by flashlight! The leak is stopped."
+failure_effects = Dictionary[String, int]({"hull": -10, "worker_health": -25, "worker_stress": 12})
+failure_text = "The patch only half held, and the spacewalker came back bruised and shaken."
+
+[sub_resource type="Resource" id="Choice_2"]
+script = ExtResource("2_choice")
+label = "Close the hatches around the module"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"hull": -15, "oxygen": -5, "crew_stress": 8})
+success_text = "The crew lost a module's worth of air and room, but everyone is inside and safe."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[resource]
+script = ExtResource("1_event")
+title = "Meteorite Impact! Hull Breach!"
+description = "A shrill alarm blares. A high-velocity space rock or debris piece has just pierced the module's outer hull!"
+min_day = 3
+weight = 1.0
+skill = "engineering"
+location = "hull"
+tags = Array[StringName]([&"hazard"])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1"), SubResource("Choice_2")])

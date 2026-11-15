@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="MissionEvent" format=3]
+
+[ext_resource type="Script" uid="uid://biefsdrors6uu" path="res://classes/mission_event.gd" id="1_event"]
+[ext_resource type="Script" uid="uid://d17r2hc2mlxap" path="res://classes/event_choice.gd" id="2_choice"]
+
+[sub_resource type="Resource" id="Choice_0"]
+script = ExtResource("2_choice")
+label = "Activate the magnetic shield and cut non-essential systems"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 1.0
+success_effects = Dictionary[String, int]({"power": -3, "cold_days": 2})
+success_text = "The shield held and the power modules are safe, but the heating is off for two days. Brrr."
+failure_effects = Dictionary[String, int]({})
+failure_text = ""
+
+[sub_resource type="Resource" id="Choice_1"]
+script = ExtResource("2_choice")
+label = "Trust the fuses and keep full power"
+cost = Dictionary[String, int]({})
+needs_crew = false
+work_hours = 2.0
+success_chance = 0.5
+success_effects = Dictionary[String, int]({})
+success_text = "The fuses held! The storm passed with a few flickers."
+failure_effects = Dictionary[String, int]({"power": -4, "lose_energy": 1})
+failure_text = "A huge spark: one of the power modules burned out for good."
+
+[resource]
+script = ExtResource("1_event")
+title = "Coronal Mass Ejection (CME) Solar Storm"
+description = "A major solar flare is heading straight for the spacecraft. Standard COTS solar panels begin crackling under the radiation. The power system flickers."
+min_day = 2
+weight = 1.0
+skill = "engineering"
+location = "engineering"
+tags = Array[StringName]([&"hazard"])
+choices = Array[ExtResource("2_choice")]([SubResource("Choice_0"), SubResource("Choice_1")])
