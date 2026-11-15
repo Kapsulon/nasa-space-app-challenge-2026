@@ -3,7 +3,7 @@ class_name Augment extends Resource
 enum Type {
     VITAL,
     TECHNICAL,
-    POLITICAL
+    SPECIAL
 }
 
 enum Rarity {
@@ -13,9 +13,15 @@ enum Rarity {
 }
 
 static var RARITY_CARDS: Dictionary[Rarity, CompressedTexture2D] = {
-    Rarity.COMMON: preload("res://assets/textures/card_common.png"),
-    Rarity.EPIC: preload("res://assets/textures/card_epic.png"),
-    Rarity.MYTHIC: preload("res://assets/textures/card_mythic.png")
+    Rarity.COMMON: load("res://assets/textures/card_common.png"),
+    Rarity.EPIC: load("res://assets/textures/card_epic.png"),
+    Rarity.MYTHIC: load("res://assets/textures/card_mythic.png")
+}
+
+static var TYPE_ICONS: Dictionary[Type, CompressedTexture2D] = {
+    Type.VITAL: load("res://assets/textures/type_vital.png"),
+    Type.TECHNICAL: load("res://assets/textures/type_technical.png"),
+    Type.SPECIAL: load("res://assets/textures/type_special.png")
 }
 
 static var RARITY_SLOTS: Dictionary[Rarity, int] = {
@@ -27,6 +33,7 @@ static var RARITY_SLOTS: Dictionary[Rarity, int] = {
 @export var display_name: String = ""
 @export_multiline var description: String = ""
 @export var upgrades: Dictionary[String, String] = {}
+@export var image: CompressedTexture2D
 
 @export var type: Type
 @export var rarity: Rarity

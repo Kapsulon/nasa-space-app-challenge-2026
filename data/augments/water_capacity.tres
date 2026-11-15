@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="Augment" format=3 uid="uid://xtl7gghullel"]
 
 [ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_n8ib4"]
+[ext_resource type="Texture2D" uid="uid://dj2m7f1lxoya1" path="res://icon.svg" id="1_omlal"]
 
 [resource]
 script = ExtResource("1_n8ib4")
@@ -9,4 +10,5 @@ description = "Adds [color=#63b1ff]{water_capacity} liters[/color] to water capa
 upgrades = Dictionary[String, String]({
 "water_capacity": "10"
 })
+image = ExtResource("1_omlal")
 metadata/_custom_type_script = "uid://cuy5s3hde6jye"

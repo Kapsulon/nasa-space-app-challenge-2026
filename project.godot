@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="nasa-space-app-challenge-2026"
-run/main_scene="uid://ls0aix5pkaln"
+run/main_scene="uid://dego1citt1xa4"
 config/features=PackedStringArray("4.7", "Forward Plus")
 config/icon="res://icon.svg"
+
+[autoload]
+
+TransitionData="*uid://d0fqpckk573d1"
 
 [display]
 
