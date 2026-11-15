@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cyc8m6w282ts6"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://dba23ric6eimq" path="res://assets/textures/cards/martians_potato.png" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 4
+chance = 1.0
+threshold = 10
+effects = {"crew_stress": 3}
+permanent = true
+short_text = "Dies if water drops below 10 L"
+log_text = "With the water tank nearly empty, the {module} shrivelled up in its tray. No more fresh potatoes."
+
+[sub_resource type="Resource" id="Risk_1"]
+script = ExtResource("3_risk")
+condition = 0
+chance = 0.1
+effects = {"random_crew_sick": 1}
+blocked_by = &"pure_water"
+short_text = "Can give a crew member diarrhea"
+log_text = "A potato from the {module} did not agree with someone. Sick crew drink twice as much water."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "The Martian's Potato"
+short_name = "Martian's Potato"
+image = ExtResource("2_img")
+weight = 0.2
+type = 0
+rarity = 0
+domain = 3
+card_type = 3
+daily = Dictionary[String, int]({"food": 1, "water": -1})
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0"), SubResource("Risk_1")])
+gives_text = "+1 meal per day"
+costs_text = "Consumes extra Water each day"
+risks_text = "Risk of diarrhea (it grew in homemade fertilizer). If Water runs short (below 10 L) the plant dies and production stops"
+synergy_text = "Competes with the crew for the Water supply"
+lore = "Potatoes are one of the crops studied for space farming: they give a lot of calories for little room. The International Potato Center and NASA grew them in a box that mimics Martian conditions. Real Martian soil holds toxic salts called perchlorates, so it would have to be washed before anything could grow in it."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

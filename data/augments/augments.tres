@@ -70,7 +70,8 @@ _uids_to_string_ids = Dictionary[StringName, StringName]({
 &"uid://bv4kxg2it1r3u": &"iss_menu",
 &"uid://d2u2f411h3xkc": &"algae_biosynthesizer",
 &"uid://beqji28akx054": &"food_printer",
-&"uid://cvv0f6ei1wmt8": &"veggie_garden"
+&"uid://cvv0f6ei1wmt8": &"veggie_garden",
+&"uid://cyc8m6w282ts6": &"martians_potato"
 })
 _string_ids_to_uids = Dictionary[StringName, StringName]({
 &"humidity_condenser": &"uid://1mkrix07xq3k",
@@ -129,5 +130,6 @@ _string_ids_to_uids = Dictionary[StringName, StringName]({
 &"iss_menu": &"uid://bv4kxg2it1r3u",
 &"algae_biosynthesizer": &"uid://d2u2f411h3xkc",
 &"food_printer": &"uid://beqji28akx054",
-&"veggie_garden": &"uid://cvv0f6ei1wmt8"
+&"veggie_garden": &"uid://cvv0f6ei1wmt8",
+&"martians_potato": &"uid://cyc8m6w282ts6"
 })
