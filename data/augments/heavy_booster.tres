@@ -5,14 +5,16 @@
 
 [resource]
 script = ExtResource("1_aug")
-display_name = "Heavy booster"
-description = "Lifts [color=#ffb800]{engine_thrust} t[/color] more and adds [color=#ffb800]{fuel} t[/color] of fuel"
-upgrades = Dictionary[String, String]({
-"engine_thrust": "8",
-"fuel": "30"
-})
+display_name = "Heavy Booster"
 image = ExtResource("2_img")
 weight = 2.5
 type = 1
 rarity = 2
+domain = 4
+card_type = 6
+upgrades = Dictionary[String, String]({"engine_thrust": "8", "fuel": "30"})
+gives_text = "Engines lift 8 t more and +30 t of fuel"
+costs_text = "Weight (2.5 t)"
+synergy_text = "More reliable launches"
+lore = "Strap-on boosters, like the solid rocket boosters of the Space Shuttle or the side cores of Falcon Heavy, add thrust and fuel for the first minutes of flight, then fall away."
 metadata/_custom_type_script = "uid://cuy5s3hde6jye"

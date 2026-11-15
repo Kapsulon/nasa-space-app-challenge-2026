@@ -14,6 +14,9 @@ signal output_done
 @export var line_pause: float = 0.03
 ## Show a blinking block cursor after the text.
 @export var show_cursor: bool = true
+## Oldest lines are dropped beyond this many (0 = keep everything). Keep each
+## line's BBCode tags closed on that line when using it.
+@export var max_lines: int = 0
 
 const CURSOR := "█"
 
@@ -63,13 +66,24 @@ func wait(seconds: float) -> void:
     _enqueue("", false, seconds)
 
 
+## Runs `callback` once everything queued before it has been shown.
+func then(callback: Callable) -> void:
+    _queue.append({"text": "", "human": false, "pause": 0.0, "callback": callback})
+    _busy = true
+
+
 ## Reveal everything that is queued right away.
 func skip() -> void:
     if not _busy:
         return
+    var callbacks: Array[Callable] = []
     for segment in _queue:
         _content += segment["text"]
+        if segment.has("callback"):
+            callbacks.append(segment["callback"])
     _queue.clear()
+    for callback in callbacks:
+        callback.call()
     _current = {}
     _wait = 0.0
     _complete()
@@ -106,6 +120,12 @@ func _process(delta: float) -> void:
             _complete()
             return
         _current = _queue.pop_front()
+        if _current.has("callback"):
+            var callback: Callable = _current["callback"]
+            _current = {}
+            callback.call()
+            return
+        _trim()
         # Work out how much is already on screen (-1 means "everything").
         _cursor_on = false
         _set_text(_content, false)
@@ -132,6 +152,17 @@ func _process(delta: float) -> void:
     if next >= _target:
         _wait = _current["pause"]
         _current = {}
+
+
+func _trim() -> void:
+    if max_lines <= 0:
+        return
+    var lines := _content.split("\n")
+    if lines.size() <= max_lines:
+        return
+    _content = "\n".join(lines.slice(lines.size() - max_lines))
+    _set_text(_content, false)
+    visible_characters = -1
 
 
 func _set_text(content: String, with_cursor: bool) -> void:

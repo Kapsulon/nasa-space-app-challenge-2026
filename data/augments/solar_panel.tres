@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://dicy4abr8ks2j"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bhkhkyklgfwk0" path="res://assets/textures/ASSETS/electricite.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Solar Panel"
+short_name = "Solar Panel"
+image = ExtResource("2_img")
+weight = 1.0
+type = 1
+rarity = 1
+domain = 1
+card_type = 3
+daily = Dictionary[String, int]({"power": 6})
+gives_text = "+6 energy"
+costs_text = "Adds weight to the rocket"
+lore = "Photovoltaic arrays are the standard power source of crewed spacecraft (ISS solar array wings). Large deployable arrays add mass and launch constraints."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

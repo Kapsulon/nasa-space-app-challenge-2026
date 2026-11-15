@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bkjhadsi82wn2"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://b14ldaxpyr27e" path="res://assets/textures/ASSETS/eau_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Quantum Atmospheric Humidity Condenser"
+short_name = "Quantum Condenser"
+image = ExtResource("2_img")
+weight = 1.2
+type = 0
+rarity = 2
+domain = 0
+card_type = 3
+daily = Dictionary[String, int]({"water": 12, "oxygen": -2})
+toggleable = true
+flags = Array[StringName]([&"pure_water"])
+gives_text = "Infinite water (+12 L). No risk of illness"
+costs_text = "Consumes 2 kg of Oxygen per day"
+synergy_text = "Neutralizes odor/contamination maluses from the Food domain. Trades Oxygen for Water"
+lore = "A far-future extrapolation of ISS humidity-condensing technology: the cabin atmosphere becomes an endless water source and every drop is purified to a standard that rules out waterborne illness. Running the system draws oxygen from the cabin air, so the crew pays for endless water in daily oxygen."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

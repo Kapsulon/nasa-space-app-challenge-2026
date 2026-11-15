@@ -7,6 +7,19 @@
 [ext_resource type="Script" path="res://scenes/mission_phase/mission_trajectory.gd" id="5_trajectory"]
 [ext_resource type="Texture2D" uid="uid://cm16qh8pgill0" path="res://assets/textures/sprites_vaisseau/x1/vaisseau_complet.png" id="6_ship"]
 [ext_resource type="Script" path="res://classes/terminal_label.gd" id="7_terminal"]
+[ext_resource type="Script" path="res://scenes/mission_phase/ship_view.gd" id="8_ship_view"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="t_aug"]
+[ext_resource type="Resource" uid="uid://detmftp7d5dn8" path="res://data/augments/plastic_jug.tres" id="t_0"]
+[ext_resource type="Resource" uid="uid://cnmy77r8nlsdi" path="res://data/augments/ebay_solar_panel.tres" id="t_1"]
+[ext_resource type="Resource" uid="uid://dtjw15qt6hg44" path="res://data/augments/diy_extension_cord.tres" id="t_2"]
+[ext_resource type="Resource" uid="uid://dicy4abr8ks2j" path="res://data/augments/solar_panel.tres" id="t_3"]
+[ext_resource type="Resource" uid="uid://bx75edonb0oui" path="res://data/augments/urine_distiller.tres" id="t_4"]
+[ext_resource type="Resource" uid="uid://jbdocux8xm0h" path="res://data/augments/oxygen_concentrator.tres" id="t_5"]
+[ext_resource type="Resource" uid="uid://sw3g33l7f4jo" path="res://data/augments/ficus.tres" id="t_6"]
+[ext_resource type="Resource" uid="uid://bij248hpmo75b" path="res://data/augments/liion_battery.tres" id="t_7"]
+[ext_resource type="Resource" uid="uid://ceuj5qtktunk4" path="res://data/augments/scuba_tank.tres" id="t_8"]
+[ext_resource type="Resource" uid="uid://bs1daudhu48dj" path="res://data/augments/oga.tres" id="t_9"]
 
 [sub_resource type="SystemFont" id="SystemFont_mono"]
 font_names = PackedStringArray("Menlo", "Consolas", "DejaVu Sans Mono", "Courier New", "Monospace")
@@ -90,6 +103,38 @@ border_color = Color(0.2235, 1, 0.4157, 1)
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_focus"]
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_ship"]
+content_margin_left = 6.0
+content_margin_top = 6.0
+content_margin_right = 6.0
+content_margin_bottom = 6.0
+bg_color = Color(0.03, 0.045, 0.08, 0.35)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.1725, 0.2431, 0.3412, 0.8)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_small"]
+content_margin_left = 14.0
+content_margin_top = 10.0
+content_margin_right = 14.0
+content_margin_bottom = 10.0
+bg_color = Color(0.0627, 0.0941, 0.1412, 0.9)
+border_width_left = 2
+border_width_top = 2
+border_width_right = 2
+border_width_bottom = 2
+border_color = Color(0.1725, 0.2431, 0.3412, 1)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+
 [node name="MissionPhase" type="Control"]
 layout_mode = 3
 anchors_preset = 15
@@ -99,6 +144,17 @@ grow_horizontal = 2
 grow_vertical = 2
 theme = ExtResource("1_theme")
 script = ExtResource("2_script")
+test_cargo = Array[ExtResource("t_aug")]([ExtResource("t_0"), ExtResource("t_1"), ExtResource("t_2"), ExtResource("t_3"), ExtResource("t_4"), ExtResource("t_5"), ExtResource("t_6"), ExtResource("t_7"), ExtResource("t_8"), ExtResource("t_9")])
+
+[node name="SpaceBackground" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("4_space")
 
 [node name="SpaceBackground" type="Control" parent="."]
 layout_mode = 1
@@ -117,173 +173,260 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
 
 [node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 10
 
 [node name="TopBar" type="HBoxContainer" parent="MarginContainer/VBox"]
-custom_minimum_size = Vector2(0, 96)
+custom_minimum_size = Vector2(0, 52)
 layout_mode = 2
-theme_override_constants/separation = 32
+theme_override_constants/separation = 18
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 34
 text = "Reach the ISS"
 vertical_alignment = 1
 
 [node name="Trajectory" type="Control" parent="MarginContainer/VBox/TopBar"]
 unique_name_in_owner = true
+custom_minimum_size = Vector2(260, 52)
 layout_mode = 2
 size_flags_horizontal = 3
 mouse_filter = 2
 script = ExtResource("5_trajectory")
 ship_texture = ExtResource("6_ship")
 
+[node name="ResourceBar" type="HBoxContainer" parent="MarginContainer/VBox/TopBar"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 16
+
 [node name="ScienceLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7686, 0.6, 1, 1)
-theme_override_font_sizes/font_size = 32
-text = "Science: 0"
+theme_override_colors/font_color = Color(0.7059, 0.4235, 1, 1)
+theme_override_font_sizes/font_size = 24
+text = "Science 0"
 vertical_alignment = 1
 
-[node name="DayLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
+[node name="ClockLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(250, 0)
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Day 1/10  08:00"
+horizontal_alignment = 2
+vertical_alignment = 1
+
+[node name="SpeedBox" type="HBoxContainer" parent="MarginContainer/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 44
-text = "Day 1 / 10"
-vertical_alignment = 1
+theme_override_constants/separation = 4
 
-[node name="Body" type="HBoxContainer" parent="MarginContainer/VBox"]
+[node name="Middle" type="HBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 
-[node name="ResourcesPanel" type="PanelContainer" parent="MarginContainer/VBox/Body"]
-custom_minimum_size = Vector2(440, 0)
-layout_mode = 2
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-
-[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBox/Body/ResourcesPanel"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="Header" type="Label" parent="MarginContainer/VBox/Body/ResourcesPanel/VBox"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 40
-text = "Ship status"
-
-[node name="Hint" type="Label" parent="MarginContainer/VBox/Body/ResourcesPanel/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5412, 0.5804, 0.651, 1)
-theme_override_font_sizes/font_size = 20
-text = "Right column: expected change tonight"
-autowrap_mode = 3
-
-[node name="ResourceList" type="VBoxContainer" parent="MarginContainer/VBox/Body/ResourcesPanel/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_constants/separation = 18
-
-[node name="CrewPanel" type="PanelContainer" parent="MarginContainer/VBox/Body"]
+[node name="ShipPanel" type="PanelContainer" parent="MarginContainer/VBox/Middle"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+theme_override_styles/panel = SubResource("StyleBoxFlat_ship")
 
-[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBox/Body/CrewPanel"]
+[node name="ShipArea" type="Control" parent="MarginContainer/VBox/Middle/ShipPanel"]
 layout_mode = 2
-theme_override_constants/separation = 16
+mouse_filter = 2
 
-[node name="Header" type="Label" parent="MarginContainer/VBox/Body/CrewPanel/VBox"]
+[node name="ShipView" type="Control" parent="MarginContainer/VBox/Middle/ShipPanel/ShipArea"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("8_ship_view")
+
+[node name="ShipHint" type="Label" parent="MarginContainer/VBox/Middle/ShipPanel/ShipArea"]
+unique_name_in_owner = true
+layout_mode = 1
+offset_left = 14.0
+offset_top = 10.0
+offset_right = 1100.0
+offset_bottom = 40.0
+mouse_filter = 2
+theme_override_colors/font_color = Color(0.75, 0.82, 0.92, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 22
+text = "Click an astronaut, then a room to send them there."
+
+[node name="RightColumn" type="VBoxContainer" parent="MarginContainer/VBox/Middle"]
+custom_minimum_size = Vector2(400, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 40
+theme_override_constants/separation = 8
+
+[node name="CrewHeader" type="Label" parent="MarginContainer/VBox/Middle/RightColumn"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
 text = "Crew"
 
-[node name="CrewList" type="GridContainer" parent="MarginContainer/VBox/Body/CrewPanel/VBox"]
+[node name="Roster" type="VBoxContainer" parent="MarginContainer/VBox/Middle/RightColumn"]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/h_separation = 16
-theme_override_constants/v_separation = 16
-columns = 2
+theme_override_constants/separation = 8
 
-[node name="RightColumn" type="VBoxContainer" parent="MarginContainer/VBox/Body"]
-custom_minimum_size = Vector2(520, 0)
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="EventPanel" type="PanelContainer" parent="MarginContainer/VBox/Body/RightColumn"]
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
-
-[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBox/Body/RightColumn/EventPanel"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="Header" type="Label" parent="MarginContainer/VBox/Body/RightColumn/EventPanel/VBox"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.5412, 0.5804, 0.651, 1)
-theme_override_font_sizes/font_size = 24
-text = "Incoming transmission"
-
-[node name="EventTitle" type="Label" parent="MarginContainer/VBox/Body/RightColumn/EventPanel/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-theme_override_font_sizes/font_size = 40
-text = "Quiet day"
-autowrap_mode = 3
-
-[node name="EventDescription" type="RichTextLabel" parent="MarginContainer/VBox/Body/RightColumn/EventPanel/VBox"]
-unique_name_in_owner = true
-layout_mode = 2
-size_flags_vertical = 3
-theme_override_fonts/bold_font = ExtResource("3_font")
-theme_override_fonts/italics_font = ExtResource("3_font")
-theme_override_font_sizes/normal_font_size = 26
-theme_override_font_sizes/bold_font_size = 26
-theme_override_font_sizes/italics_font_size = 26
-bbcode_enabled = true
-text = "No incidents reported."
-
-[node name="EventChoices" type="VBoxContainer" parent="MarginContainer/VBox/Body/RightColumn/EventPanel/VBox"]
-unique_name_in_owner = true
+[node name="Bottom" type="HBoxContainer" parent="MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 280)
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="DecisionBox" type="PanelContainer" parent="MarginContainer/VBox/Body/RightColumn/EventPanel/VBox"]
-unique_name_in_owner = true
-visible = false
+[node name="TerminalPanel" type="PanelContainer" parent="MarginContainer/VBox/Bottom"]
 layout_mode = 2
+size_flags_horizontal = 3
 theme_override_styles/panel = SubResource("StyleBoxFlat_decision")
 
-[node name="DecisionTerminal" type="RichTextLabel" parent="MarginContainer/VBox/Body/RightColumn/EventPanel/VBox/DecisionBox"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 130)
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBox/Bottom/TerminalPanel"]
 layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="TerminalTitle" type="Label" parent="MarginContainer/VBox/Bottom/TerminalPanel/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5843, 0.7412, 0.6157, 1)
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 15
+text = "houston@mission-control  <-->  crew channel"
+
+[node name="Terminal" type="RichTextLabel" parent="MarginContainer/VBox/Bottom/TerminalPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
 mouse_filter = 2
 theme_override_colors/default_color = Color(0.2235, 1, 0.4157, 1)
 theme_override_fonts/normal_font = SubResource("SystemFont_mono")
-theme_override_font_sizes/normal_font_size = 18
+theme_override_font_sizes/normal_font_size = 17
 bbcode_enabled = true
-scroll_active = false
+scroll_following = true
 script = ExtResource("7_terminal")
-type_cps = 30.0
+print_cps = 700.0
+type_cps = 45.0
+line_pause = 0.02
+max_lines = 250
 
-[node name="EndDayButton" type="Button" parent="MarginContainer/VBox/Body/RightColumn"]
-unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 96)
+[node name="ModulesPanel" type="PanelContainer" parent="MarginContainer/VBox/Bottom"]
+custom_minimum_size = Vector2(560, 0)
 layout_mode = 2
-mouse_default_cursor_shape = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_small")
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer/VBox/Bottom/ModulesPanel"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ModulesHeader" type="Label" parent="MarginContainer/VBox/Bottom/ModulesPanel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "Modules"
+
+[node name="ModuleScroll" type="ScrollContainer" parent="MarginContainer/VBox/Bottom/ModulesPanel/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ModuleList" type="VBoxContainer" parent="MarginContainer/VBox/Bottom/ModulesPanel/VBox/ModuleScroll"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 6
+
+[node name="EventPopup" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="EventPopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="Center" type="CenterContainer" parent="EventPopup"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="EventPopup/Center"]
+custom_minimum_size = Vector2(820, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="VBox" type="VBoxContainer" parent="EventPopup/Center/Panel"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PopupKicker" type="Label" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.3529, 0.2353, 1)
+theme_override_font_sizes/font_size = 20
+text = "ALERT"
+
+[node name="PopupTitle" type="Label" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
 theme_override_font_sizes/font_size = 40
-text = "End day"
+text = "Event"
+
+[node name="PopupDesc" type="RichTextLabel" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 22
+bbcode_enabled = true
+text = "Description"
+fit_content = true
+scroll_active = false
+
+[node name="PopupInfo" type="RichTextLabel" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_colors/default_color = Color(0.5412, 0.5804, 0.651, 1)
+theme_override_font_sizes/normal_font_size = 20
+bbcode_enabled = true
+text = "Info"
+fit_content = true
+scroll_active = false
+
+[node name="PopupChoices" type="VBoxContainer" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="PopupClose" type="Button" parent="EventPopup/Center/Panel/VBox"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_font_sizes/font_size = 22
+text = "Close"
 
 [node name="RecapOverlay" type="Control" parent="."]
 unique_name_in_owner = true

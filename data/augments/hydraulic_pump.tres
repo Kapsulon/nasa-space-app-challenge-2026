@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bqxusqq3xx8vg"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://l1ii18u2qhwl" path="res://assets/textures/ASSETS/electricite_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Hydraulic Pump"
+short_name = "Hydraulic Pump"
+image = ExtResource("2_img")
+weight = 0.8
+type = 1
+rarity = 2
+domain = 1
+card_type = 3
+upgrades = Dictionary[String, String]({"water": "-30"})
+daily = Dictionary[String, int]({"power": 8})
+gives_text = "Infinite energy"
+costs_text = "Costs 30 L of water (one-time)"
+synergy_text = "Consumes Water once"
+lore = "Game conceit: a water loop is filled once, then pumped endlessly through a turbine. Real spacecraft already rely on pumped fluid loops (ISS thermal control system), and the one-time water cost is what the crew pays to start it."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

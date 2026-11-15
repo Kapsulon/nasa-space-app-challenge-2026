@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://d1qs1v2rpwjy0"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://l1ii18u2qhwl" path="res://assets/textures/ASSETS/electricite_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Radioisotope Thermoelectric Generator (RTG)"
+short_name = "RTG"
+image = ExtResource("2_img")
+weight = 2.5
+type = 1
+rarity = 2
+domain = 1
+card_type = 3
+daily = Dictionary[String, int]({"power": 8})
+gives_text = "Infinite and constant energy"
+costs_text = "Very heavy"
+lore = "Used by NASA deep space probes (Curiosity, Perseverance, Voyager) when solar panels are ineffective. It converts the heat of plutonium-238 decay into electricity via the Seebeck effect."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

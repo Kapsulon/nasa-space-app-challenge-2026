@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bbmhyxdctkpao"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://b8hmmgmv6uemx" path="res://assets/textures/ASSETS/oxygen.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "High-Pressure Oxygen Tank Assembly"
+short_name = "High-Pressure Tanks"
+image = ExtResource("2_img")
+weight = 0.9
+type = 0
+rarity = 1
+domain = 2
+card_type = 0
+upgrades = Dictionary[String, String]({"oxygen": "32"})
+gives_text = "+8 turns of oxygen reserve"
+risks_text = "No penalty, no leaks"
+lore = "The ISS stores oxygen and nitrogen in external high-pressure tanks, topped up by resupply missions. They are used to repressurize the station and as a buffer when production drops."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

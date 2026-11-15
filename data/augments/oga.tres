@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://bs1daudhu48dj"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://b8hmmgmv6uemx" path="res://assets/textures/ASSETS/oxygen.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Oxygen Generation Assembly (OGA)"
+short_name = "OGA"
+image = ExtResource("2_img")
+weight = 0.7
+type = 0
+rarity = 1
+domain = 2
+card_type = 3
+daily = Dictionary[String, int]({"oxygen": 4, "power": -1, "water": -1})
+toggleable = true
+synergy_daily = Dictionary[String, int]({"oxygen": 1})
+synergy_domain = 0
+synergy_adjacent = false
+synergy_max = 1
+gives_text = "Produces oxygen continuously and stably"
+risks_text = "No penalty"
+synergy_text = "Synergy with the Water card"
+lore = "The ISS OGA splits water into hydrogen and oxygen by electrolysis. The leftover hydrogen can be combined with exhaled CO2 in a Sabatier reaction."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

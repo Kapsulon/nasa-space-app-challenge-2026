@@ -5,12 +5,16 @@
 
 [resource]
 script = ExtResource("1_aug")
-display_name = "Fuel tank"
-description = "Adds [color=#ffb800]{fuel} t[/color] of rocket fuel"
-upgrades = Dictionary[String, String]({
-"fuel": "10"
-})
+display_name = "Fuel Tank"
 image = ExtResource("2_img")
 weight = 0.5
 type = 1
+rarity = 0
+domain = 4
+card_type = 6
+upgrades = Dictionary[String, String]({"fuel": "10"})
+gives_text = "+10 t of rocket propellant"
+costs_text = "Weight (0.5 t of tank hardware)"
+synergy_text = "Lets a heavier rocket reach orbit"
+lore = "Most of a rocket's launch mass is propellant. Every extra ton carried to orbit needs several more tons of fuel: this is the rocket equation discovered by Konstantin Tsiolkovsky in 1903."
 metadata/_custom_type_script = "uid://cuy5s3hde6jye"

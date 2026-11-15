@@ -5,6 +5,7 @@
 
 [sub_resource type="Resource" id="Resource_choice0"]
 script = ExtResource("2_choice")
+work_hours = 1.0
 label = "Burn now"
 cost = Dictionary[String, int]({"power": 4})
 success_chance = 0.7
@@ -15,6 +16,7 @@ failure_text = "The engine rattled and the burn was cancelled. The hull got shak
 
 [sub_resource type="Resource" id="Resource_choice1"]
 script = ExtResource("2_choice")
+needs_crew = false
 label = "Wait for the planned window"
 cost = Dictionary[String, int]({})
 success_chance = 1.0
@@ -29,4 +31,6 @@ title = "Early docking window"
 description = "Mission control says the space station is adjusting its orbit. An engine burn right now could get you there a day early."
 min_day = 4
 weight = 0.7
+skill = "command"
+location = "comms"
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cxqr8t421443j"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bhkhkyklgfwk0" path="res://assets/textures/ASSETS/electricite.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 3
+chance = 0.3
+effects = {"crew_stress": 8, "random_crew_health": -10}
+short_text = "Fumes when overcharged"
+log_text = "The overcharged {module} got hot and gave off nasty fumes. Everyone coughed and opened the vents."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Electric Car Lead-Acid Battery"
+short_name = "Lead-Acid Battery"
+image = ExtResource("2_img")
+weight = 1.5
+type = 1
+rarity = 0
+domain = 1
+card_type = 4
+upgrades = Dictionary[String, String]({"power": "10"})
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "Stores a small energy reserve"
+costs_text = "Very heavy: weight penalty on the rocket (inventory)"
+risks_text = "Emits toxic fumes if overheated"
+lore = "Lead-acid batteries are extremely heavy and present major chemical risks in case of leaks in microgravity, which bans them from crewed spaceflight standards."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

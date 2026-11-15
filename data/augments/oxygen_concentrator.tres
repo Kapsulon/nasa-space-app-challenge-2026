@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://jbdocux8xm0h"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://b8hmmgmv6uemx" path="res://assets/textures/ASSETS/oxygen.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Second-Hand Hospital Oxygen Concentrator"
+short_name = "O2 Concentrator"
+image = ExtResource("2_img")
+weight = 0.4
+type = 0
+rarity = 0
+domain = 2
+card_type = 3
+daily = Dictionary[String, int]({"oxygen": 3, "power": -3, "crew_stress": 3})
+toggleable = true
+gives_text = "+3 oxygen per turn"
+costs_text = "Draws a lot of Energy. Loud: crew rest is worse (-5% Morale per turn)"
+synergy_text = "Raises the load on the Energy domain"
+lore = "Terrestrial concentrators pull oxygen out of cabin air with molecular sieves. They are power-hungry and were never designed for microgravity or continuous operation."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

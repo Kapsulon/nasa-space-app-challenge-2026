@@ -11,9 +11,9 @@ class_name LaunchProfile extends RefCounted
 ## Crew capsule with the crew inside, always on board.
 const CAPSULE_TONS: float = 8.0
 ## Tons the stock engines can carry to orbit.
-const BASE_LIFT_TONS: float = 18.0
+const BASE_LIFT_TONS: float = 20.0
 ## Propellant in the stock tanks.
-const BASE_FUEL_TONS: float = 60.0
+const BASE_FUEL_TONS: float = 70.0
 ## Tons of propellant needed for every ton carried to orbit.
 const FUEL_PER_TON: float = 5.0
 const BASE_RELIABILITY: float = 0.94

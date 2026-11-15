@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://ceuj5qtktunk4"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://b8hmmgmv6uemx" path="res://assets/textures/ASSETS/oxygen.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 0
+chance = 0.2
+effects = {"oxygen": -2}
+short_text = "Leaks noisily"
+log_text = "The {module} hissed and leaked a little oxygen."
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Requisitioned Old Scuba Tank"
+short_name = "Old Scuba Tank"
+image = ExtResource("2_img")
+weight = 0.6
+type = 0
+rarity = 0
+domain = 2
+card_type = 0
+slot_override = 2
+upgrades = Dictionary[String, String]({"oxygen": "12"})
+daily = Dictionary[String, int]({"crew_stress": 1})
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "+3 turns of oxygen reserve"
+costs_text = "Heavy: takes 2 inventory slots. Permanent -5% Morale (noisy leaks)"
+risks_text = "Leaks noisily"
+lore = "High-pressure tanks stored without maintenance risk metal fatigue and slow leaks. In space, managing gas mixes (oxygen/nitrogen) prevents hypoxia and toxic hyperoxia."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

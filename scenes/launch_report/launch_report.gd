@@ -18,6 +18,7 @@ var _launching: bool = false
 func _ready() -> void:
     var terminal: TerminalLabel = %Terminal
     terminal.clear_terminal()
+    terminal.get_v_scroll_bar().modulate = Color.TRANSPARENT
     terminal.print_text(PROMPT, 0.4)
     terminal.type_text("./launch_readiness --mission %s\n" % _mission_slug(), 0.3)
     terminal.print_text(_build_report())
@@ -97,11 +98,8 @@ func _build_report() -> String:
         var n: int = counts[augment]
         t += "  [color=#%s][%s][/color] %s x%d ... %d SLOT%s\n" % [
             Augment.RARITY_COLORS[augment.rarity].to_html(false),
-            augment.rarity_name().to_upper(), augment.display_name.to_upper(), n,
+            augment.rarity_name().to_upper(), augment.card_name().to_upper(), n,
             augment.slot_cost() * n, "" if augment.slot_cost() * n == 1 else "S"]
-        for key in augment.upgrades.keys():
-            var amount := int(augment.upgrades[key])
-            t += _dim("      %+d %s" % [amount * n, key.replace("_", " ").to_upper()]) + "\n"
     var total_slots: int = TransitionData.scenario_base_slot_count if TransitionData.scenario_base_slot_count > 0 else slots_used
     t += "  TOTAL ....... %d / %d SLOTS\n\n" % [slots_used, total_slots]
 

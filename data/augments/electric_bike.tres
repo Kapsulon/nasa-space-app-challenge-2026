@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://cxw4p2nbhlemm"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://bhkhkyklgfwk0" path="res://assets/textures/ASSETS/electricite.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Electric Bike"
+short_name = "Electric Bike"
+image = ExtResource("2_img")
+weight = 0.3
+type = 1
+rarity = 1
+domain = 1
+card_type = 3
+daily = Dictionary[String, int]({"power": 4, "food": -1, "oxygen": -1})
+toggleable = true
+gives_text = "+4 energy"
+costs_text = "Crew exercises to generate it: consumes more Food and more Oxygen"
+synergy_text = "Draws on Food and Oxygen"
+lore = "Human-powered generation: the crew pedals to feed the grid. Stations already use cycle ergometers for exercise (ISS CEVIS), and a working body burns extra calories and breathes more oxygen."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

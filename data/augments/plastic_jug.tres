@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://detmftp7d5dn8"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://diq143o6w0bx7" path="res://assets/textures/ASSETS/eau.jpeg" id="2_img"]
+[ext_resource type="Script" path="res://classes/card_risk.gd" id="3_risk"]
+
+[sub_resource type="Resource" id="Risk_0"]
+script = ExtResource("3_risk")
+condition = 1
+chance = 0.25
+domain = 1
+effects = {"power": -4, "crew_stress": 4}
+short_text = "Shorts next to Energy cards"
+log_text = "The leaky {module} dripped onto the power module next to it: short-circuit! (-4 kWh)"
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "The Handyman's Plastic Jug"
+short_name = "Plastic Jug"
+image = ExtResource("2_img")
+weight = 0.2
+type = 0
+rarity = 0
+domain = 0
+card_type = 0
+upgrades = Dictionary[String, String]({"water": "20"})
+daily = Dictionary[String, int]({"water": -2})
+risks = Array[ExtResource("3_risk")]([SubResource("Risk_0")])
+gives_text = "+20 L water instantly"
+costs_text = "Leaks 2 L of water per turn"
+risks_text = "Short-circuit if placed too close to the Energy card"
+synergy_text = "Bad adjacency with Energy"
+lore = "Consumer-grade polymer containers (COTS) are not certified for aerospace: porosity, chemical leaching into drinking water and poor resistance to launch vibrations."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

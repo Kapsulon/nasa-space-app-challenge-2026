@@ -5,6 +5,7 @@
 
 [sub_resource type="Resource" id="Resource_choice0"]
 script = ExtResource("2_choice")
+work_hours = 1.5
 label = "Answer their questions"
 cost = Dictionary[String, int]({"power": 1})
 success_chance = 1.0
@@ -15,6 +16,7 @@ failure_text = ""
 
 [sub_resource type="Resource" id="Resource_choice1"]
 script = ExtResource("2_choice")
+needs_crew = false
 label = "Politely reschedule"
 cost = Dictionary[String, int]({})
 success_chance = 1.0
@@ -27,6 +29,8 @@ failure_text = ""
 script = ExtResource("1_event")
 title = "Call from a school"
 description = "Students from a school on Earth would like to ask the crew questions over the radio."
-min_day = 2
+min_day = 1
 weight = 0.9
+skill = "science"
+location = "comms"
 choices = Array[ExtResource("2_choice")]([SubResource("Resource_choice0"), SubResource("Resource_choice1")])

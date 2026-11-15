@@ -1,7 +1,7 @@
 @tool
 extends Control
 
-const TIME_TO_PICK: float = 10.0
+const TIME_TO_PICK: float = 60.0
 const LAUNCH_REPORT_SCENE: String = "res://scenes/launch_report/launch_report.tscn"
 
 @export_tool_button("Generate cards") var gen = gen_cards
@@ -77,17 +77,37 @@ func gen_cards() -> void:
     for child in %CardsHolder.get_children():
         child.queue_free()
     update_launch_odds()
-    var pool := available_augments()
-    if pool.is_empty():
-        return
-    for i in range(3):
+    show_details(null)
+    for augment in draw_offers(available_augments(), 3):
         var card: AugmentCard = AUGMENT_CARD_PACKED_SCENE.instantiate()
-        card.augment_instance = AugmentInstance.new(pool.pick_random(), "")
+        card.augment_instance = AugmentInstance.new(augment, "")
         card.connect("picked", func(): card_picked(card.augment_instance))
         card.hover_changed.connect(func(hovering: bool):
-            update_launch_odds(card.augment_instance.augment if hovering else null))
+            update_launch_odds(card.augment_instance.augment if hovering else null)
+            show_details(card.augment_instance.augment if hovering else null))
         %CardsHolder.add_child(card)
         card.owner = get_tree().edited_scene_root
+
+
+## Up to `count` different cards, rarer cards showing up less often
+## (Augment.RARITY_WEIGHTS).
+static func draw_offers(pool: Array[Augment], count: int) -> Array[Augment]:
+    var remaining := pool.duplicate()
+    var offers: Array[Augment] = []
+    while offers.size() < count and not remaining.is_empty():
+        var total := 0.0
+        for augment: Augment in remaining:
+            total += Augment.RARITY_WEIGHTS[augment.rarity]
+        var roll := randf() * total
+        var picked: Augment = remaining[-1]
+        for augment: Augment in remaining:
+            roll -= Augment.RARITY_WEIGHTS[augment.rarity]
+            if roll <= 0.0:
+                picked = augment
+                break
+        remaining.erase(picked)
+        offers.append(picked)
+    return offers
 
 
 func gen_slots() -> void:
@@ -100,12 +120,13 @@ func gen_slots() -> void:
     update_slots()
 
 
-## Tints filled slots with the rarity color of the augment occupying them.
+## Tints filled slots with the domain color of the card occupying them, so
+## neighbours in the cargo are easy to spot.
 func update_slots() -> void:
     var colors: Array[Color] = []
     for instance in selected_augments:
         for i in instance.augment.slot_cost():
-            colors.append(Augment.RARITY_COLORS[instance.augment.rarity])
+            colors.append(Augment.DOMAIN_COLORS[instance.augment.domain])
     var slots := %Slots.get_children().filter(func(c: Node): return not c.is_queued_for_deletion())
     for i in slots.size():
         slots[i].modulate = colors[i] if i < colors.size() else EMPTY_SLOT_COLOR
@@ -116,18 +137,80 @@ func update_manifest() -> void:
     for child in %ManifestList.get_children():
         child.queue_free()
 
-    # Group identical augments: "3x Water capacity".
-    var counts: Dictionary[Augment, int] = {}
+    # Cargo order matters (neighbours), so list it in order and only merge
+    # identical cards picked one after the other: "3x Fuel Tank".
+    var runs: Array[Array] = []
     for instance in selected_augments:
-        counts[instance.augment] = counts.get(instance.augment, 0) + 1
-    for augment: Augment in counts.keys():
+        if not runs.is_empty() and runs[-1][0] == instance.augment:
+            runs[-1][1] += 1
+        else:
+            runs.append([instance.augment, 1])
+    for run in runs:
+        var augment: Augment = run[0]
+        var row := HBoxContainer.new()
+        row.add_theme_constant_override("separation", 10)
+        var swatch := ColorRect.new()
+        swatch.color = Augment.DOMAIN_COLORS[augment.domain]
+        swatch.custom_minimum_size = Vector2(10, 22)
+        swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+        row.add_child(swatch)
         var label := Label.new()
-        var cost: int = augment.slot_cost()
-        label.text = "%dx %s  (%d slot%s each)" % [counts[augment], augment.display_name, cost, "" if cost == 1 else "s"]
-        label.add_theme_font_size_override("font_size", 26)
+        label.text = ("%dx " % run[1] if run[1] > 1 else "") + augment.card_name()
+        label.add_theme_font_size_override("font_size", 22)
         label.add_theme_color_override("font_color", Augment.RARITY_COLORS[augment.rarity])
         label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        %ManifestList.add_child(label)
+        label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+        row.add_child(label)
+        %ManifestList.add_child(row)
+    update_balance()
+
+
+## How long the supplies would last with this cargo, and how the cargo order
+## affects the modules.
+func update_balance() -> void:
+    if Engine.is_editor_hint():
+        return
+    var preview := MissionState.new("", TransitionData.scenario_days, [], selected_augments)
+    var forecast := preview.forecast()
+    var t := ""
+    for res_id in ["water", "oxygen", "food", "power"]:
+        var stock: int = preview.resources[res_id]
+        var net: int = forecast[res_id]
+        var lasts := ""
+        var color := "7be38b"
+        if net >= 0:
+            lasts = "steady"
+        else:
+            var days := floori(stock / float(-net))
+            lasts = "lasts %d day%s" % [days, "" if days == 1 else "s"]
+            if days < preview.mission_days:
+                color = "ff5a6e" if days * 2 < preview.mission_days else "ffb35c"
+        t += "%s %d %s  [color=#8a94a6]%+d/day[/color]  [color=#%s]%s[/color]\n" % [
+            MissionState.resource_name(res_id), stock, MissionState.unit(res_id), net, color, lasts]
+    for note in preview.adjacency_notes():
+        t += "[color=#ffb35c][font_size=18]%s[/font_size][/color]\n" % note
+    %Balance.text = t.strip_edges()
+
+
+## Fills the details panel with everything about the hovered card.
+func show_details(augment: Augment) -> void:
+    if Engine.is_editor_hint():
+        return
+    if augment == null:
+        %CardDetails.text = "[color=#8a94a6]Hover a card to read about it. Cards become modules aboard the ship: they bring supplies, produce or use resources every day, and some can misbehave. Order matters: cards next to each other in the cargo can help or bother each other.[/color]"
+        return
+    var t := "[b][color=#%s]%s[/color][/b]\n" % [Augment.RARITY_COLORS[augment.rarity].to_html(false), augment.display_name]
+    t += "[color=#%s]%s[/color] [color=#8a94a6]-  %s  -  %s  -  %.1f t  -  %d slot%s[/color]\n" % [
+        Augment.DOMAIN_COLORS[augment.domain].to_html(false), augment.domain_name(), augment.card_type_name(),
+        augment.rarity_name(), augment.weight, augment.slot_cost(), "" if augment.slot_cost() == 1 else "s"]
+    var rows := [["Gives", augment.gives_text, "7be38b"], ["Costs", augment.costs_text, "ff5a6e"],
+        ["Risks", augment.risks_text, "ffb35c"], ["Synergy", augment.synergy_text, "63b1ff"]]
+    for row in rows:
+        if row[1] != "":
+            t += "[color=#%s]%s:[/color] %s\n" % [row[2], row[0], row[1]]
+    if augment.lore != "":
+        t += "[color=#8a94a6][font_size=18]%s[/font_size][/color]" % augment.lore
+    %CardDetails.text = t
 
 
 ## Refreshes the launch odds bar. While a card is hovered, `preview` is its
@@ -161,6 +244,7 @@ func card_picked(augment_instance: AugmentInstance) -> void:
     if finished or augment_instance.augment.slot_cost() > remaining_slots():
         return
     time_left = TIME_TO_PICK
+    augment_instance.roll()
     selected_augments.append(augment_instance)
     used_slots += augment_instance.augment.slot_cost()
     launch.add(augment_instance.augment)

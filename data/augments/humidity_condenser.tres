@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://1mkrix07xq3k"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://diq143o6w0bx7" path="res://assets/textures/ASSETS/eau.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Air Humidity Condenser"
+short_name = "Humidity Condenser"
+image = ExtResource("2_img")
+weight = 0.4
+type = 0
+rarity = 1
+domain = 0
+card_type = 1
+daily = Dictionary[String, int]({"water": 5, "power": -2})
+toggleable = true
+gives_text = "+5 L water per turn (recovered from crew sweat and breathing)"
+costs_text = "Costs Energy"
+synergy_text = "Draws on Energy"
+lore = "Exhaled air and sweat load the cabin with humidity. Space environmental control systems (CDRA, condensing heat exchangers) condense this humidity and redirect it to the drinking water reserves."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"

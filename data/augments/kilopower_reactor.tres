@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="Augment" format=3 uid="uid://b7a64fj7a0c2o"]
+
+[ext_resource type="Script" uid="uid://cuy5s3hde6jye" path="res://classes/augment.gd" id="1_aug"]
+[ext_resource type="Texture2D" uid="uid://l1ii18u2qhwl" path="res://assets/textures/ASSETS/electricite_mythique.jpeg" id="2_img"]
+
+[resource]
+script = ExtResource("1_aug")
+display_name = "Compact Nuclear Fission Reactor (Kilopower)"
+short_name = "Kilopower Reactor"
+image = ExtResource("2_img")
+weight = 1.8
+type = 1
+rarity = 2
+domain = 1
+card_type = 3
+daily = Dictionary[String, int]({"power": 10})
+flags = Array[StringName]([&"stable_power"])
+gives_text = "Very large amount of energy. No risk of energy failure"
+lore = "Developed by NASA, the Kilopower project aims to provide a lightweight and reliable nuclear power source for future crewed bases on the Moon or Mars."
+metadata/_custom_type_script = "uid://cuy5s3hde6jye"
