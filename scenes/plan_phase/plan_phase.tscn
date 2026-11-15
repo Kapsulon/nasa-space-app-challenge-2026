@@ -94,7 +94,7 @@ theme_override_constants/separation = 10
 
 [node name="PromptLabel" type="Label" parent="MarginContainer/HBoxContainer/VBoxContainer" unique_id=1729778124]
 unique_name_in_owner = true
-custom_minimum_size = Vector2(0, 90)
+custom_minimum_size = Vector2(0, 76)
 layout_mode = 2
 theme_override_font_sizes/font_size = 64
 text = "Choose wisely:"
@@ -110,9 +110,9 @@ size_flags_vertical = 3
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/margin_left = 32
-theme_override_constants/margin_top = 32
+theme_override_constants/margin_top = 4
 theme_override_constants/margin_right = 32
-theme_override_constants/margin_bottom = 32
+theme_override_constants/margin_bottom = 12
 
 [node name="CardsHolder" type="HBoxContainer" parent="MarginContainer/HBoxContainer/VBoxContainer/VBoxContainer/MarginContainer" unique_id=1279215475]
 unique_name_in_owner = true
@@ -148,7 +148,7 @@ grow_vertical = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.008, 0.024, 0.09, 1)
 theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 39
 text = "60s"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -161,7 +161,7 @@ theme_override_constants/margin_right = 32
 theme_override_constants/margin_bottom = 0
 
 [node name="DetailsPanel" type="PanelContainer" parent="MarginContainer/HBoxContainer/VBoxContainer/VBoxContainer/DetailsMargin" unique_id=1075748697]
-custom_minimum_size = Vector2(0, 250)
+custom_minimum_size = Vector2(0, 300)
 layout_mode = 2
 theme_override_styles/panel = SubResource("StyleBoxFlat_details")
 
@@ -170,8 +170,8 @@ unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
 theme_override_colors/default_color = Color(0.85, 0.88, 0.92, 1)
-theme_override_font_sizes/normal_font_size = 21
-theme_override_font_sizes/bold_font_size = 28
+theme_override_font_sizes/normal_font_size = 34
+theme_override_font_sizes/bold_font_size = 34
 bbcode_enabled = true
 text = "Hover a card to read about it."
 scroll_active = false
@@ -481,14 +481,14 @@ color = Color(0.976, 0.451, 0.086, 1)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.973, 0.98, 0.988, 1)
-theme_override_font_sizes/font_size = 30
+theme_override_font_sizes/font_size = 53
 text = "CARGO MANIFEST"
 
 [node name="SlotsLabel" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Header"]
 layout_mode = 2
 unique_name_in_owner = true
 theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "0 / 30 SLOTS"
 
 [node name="Sep0" type="ColorRect" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
@@ -504,7 +504,7 @@ layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 8
 theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "LAUNCH ODDS"
 
 [node name="OddsLabel" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/OddsHeader"]
@@ -530,7 +530,7 @@ segments = 20
 [node name="OddsHint" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "Looking good!"
 autowrap_mode = 3
 
@@ -543,7 +543,7 @@ columns = 3
 [node name="ThrustTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.58, 0.639, 0.722, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "THRUST"
 
 [node name="ThrustBar" type="Control" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
@@ -561,14 +561,14 @@ layout_mode = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 theme_override_colors/font_color = Color(0.973, 0.98, 0.988, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "0 / 0"
 horizontal_alignment = 2
 
 [node name="FuelTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.58, 0.639, 0.722, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "FUEL"
 
 [node name="FuelBar" type="Control" parent="MarginContainer/HBoxContainer/Manifest/VBox/Stats"]
@@ -586,7 +586,7 @@ layout_mode = 2
 unique_name_in_owner = true
 custom_minimum_size = Vector2(120, 0)
 theme_override_colors/font_color = Color(0.973, 0.98, 0.988, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "0 / 0"
 horizontal_alignment = 2
 
@@ -594,7 +594,7 @@ horizontal_alignment = 2
 layout_mode = 2
 unique_name_in_owner = true
 theme_override_colors/font_color = Color(0.58, 0.639, 0.722, 1)
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 34
 text = "WEIGHT 0.0 T"
 
 [node name="Sep1" type="ColorRect" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
@@ -605,7 +605,7 @@ color = Color(0.118, 0.161, 0.231, 1)
 [node name="SuppliesTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "SUPPLIES"
 
 [node name="Supplies" type="GridContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
@@ -619,7 +619,7 @@ columns = 4
 unique_name_in_owner = true
 layout_mode = 2
 mouse_filter = 2
-theme_override_font_sizes/normal_font_size = 16
+theme_override_font_sizes/normal_font_size = 34
 bbcode_enabled = true
 fit_content = true
 scroll_active = false
@@ -632,7 +632,7 @@ color = Color(0.118, 0.161, 0.231, 1)
 [node name="CargoTitle" type="Label" parent="MarginContainer/HBoxContainer/Manifest/VBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.22, 0.741, 0.973, 1)
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 35
 text = "CARGO"
 
 [node name="ManifestScroll" type="ScrollContainer" parent="MarginContainer/HBoxContainer/Manifest/VBox"]

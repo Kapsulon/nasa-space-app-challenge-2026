@@ -300,7 +300,7 @@ func update_manifest() -> void:
         row.add_child(line)
         var label := Label.new()
         label.text = augment.card_name()
-        label.add_theme_font_size_override("font_size", 18)
+        label.add_theme_font_size_override("font_size", 35)
         label.add_theme_color_override("font_color", Augment.RARITY_COLORS[augment.rarity])
         label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -318,7 +318,7 @@ func update_manifest() -> void:
     if overhead_slots > 0:
         var crates := Label.new()
         crates.text = "Crates and gambles: %d slot%s" % [overhead_slots, "" if overhead_slots == 1 else "s"]
-        crates.add_theme_font_size_override("font_size", 16)
+        crates.add_theme_font_size_override("font_size", 34)
         crates.add_theme_color_override("font_color", Augment.DOMAIN_COLORS[Augment.Domain.LOGISTICS])
         %ManifestList.add_child(crates)
     update_balance()
@@ -334,7 +334,7 @@ func _build_target_list() -> void:
         button.text = augment.card_name()
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-        button.add_theme_font_size_override("font_size", 18)
+        button.add_theme_font_size_override("font_size", 35)
         var rarity_color: Color = Augment.RARITY_COLORS[augment.rarity]
         for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color", "font_hover_pressed_color"]:
             button.add_theme_color_override(state, rarity_color)
@@ -398,7 +398,7 @@ func _tag(text: String, color: Color) -> PanelContainer:
     tag.add_theme_stylebox_override("panel", style)
     var label := Label.new()
     label.text = text
-    label.add_theme_font_size_override("font_size", 14)
+    label.add_theme_font_size_override("font_size", 34)
     label.add_theme_color_override("font_color", color)
     tag.add_child(label)
     return tag
@@ -434,11 +434,11 @@ func update_balance() -> void:
             lasts = "%d DAY%s" % [days, "" if days == 1 else "S"]
             if days < preview.mission_days:
                 color = Color("ff3a55") if days * 2 < preview.mission_days else Color("ffb800")
-        var name_label := _small_label(MissionState.resource_name(res_id).to_upper(), 16, Color("cbd5e1"))
+        var name_label := _small_label(MissionState.resource_name(res_id).to_upper(), 34, Color("cbd5e1"))
         name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         grid.add_child(name_label)
-        grid.add_child(_small_label("%d %s" % [stock, MissionState.unit(res_id)], 16, Color.WHITE))
-        grid.add_child(_small_label("%+d/DAY" % net, 14, Color("64748b")))
+        grid.add_child(_small_label("%d %s" % [stock, MissionState.unit(res_id)], 34, Color.WHITE))
+        grid.add_child(_small_label("%+d/DAY" % net, 34, Color("64748b")))
         grid.add_child(_tag(lasts, color))
     var t := ""
     var hazard := preview.hazard_change()
@@ -466,9 +466,15 @@ func show_details(augment: Augment) -> void:
     for row in rows:
         if row[1] != "":
             t += "[color=#%s]%s:[/color] %s\n" % [row[2], row[0], row[1]]
-    if augment.lore != "":
-        t += "[color=#8a94a6][font_size=18]%s[/font_size][/color]" % augment.lore
     %CardDetails.text = t
+    # The flavor text only shows when there is room: the numbers come first
+    # and must stay big enough to read.
+    if augment.lore != "":
+        var label: RichTextLabel = %CardDetails
+        var with_lore := t + "[color=#8a94a6][font_size=34]%s[/font_size][/color]" % augment.lore
+        label.text = with_lore
+        if label.get_content_height() > label.size.y:
+            label.text = t
 
 
 ## Refreshes the launch odds bar. While a card is hovered, `preview` is its
@@ -838,7 +844,7 @@ func _build_hand() -> void:
     _hand.add_child(_hand_cards)
     _hand_cancel = Button.new()
     _hand_cancel.text = "CANCEL: PICK ANOTHER CARD"
-    _hand_cancel.add_theme_font_size_override("font_size", 18)
+    _hand_cancel.add_theme_font_size_override("font_size", 34)
     var cancel_style := _box_style(Color("1e293b"), Color("475569"), 2)
     var cancel_hover := _box_style(Color("1e293b"), Color("38bdf8"), 2)
     cancel_style.content_margin_left = 20
@@ -996,15 +1002,15 @@ func _show_reveal(title: String, gained: Array[AugmentInstance], lost: Array[Aug
 
     var title_label := Label.new()
     title_label.text = title
-    title_label.add_theme_font_size_override("font_size", 72)
+    title_label.add_theme_font_size_override("font_size", 96)
     var title_color := Color("ff3a55") if gained.is_empty() else Color("ffb800")
     title_label.add_theme_color_override("font_color", title_color)
     title_label.add_theme_color_override("font_shadow_color", Color(0, 0, 0, 0.8))
     title_label.add_theme_constant_override("shadow_offset_y", 6)
     title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     title_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    title_label.size = Vector2(screen.x, 100.0)
-    title_label.position = Vector2(0.0, y - 150.0)
+    title_label.size = Vector2(screen.x, 130.0)
+    title_label.position = Vector2(0.0, y - 180.0)
     title_label.pivot_offset = title_label.size * 0.5
     title_label.scale = Vector2(0.4, 0.4)
     title_label.modulate.a = 0.0
@@ -1015,11 +1021,11 @@ func _show_reveal(title: String, gained: Array[AugmentInstance], lost: Array[Aug
 
     var hint := Label.new()
     hint.text = "CLICK TO CONTINUE"
-    hint.add_theme_font_size_override("font_size", 22)
+    hint.add_theme_font_size_override("font_size", 34)
     hint.add_theme_color_override("font_color", Color("8a94a6"))
     hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
     hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    hint.size = Vector2(screen.x, 40.0)
+    hint.size = Vector2(screen.x, 56.0)
     hint.position = Vector2(0.0, y + card_h + 60.0)
     hint.modulate.a = 0.0
     _reveal.add_child(hint)
@@ -1038,7 +1044,7 @@ func _show_reveal(title: String, gained: Array[AugmentInstance], lost: Array[Aug
         if is_new and i > 0 and not entries[i - 1][1]:
             var arrow := Label.new()
             arrow.text = ">>"
-            arrow.add_theme_font_size_override("font_size", 56)
+            arrow.add_theme_font_size_override("font_size", 80)
             arrow.add_theme_color_override("font_color", Color("cbd5e1"))
             arrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
             arrow.vertical_alignment = VERTICAL_ALIGNMENT_CENTER

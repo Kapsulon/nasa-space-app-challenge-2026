@@ -35,6 +35,7 @@ var _badge: PanelContainer
 
 func _ready() -> void:
     %NameLabel.resized.connect(_fit_name)
+    %AugmentDescription.resized.connect(_fit_face)
     # The offer row lays the card out; the motion runs on the inner box's
     # offset transform so it never fights the container.
     _box.offset_transform_enabled = true
@@ -57,17 +58,50 @@ func update_display() -> void:
     %AugmentImage.texture = augment.image
     %Foil.visible = augment.rarity == Augment.Rarity.MYTHIC
 
-    var desc: String = augment.description
-    if desc == "":
-        var lines: PackedStringArray = []
+    _face_lines = []
+    if augment.description != "":
+        _face_lines.append(augment.description)
+    else:
         for entry in augment.summary_entries():
-            lines.append("[color=#%s]%s[/color]" % [FACE_COLORS[entry["kind"]], entry["text"]])
-        desc = "[font_size=19]%s[/font_size]" % "\n".join(lines)
+            _face_lines.append("[color=#%s]%s[/color]" % [FACE_COLORS[entry["kind"]], entry["text"]])
     var footer := "%.1f t" % augment.weight
     if augment.slot_cost() != Augment.RARITY_SLOTS[augment.rarity]:
         footer += "  -  %d slots" % augment.slot_cost()
-    desc += "\n[font_size=17][color=#%s]%s  -  %s[/color][/font_size]" % [FACE_COLORS["info"], augment.card_type_name(), footer]
-    %AugmentDescription.text = desc
+    _face_footer = "[color=#%s]%s  -  %s[/color]" % [FACE_COLORS["info"], augment.card_type_name(), footer]
+    _set_face_text(FACE_MAX_FONT, _face_lines.size())
+    _fit_face.call_deferred()
+
+
+## Card face text: one BBCode line per effect (no sizes) plus a footer.
+## `_fit_face` picks the size, and drops the last lines when they cannot be
+## read at the minimum size (the details panel shows everything).
+var _face_lines: Array[String] = []
+var _face_footer: String = ""
+
+## Biggest and smallest text sizes of the card face. The biggest one that
+## fits the parchment wins, so short cards are easy to read from afar.
+const FACE_MAX_FONT: int = 40
+const FACE_MIN_FONT: int = 28
+
+
+func _set_face_text(size: int, line_count: int) -> void:
+    var shown := _face_lines.slice(0, line_count)
+    %AugmentDescription.text = "[font_size=%d]%s[/font_size]\n[font_size=%d]%s[/font_size]" % [
+        size, "\n".join(shown), maxi(size - 8, FACE_MIN_FONT - 6), _face_footer]
+
+
+## Largest text size that fits the description box, dropping the least
+## important lines when even the smallest size is too big.
+func _fit_face() -> void:
+    var label: RichTextLabel = %AugmentDescription
+    if label.size.y <= 0.0 or _face_lines.is_empty():
+        return
+    var room := label.size.y - 4.0
+    for line_count in range(_face_lines.size(), 0, -1):
+        for size in range(FACE_MAX_FONT, FACE_MIN_FONT - 1, -2):
+            _set_face_text(size, line_count)
+            if label.get_content_height() <= room:
+                return
 
 
 ## Shrinks the name until it fits on (at most) two lines.
@@ -78,12 +112,12 @@ func _fit_name() -> void:
     label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     label.clip_text = true
     var font := label.get_theme_font("font")
-    for font_size in range(36, 11, -2):
+    for font_size in range(44, 17, -2):
         var height := font.get_multiline_string_size(label.text, HORIZONTAL_ALIGNMENT_CENTER, label.size.x, font_size).y
         if height <= label.size.y:
             label.add_theme_font_size_override("font_size", font_size)
             return
-    label.add_theme_font_size_override("font_size", 12)
+    label.add_theme_font_size_override("font_size", 18)
 
 
 ## Marks the card with a glowing outline and a badge on its top edge, e.g.
@@ -105,9 +139,9 @@ func set_mark(text: String, color: Color = Color.WHITE) -> void:
         _badge.anchor_left = 0.5
         _badge.anchor_right = 0.5
         _badge.grow_horizontal = Control.GROW_DIRECTION_BOTH
-        _badge.offset_top = -18.0
+        _badge.offset_top = -28.0
         var label := Label.new()
-        label.add_theme_font_size_override("font_size", 20)
+        label.add_theme_font_size_override("font_size", 32)
         label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         _badge.add_child(label)
         %Card.add_child(_badge)
@@ -122,10 +156,10 @@ func set_mark(text: String, color: Color = Color.WHITE) -> void:
     var tag := StyleBoxFlat.new()
     tag.bg_color = color
     tag.set_corner_radius_all(4)
-    tag.content_margin_left = 12
-    tag.content_margin_right = 12
-    tag.content_margin_top = 3
-    tag.content_margin_bottom = 3
+    tag.content_margin_left = 16
+    tag.content_margin_right = 16
+    tag.content_margin_top = 4
+    tag.content_margin_bottom = 4
     _badge.add_theme_stylebox_override("panel", tag)
     var badge_label: Label = _badge.get_child(0)
     badge_label.text = text

@@ -179,7 +179,7 @@ func _build_main() -> void:
     name_label.add_theme_constant_override("shadow_offset_x", 0)
     name_label.add_theme_constant_override("shadow_offset_y", 6)
     box.add_child(name_label)
-    box.add_child(_label("DRAFT  •  LAUNCH  •  SURVIVE", 22, C_AMBER))
+    box.add_child(_label("DRAFT  •  LAUNCH  •  SURVIVE", 42, C_AMBER))
 
     var buttons := VBoxContainer.new()
     buttons.add_theme_constant_override("separation", 14)
@@ -192,7 +192,7 @@ func _build_main() -> void:
     if not OS.has_feature("web"):
         buttons.add_child(_menu_button("QUIT", C_DIM, "", func(): get_tree().quit()))
 
-    var hint := _label("↑↓ SELECT     ENTER CONFIRM     ESC BACK", 16, C_DIM, HORIZONTAL_ALIGNMENT_CENTER)
+    var hint := _label("↑↓ SELECT     ENTER CONFIRM     ESC BACK", 34, C_DIM, HORIZONTAL_ALIGNMENT_CENTER)
     column.add_child(hint)
 
 
@@ -216,7 +216,7 @@ func _build_missions() -> void:
 
 func _mission_row(scenario: Dictionary, index: int) -> Button:
     var row := Button.new()
-    row.custom_minimum_size = Vector2(0, 200)
+    row.custom_minimum_size = Vector2(0, 290)
     row.focus_mode = Control.FOCUS_ALL
     var strip := _strip(C_ORANGE)
     row.add_child(strip)
@@ -246,8 +246,8 @@ func _mission_row(scenario: Dictionary, index: int) -> Button:
     text.add_theme_constant_override("separation", 12)
     text.mouse_filter = Control.MOUSE_FILTER_IGNORE
     content.add_child(text)
-    text.add_child(_label(String(scenario["name"]).to_upper(), 38, C_WHITE))
-    var objective := _label(scenario["objective"], 20, C_TEXT)
+    text.add_child(_label(String(scenario["name"]).to_upper(), 52, C_WHITE))
+    var objective := _label(scenario["objective"], 36, C_TEXT)
     objective.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     text.add_child(objective)
     var chips := HBoxContainer.new()
@@ -258,7 +258,7 @@ func _mission_row(scenario: Dictionary, index: int) -> Button:
     chips.add_child(_chip("%d SLOTS" % scenario["slots"], C_SKY))
     chips.add_child(_chip(scenario["orbit"], C_AMBER))
 
-    var cursor := _label("▶", 28, C_ORANGE)
+    var cursor := _label("▶", 51, C_ORANGE)
     cursor.modulate.a = 0.0
     content.add_child(cursor)
 
@@ -356,7 +356,7 @@ func _fill_codex() -> void:
 func _codex_tile(augment: Augment) -> Button:
     var colors: Array = RARITY_STYLE[augment.rarity]
     var tile := Button.new()
-    tile.custom_minimum_size = Vector2(0, 236)
+    tile.custom_minimum_size = Vector2(0, 250)
     tile.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     tile.focus_mode = Control.FOCUS_ALL
     tile.set_meta(&"domain", augment.domain)
@@ -384,10 +384,10 @@ func _codex_tile(augment: Augment) -> Button:
     image.size_flags_vertical = Control.SIZE_EXPAND_FILL
     image.mouse_filter = Control.MOUSE_FILTER_IGNORE
     box.add_child(image)
-    var name_label := _label(augment.card_name().to_upper(), 16, C_WHITE, HORIZONTAL_ALIGNMENT_CENTER)
+    var name_label := _label(augment.card_name().to_upper(), 30, C_WHITE, HORIZONTAL_ALIGNMENT_CENTER)
     name_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     name_label.max_lines_visible = 2
-    name_label.custom_minimum_size.y = 40
+    name_label.custom_minimum_size.y = 74
     box.add_child(name_label)
 
     var on_change := func(on: bool):
@@ -421,7 +421,7 @@ func _filter_chip(text: String, color: Color, domain: int) -> Button:
     button.focus_mode = Control.FOCUS_ALL
     button.set_meta(&"domain", domain)
     button.set_meta(&"color", color)
-    button.add_theme_font_size_override("font_size", 15)
+    button.add_theme_font_size_override("font_size", 34)
     button.pressed.connect(func():
         _codex_filter = domain
         _synth.word_tick(620.0)
@@ -468,7 +468,7 @@ func _build_options() -> void:
     var fullscreen := Button.new()
     fullscreen.custom_minimum_size = Vector2(150, 0)
     fullscreen.focus_mode = Control.FOCUS_ALL
-    fullscreen.add_theme_font_size_override("font_size", 20)
+    fullscreen.add_theme_font_size_override("font_size", 39)
     fullscreen.add_theme_stylebox_override("focus", StyleBoxEmpty.new())
     _paint_toggle(fullscreen, GameSettings.fullscreen)
     fullscreen.pressed.connect(func():
@@ -494,16 +494,16 @@ func _option_row(text: String, control: Control, show_value: bool) -> Control:
     var row := HBoxContainer.new()
     row.custom_minimum_size.y = 84
     row.add_theme_constant_override("separation", 18)
-    var cursor := _label("▶", 20, C_SKY)
+    var cursor := _label("▶", 39, C_SKY)
     cursor.modulate.a = 0.0
     row.add_child(cursor)
-    var label := _label(text, 24, C_WHITE)
+    var label := _label(text, 44, C_WHITE)
     label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     row.add_child(label)
     control.size_flags_vertical = Control.SIZE_SHRINK_CENTER
     row.add_child(control)
     if show_value:
-        var value := _label("", 20, C_SKY, HORIZONTAL_ALIGNMENT_RIGHT)
+        var value := _label("", 39, C_SKY, HORIZONTAL_ALIGNMENT_RIGHT)
         value.custom_minimum_size.x = 72
         row.add_child(value)
         var slider := control as Range
@@ -573,13 +573,13 @@ func _header(text: String, accent: Color) -> PanelContainer:
     block.custom_minimum_size = Vector2(14, 14)
     block.size_flags_vertical = Control.SIZE_SHRINK_CENTER
     row.add_child(block)
-    var title := _label(text, 34, C_WHITE)
+    var title := _label(text, 58, C_WHITE)
     title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     row.add_child(title)
     var back := Button.new()
     back.text = "◀ BACK"
     back.focus_mode = Control.FOCUS_ALL
-    back.add_theme_font_size_override("font_size", 16)
+    back.add_theme_font_size_override("font_size", 34)
     var normal := _style(C_PANEL_HI, C_EDGE, 2, Vector2(18, 10), 3)
     var hover := normal.duplicate() as StyleBoxFlat
     hover.border_color = C_SKY
@@ -606,14 +606,14 @@ func _menu_button(text: String, accent: Color, hint: String, action: Callable) -
     row.offset_right = -28
     row.add_theme_constant_override("separation", 18)
     button.add_child(row)
-    var cursor := _label("▶", 24, accent)
+    var cursor := _label("▶", 44, accent)
     cursor.modulate.a = 0.0
     row.add_child(cursor)
-    var label := _label(text, 30, C_WHITE)
+    var label := _label(text, 53, C_WHITE)
     label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     row.add_child(label)
     if hint != "":
-        row.add_child(_label(hint, 16, accent))
+        row.add_child(_label(hint, 34, accent))
     _hook_highlight(button, func(on: bool): cursor.modulate.a = 1.0 if on else 0.0)
     button.pressed.connect(func():
         _synth.word_tick(880.0)
@@ -652,7 +652,7 @@ func _action_button(text: String, bg_color: Color, border: Color) -> Button:
     var button := Button.new()
     button.text = text
     button.focus_mode = Control.FOCUS_ALL
-    button.add_theme_font_size_override("font_size", 28)
+    button.add_theme_font_size_override("font_size", 51)
     for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
         button.add_theme_color_override(state, C_WHITE)
     var normal := _style(bg_color, border, 3, Vector2(44, 22))
@@ -685,7 +685,7 @@ func _chip(text: String, color: Color, dot: Color = Color.TRANSPARENT) -> PanelC
         square.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         square.mouse_filter = Control.MOUSE_FILTER_IGNORE
         row.add_child(square)
-    row.add_child(_label(text, 16, color))
+    row.add_child(_label(text, 34, color))
     return chip
 
 

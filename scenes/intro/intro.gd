@@ -190,7 +190,7 @@ func _start_mission() -> void:
 func _show_text(data: Dictionary) -> void:
     var box := _centered_box(12)
     if data.has("kicker"):
-        box.add_child(_label(data["kicker"], 22, C_MUTED, _mono))
+        box.add_child(_label(data["kicker"], 42, C_MUTED, _mono))
     var main := RichTextLabel.new()
     main.bbcode_enabled = true
     main.fit_content = true
@@ -207,7 +207,7 @@ func _show_text(data: Dictionary) -> void:
     main.text = "[center]%s[/center]" % data["main"]
     box.add_child(main)
     if data.has("sub"):
-        box.add_child(_label(data["sub"], 34, Color("cbd5e1")))
+        box.add_child(_label(data["sub"], 58, Color("cbd5e1")))
     _slam(box)
 
 
@@ -231,7 +231,7 @@ func _show_words(words: Array) -> void:
             panel.custom_minimum_size = Vector2(560, 0)
             panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
             panel.add_theme_stylebox_override("panel", _box_style(Color("020617", 0.9), color, 3, 10, Vector2(28, 22)))
-            var label := _label(word, 48, color)
+            var label := _label(word, 61, color)
             panel.add_child(label)
             grid.add_child(panel)
             _slam(panel)})
@@ -248,7 +248,7 @@ func _show_title() -> void:
     chip.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
     chip.mouse_filter = Control.MOUSE_FILTER_IGNORE
     chip.add_theme_stylebox_override("panel", _box_style(Color(C_BLUE, 0.15), C_BLUE, 2, 0, Vector2(16, 6)))
-    chip.add_child(_label("NASA SPACE APPS CHALLENGE • PITCH INTRO", 18, C_BLUE, _mono))
+    chip.add_child(_label("NASA SPACE APPS CHALLENGE • PITCH INTRO", 35, C_BLUE, _mono))
     box.add_child(chip)
 
     var title := _label("MISSION ISMA", 104, C_WHITE)
@@ -256,7 +256,7 @@ func _show_title() -> void:
     title.add_theme_constant_override("shadow_offset_x", 0)
     title.add_theme_constant_override("shadow_offset_y", 5)
     box.add_child(title)
-    box.add_child(_label("5 MINUTES TO ASSEMBLE YOUR STATION", 26, C_AMBER))
+    box.add_child(_label("5 MINUTES TO ASSEMBLE YOUR STATION", 48, C_AMBER))
 
     var buttons := HBoxContainer.new()
     buttons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -349,15 +349,15 @@ func _build() -> void:
     var left := HBoxContainer.new()
     left.add_theme_constant_override("separation", 18)
     left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-    left.add_child(_label("● REC", 18, Color("f43f5e"), _mono))
-    left.add_child(_label("CAM-ISMA-01", 18, C_DIM, _mono))
-    _counter = _label("", 18, C_GREEN, _mono)
+    left.add_child(_label("● REC", 35, Color("f43f5e"), _mono))
+    left.add_child(_label("CAM-ISMA-01", 35, C_DIM, _mono))
+    _counter = _label("", 35, C_GREEN, _mono)
     left.add_child(_counter)
     top.add_child(left)
-    _timecode = _label("TC 00:00:01:00", 18, C_MUTED, _mono)
+    _timecode = _label("TC 00:00:01:00", 35, C_MUTED, _mono)
     _timecode.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     top.add_child(_timecode)
-    var right := _label("NASA SPACE APPS // PITCH INTRO", 18, Color(C_BLUE, 0.8), _mono)
+    var right := _label("NASA SPACE APPS // PITCH INTRO", 35, Color(C_BLUE, 0.8), _mono)
     right.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     right.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
     top.add_child(right)
@@ -365,7 +365,7 @@ func _build() -> void:
     # Bottom letterbox: progress through the beats, controls.
     var bottom := _bar(false)
     bottom.add_theme_constant_override("separation", 28)
-    bottom.add_child(_label("INTRO SEQUENCE", 18, C_DIM, _mono))
+    bottom.add_child(_label("INTRO SEQUENCE", 35, C_DIM, _mono))
     _progress = ProgressBar.new()
     _progress.show_percentage = false
     _progress.custom_minimum_size = Vector2(0, 10)
@@ -375,7 +375,7 @@ func _build() -> void:
     _progress.add_theme_stylebox_override("background", _box_style(Color("0f172a"), C_LINE, 1, 3, Vector2.ZERO))
     _progress.add_theme_stylebox_override("fill", _box_style(C_WHITE, C_WHITE, 0, 3, Vector2.ZERO))
     bottom.add_child(_progress)
-    _hint = _label("", 18, C_AMBER, _mono)
+    _hint = _label("", 35, C_AMBER, _mono)
     bottom.add_child(_hint)
 
     _fade = ColorRect.new()
@@ -457,7 +457,7 @@ func _arcade_button(text: String, bg_color: Color, border: Color, font_color: Co
     var button := Button.new()
     button.text = text
     button.focus_mode = Control.FOCUS_ALL
-    button.add_theme_font_size_override("font_size", 28)
+    button.add_theme_font_size_override("font_size", 51)
     for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
         button.add_theme_color_override(state, font_color)
     var normal := _box_style(bg_color, border, 3, 10, Vector2(36, 20))
