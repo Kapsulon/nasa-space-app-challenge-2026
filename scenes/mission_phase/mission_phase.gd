@@ -320,7 +320,7 @@ func _fill_popup() -> void:
             var button := Button.new()
             button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
             button.custom_minimum_size = Vector2(0, 54)
-            button.add_theme_font_size_override("font_size", 42)
+            button.add_theme_font_size_override("font_size", 38)
             var parts: PackedStringArray = []
             if not choice.cost.is_empty():
                 parts.append(_format_cost(choice.cost))
@@ -340,13 +340,13 @@ func _fill_popup() -> void:
         return
 
     # Second step: who goes?
-    var header := _label("\"%s\": who should go?" % _popup_choice.label, 42, COLOR_WARN)
+    var header := _label("\"%s\": who should go?" % _popup_choice.label, 38, COLOR_WARN)
     header.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     %PopupChoices.add_child(header)
     for member in state.crew_aboard():
         var button := Button.new()
         button.custom_minimum_size = Vector2(0, 50)
-        button.add_theme_font_size_override("font_size", 42)
+        button.add_theme_font_size_override("font_size", 38)
         button.alignment = HORIZONTAL_ALIGNMENT_LEFT
         var chance := state.event_chance(event, _popup_choice, member)
         var hours := state.event_hours(event, _popup_choice, member)
@@ -369,7 +369,7 @@ func _fill_popup() -> void:
         %PopupChoices.add_child(button)
     var back := Button.new()
     back.text = "Back"
-    back.add_theme_font_size_override("font_size", 39)
+    back.add_theme_font_size_override("font_size", 35)
     back.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
     back.pressed.connect(func():
         _popup_choice = null
@@ -384,7 +384,7 @@ func _add_navigation_buttons(event: MissionEvent) -> void:
     if state.can_reroll():
         var reroll := Button.new()
         reroll.text = "Redraw this alert (star tracker, %d left)" % state.rerolls_left
-        reroll.add_theme_font_size_override("font_size", 36)
+        reroll.add_theme_font_size_override("font_size", 32)
         reroll.add_theme_color_override("font_color", Augment.DOMAIN_COLORS[Augment.Domain.NAVIGATION])
         reroll.pressed.connect(_reroll_alert)
         row.add_child(reroll)
@@ -393,7 +393,7 @@ func _add_navigation_buttons(event: MissionEvent) -> void:
         var wait := state.cancel_wait()
         cancel.text = "Cancel it (AutoNav)" if wait == 0 else "AutoNav recharging: %d day%s" % [wait, "" if wait == 1 else "s"]
         cancel.disabled = not state.can_cancel(event)
-        cancel.add_theme_font_size_override("font_size", 36)
+        cancel.add_theme_font_size_override("font_size", 32)
         cancel.add_theme_color_override("font_color", Augment.DOMAIN_COLORS[Augment.Domain.NAVIGATION])
         cancel.pressed.connect(_cancel_alert)
         row.add_child(cancel)
@@ -673,13 +673,13 @@ func _build_resource_bar() -> void:
         swatch.custom_minimum_size = Vector2(6, 26)
         swatch.size_flags_vertical = Control.SIZE_SHRINK_CENTER
         chip.add_child(swatch)
-        var name_label := _label(info["name"], 35, COLOR_MUTED)
+        var name_label := _label(info["name"], 32, COLOR_MUTED)
         name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
         chip.add_child(name_label)
-        var value := _label("", 44)
+        var value := _label("", 40)
         value.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
         chip.add_child(value)
-        var delta := _label("", 35)
+        var delta := _label("", 32)
         delta.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
         chip.add_child(delta)
         %ResourceBar.add_child(chip)
@@ -704,10 +704,10 @@ func _build_roster() -> void:
         panel.add_child(box)
         var header := HBoxContainer.new()
         header.mouse_filter = Control.MOUSE_FILTER_IGNORE
-        var name_label := _label(member.display_name, 47, tint)
+        var name_label := _label(member.display_name, 42, tint)
         name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
         header.add_child(name_label)
-        header.add_child(_label(member.role, 34, COLOR_MUTED))
+        header.add_child(_label(member.role, 31, COLOR_MUTED))
         box.add_child(header)
         var health := _stat_row("Health")
         var stress := _stat_row("Stress")
@@ -719,12 +719,12 @@ func _build_roster() -> void:
         stats.add_child(health["row"])
         stats.add_child(stress["row"])
         box.add_child(stats)
-        var activity := _label("", 35, COLOR_MUTED)
+        var activity := _label("", 32, COLOR_MUTED)
         activity.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         box.add_child(activity)
         var medkit := Button.new()
         medkit.text = "Use medkit (+%d health)" % MissionState.MEDKIT_HEAL
-        medkit.add_theme_font_size_override("font_size", 34)
+        medkit.add_theme_font_size_override("font_size", 31)
         medkit.pressed.connect(func():
             state.use_medkit(member)
             _refresh_ui())
@@ -783,7 +783,7 @@ func _stat_row(title: String) -> Dictionary:
     var row := HBoxContainer.new()
     row.add_theme_constant_override("separation", 10)
     row.mouse_filter = Control.MOUSE_FILTER_IGNORE
-    var label := _label(title, 35)
+    var label := _label(title, 32)
     row.add_child(label)
     var bar := _bar(Color.WHITE, 12)
     bar.max_value = 100
@@ -807,7 +807,7 @@ func _build_modules() -> void:
     var ship_modules := state.ship_modules()
     %ModulesHeader.text = "Modules (%d)" % ship_modules.size()
     if ship_modules.is_empty():
-        var empty := _label("No modules aboard: the crew relies on the capsule's own supplies.", 35, COLOR_MUTED)
+        var empty := _label("No modules aboard: the crew relies on the capsule's own supplies.", 32, COLOR_MUTED)
         empty.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
         %ModuleList.add_child(empty)
     for module in ship_modules:
@@ -826,7 +826,7 @@ func _make_module_row(module: ShipModule) -> Control:
     var box := VBoxContainer.new()
     box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
     box.add_theme_constant_override("separation", 0)
-    box.add_child(_label(augment.card_name(), 35, Augment.RARITY_COLORS[augment.rarity]))
+    box.add_child(_label(augment.card_name(), 32, Augment.RARITY_COLORS[augment.rarity]))
     var effects := state.module_daily(module)
     var parts: PackedStringArray = []
     for key in effects.keys():
@@ -841,7 +841,7 @@ func _make_module_row(module: ShipModule) -> Control:
     if not module.working() or module.unpowered:
         detail = module.status_text()
         status_color = COLOR_BAD if module.broken or module.lost else COLOR_WARN
-    var detail_label := _label(detail, 34, status_color)
+    var detail_label := _label(detail, 31, status_color)
     detail_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     box.add_child(detail_label)
     row.add_child(box)
@@ -911,7 +911,7 @@ func _small_button(text: String) -> Button:
     var button := Button.new()
     button.text = text
     button.custom_minimum_size = Vector2(52, 44)
-    button.add_theme_font_size_override("font_size", 39)
+    button.add_theme_font_size_override("font_size", 35)
     button.focus_mode = Control.FOCUS_NONE
     return button
 

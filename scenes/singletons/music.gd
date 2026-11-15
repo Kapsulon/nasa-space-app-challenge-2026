@@ -5,11 +5,13 @@ extends Node
 ## scenes that share it (plan phase -> launch report -> launch). Changing track
 ## crossfades.
 ##
+##   intro   : the teaser
 ##   menu    : mission select
 ##   phase_1 : planning, launch report, launch (and back after a failed launch)
 ##   phase_2 : the mission
 
 const TRACKS: Dictionary[StringName, AudioStream] = {
+    &"intro": preload("res://assets/audio/intro.mp3"),
     &"menu": preload("res://assets/audio/menu.wav"),
     &"phase_1": preload("res://assets/audio/phase_1.wav"),
     &"phase_2": preload("res://assets/audio/phase_2.wav"),
@@ -57,6 +59,12 @@ func play(track: StringName) -> void:
     player.play()
     _fade(player, db_to_linear(VOLUME_DB))
     _fade(old, 0.0)
+
+
+## Starts the current track over from the beginning (the teaser's replay).
+func restart() -> void:
+    if current != &"":
+        _players[_active].play(0.0)
 
 
 func stop() -> void:

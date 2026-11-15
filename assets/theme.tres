@@ -1,8 +1,8 @@
 [gd_resource type="Theme" format=3 uid="uid://dwi8du326v0y2"]
 
-[ext_resource type="FontFile" uid="uid://diofu2r7xyvo" path="res://assets/fonts/Winds 7.ttf" id="1_5x3i2"]
+[ext_resource type="FontFile" uid="uid://b0335x67onex0" path="res://assets/fonts/Jersey10-Regular.ttf" id="1_5x3i2"]
 
 [resource]
-default_font_size = 28
+default_font_size = 25
 Control/fonts/font = ExtResource("1_5x3i2")
 Control/fonts/normal_font = ExtResource("1_5x3i2")

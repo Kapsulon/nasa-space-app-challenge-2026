@@ -2,7 +2,7 @@
 
 [ext_resource type="Theme" uid="uid://dwi8du326v0y2" path="res://assets/theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://scenes/mission_phase/mission_phase.gd" id="2_script"]
-[ext_resource type="FontFile" uid="uid://diofu2r7xyvo" path="res://assets/fonts/Winds 7.ttf" id="3_font"]
+[ext_resource type="FontFile" uid="uid://b0335x67onex0" path="res://assets/fonts/Jersey10-Regular.ttf" id="3_font"]
 [ext_resource type="Script" path="res://scenes/mission_phase/space_background.gd" id="4_space"]
 [ext_resource type="Script" path="res://scenes/mission_phase/mission_trajectory.gd" id="5_trajectory"]
 [ext_resource type="Texture2D" uid="uid://cm16qh8pgill0" path="res://assets/textures/sprites_vaisseau/x1/vaisseau_complet.png" id="6_ship"]
@@ -190,7 +190,7 @@ theme_override_constants/separation = 18
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBox/TopBar"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 58
+theme_override_font_sizes/font_size = 52
 text = "Reach the ISS"
 vertical_alignment = 1
 
@@ -208,7 +208,7 @@ ship_texture = ExtResource("6_ship")
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7059, 0.4235, 1, 1)
-theme_override_font_sizes/font_size = 44
+theme_override_font_sizes/font_size = 40
 text = "Science 0"
 vertical_alignment = 1
 
@@ -216,7 +216,7 @@ vertical_alignment = 1
 unique_name_in_owner = true
 custom_minimum_size = Vector2(250, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 53
+theme_override_font_sizes/font_size = 48
 text = "Day 1/10  08:00"
 horizontal_alignment = 2
 vertical_alignment = 1
@@ -268,7 +268,7 @@ mouse_filter = 2
 theme_override_colors/font_color = Color(0.75, 0.82, 0.92, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 6
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 38
 text = "Click an astronaut, then a room to send them there."
 
 [node name="RightColumn" type="VBoxContainer" parent="MarginContainer/VBox/Middle"]
@@ -278,7 +278,7 @@ theme_override_constants/separation = 8
 
 [node name="CrewHeader" type="Label" parent="MarginContainer/VBox/Middle/RightColumn"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 53
+theme_override_font_sizes/font_size = 48
 text = "Crew"
 
 [node name="Roster" type="VBoxContainer" parent="MarginContainer/VBox/Middle/RightColumn"]
@@ -305,7 +305,7 @@ theme_override_constants/separation = 6
 layout_mode = 2
 theme_override_colors/font_color = Color(0.5843, 0.7412, 0.6157, 1)
 theme_override_fonts/font = SubResource("SystemFont_mono")
-theme_override_font_sizes/font_size = 34
+theme_override_font_sizes/font_size = 26
 text = "houston@mission-control  <-->  crew channel"
 
 [node name="Terminal" type="RichTextLabel" parent="MarginContainer/VBox/Bottom/TerminalPanel/VBox"]
@@ -315,7 +315,7 @@ size_flags_vertical = 3
 mouse_filter = 2
 theme_override_colors/default_color = Color(0.2235, 1, 0.4157, 1)
 theme_override_fonts/normal_font = SubResource("SystemFont_mono")
-theme_override_font_sizes/normal_font_size = 34
+theme_override_font_sizes/normal_font_size = 24
 bbcode_enabled = true
 scroll_following = true
 script = ExtResource("7_terminal")
@@ -336,7 +336,7 @@ theme_override_constants/separation = 6
 [node name="ModulesHeader" type="Label" parent="MarginContainer/VBox/Bottom/ModulesPanel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
+theme_override_font_sizes/font_size = 43
 text = "Modules"
 
 [node name="ModuleScroll" type="ScrollContainer" parent="MarginContainer/VBox/Bottom/ModulesPanel/VBox"]
@@ -391,19 +391,19 @@ theme_override_constants/separation = 12
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.3529, 0.2353, 1)
-theme_override_font_sizes/font_size = 39
+theme_override_font_sizes/font_size = 35
 text = "ALERT"
 
 [node name="PopupTitle" type="Label" parent="EventPopup/Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/font_size = 52
+theme_override_font_sizes/font_size = 47
 text = "Event"
 
 [node name="PopupDesc" type="RichTextLabel" parent="EventPopup/Center/Panel/VBox"]
 unique_name_in_owner = true
 layout_mode = 2
-theme_override_font_sizes/normal_font_size = 42
+theme_override_font_sizes/normal_font_size = 38
 bbcode_enabled = true
 text = "Description"
 fit_content = true
@@ -413,7 +413,7 @@ scroll_active = false
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/default_color = Color(0.5412, 0.5804, 0.651, 1)
-theme_override_font_sizes/normal_font_size = 39
+theme_override_font_sizes/normal_font_size = 35
 bbcode_enabled = true
 text = "Info"
 fit_content = true
@@ -428,7 +428,7 @@ theme_override_constants/separation = 8
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 8
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 38
 text = "Close"
 
 [node name="RecapOverlay" type="Control" parent="."]

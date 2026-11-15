@@ -84,7 +84,7 @@ func _draw() -> void:
 
     var font := get_theme_default_font()
     var glyph := "..." if assigned else "!"
-    var font_size := 40 if not assigned else 30
+    var font_size := 36 if not assigned else 27
     var w := font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
     draw_string(font, center + Vector2(-w.x * 0.5, w.y * 0.3), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color.lerp(Color.WHITE, 0.3))
 

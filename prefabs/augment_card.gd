@@ -81,8 +81,8 @@ var _face_footer: String = ""
 
 ## Biggest and smallest text sizes of the card face. The biggest one that
 ## fits the parchment wins, so short cards are easy to read from afar.
-const FACE_MAX_FONT: int = 40
-const FACE_MIN_FONT: int = 28
+const FACE_MAX_FONT: int = 36
+const FACE_MIN_FONT: int = 25
 
 
 func _set_face_text(size: int, line_count: int) -> void:
@@ -113,12 +113,12 @@ func _fit_name() -> void:
     label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
     label.clip_text = true
     var font := label.get_theme_font("font")
-    for font_size in range(44, 17, -2):
+    for font_size in range(40, 15, -2):
         var height := font.get_multiline_string_size(label.text, HORIZONTAL_ALIGNMENT_CENTER, label.size.x, font_size).y
         if height <= label.size.y:
             label.add_theme_font_size_override("font_size", font_size)
             return
-    label.add_theme_font_size_override("font_size", 18)
+    label.add_theme_font_size_override("font_size", 16)
 
 
 ## Marks the card with a glowing outline and a badge on its top edge, e.g.
@@ -142,7 +142,7 @@ func set_mark(text: String, color: Color = Color.WHITE) -> void:
         _badge.grow_horizontal = Control.GROW_DIRECTION_BOTH
         _badge.offset_top = -28.0
         var label := Label.new()
-        label.add_theme_font_size_override("font_size", 32)
+        label.add_theme_font_size_override("font_size", 29)
         label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
         _badge.add_child(label)
         %Card.add_child(_badge)

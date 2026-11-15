@@ -32,21 +32,21 @@ const C_LINE := Color("334155")
 ## The beats. "main" is BBCode. "words" makes a word stack, "final" the title
 ## card. warp = starfield speed, sound = tick / bass / alert / chord.
 const BEATS: Array[Dictionary] = [
-    {"kicker": "INCOMING TRANSMISSION // NASA SPACE APPS", "main": "YEAR 2026.", "size": 84,
+    {"kicker": "INCOMING TRANSMISSION // NASA SPACE APPS", "main": "YEAR 2026.", "size": 76,
         "warp": 0.6, "sound": "tick"},
-    {"kicker": "COORDINATES LOCKED", "main": "LOW EARTH ORBIT — [color=#63b1ff]NEXT STOP: ISS.[/color]", "size": 64,
+    {"kicker": "COORDINATES LOCKED", "main": "LOW EARTH ORBIT — [color=#63b1ff]NEXT STOP: ISS.[/color]", "size": 58,
         "warp": 1.2, "sound": "bass"},
-    {"kicker": "SURVIVAL REPORT", "main": "SPACE FORGIVES [color=#63b1ff]NO MISTAKES.[/color]", "size": 56,
+    {"kicker": "SURVIVAL REPORT", "main": "SPACE FORGIVES [color=#63b1ff]NO MISTAKES.[/color]", "size": 50,
         "warp": 1.8, "sound": "bass"},
     {"words": [["OXYGEN.", "63b1ff"], ["WATER.", "3ad1c2"], ["ENERGY.", "ffe45c"], ["PROPULSION.", "ff7a1a"]],
         "warp": 2.5, "sound": ""},
     {"kicker": "⚠ SYSTEM FAILURE IMMINENT", "main": "ONE GAUGE DROPS TO [color=#ff3a55]0%[/color]",
-        "sub": "AND THE STATION IS LOST.", "size": 64, "warp": 4.2, "sound": "alert", "shake": true, "flash": true},
+        "sub": "AND THE STATION IS LOST.", "size": 58, "warp": 4.2, "sound": "alert", "shake": true, "flash": true},
     {"kicker": "CONTROL ROOM • EMERGENCY PROTOCOL", "main": "[color=#ffb800]4 ASTRONAUTS.[/color] ONE ROCKET.",
-        "sub": "TO DEFY THE CHAOS.", "size": 84, "warp": 5.5, "sound": "alert", "shake": true},
+        "sub": "TO DEFY THE CHAOS.", "size": 76, "warp": 5.5, "sound": "alert", "shake": true},
     {"kicker": "ENGINEERING PHASE", "main": "DRAFT YOUR [color=#63b1ff]CARDS.[/color]",
-        "sub": "ASSEMBLE YOUR MODULES.", "size": 64, "warp": 3.5, "sound": "bass"},
-    {"kicker": "ULTIMATE DIRECTIVE", "main": "EVERY CHOICE DECIDES YOUR [color=#39ff6a]SURVIVAL.[/color]", "size": 56,
+        "sub": "ASSEMBLE YOUR MODULES.", "size": 58, "warp": 3.5, "sound": "bass"},
+    {"kicker": "ULTIMATE DIRECTIVE", "main": "EVERY CHOICE DECIDES YOUR [color=#39ff6a]SURVIVAL.[/color]", "size": 50,
         "warp": 6.5, "sound": "bass"},
     {"final": true, "warp": 1.0, "sound": "chord"},
 ]
@@ -75,6 +75,7 @@ var _start_button: Button
 
 
 func _ready() -> void:
+    Music.play(&"intro")
     Augment.preload_library()
     _mono = SystemFont.new()
     _mono.font_names = PackedStringArray(["Menlo", "Consolas", "DejaVu Sans Mono", "Courier New", "Monospace"])
@@ -207,7 +208,7 @@ func _show_text(data: Dictionary) -> void:
     main.text = "[center]%s[/center]" % data["main"]
     box.add_child(main)
     if data.has("sub"):
-        box.add_child(_label(data["sub"], 58, Color("cbd5e1")))
+        box.add_child(_label(data["sub"], 52, Color("cbd5e1")))
     _slam(box)
 
 
@@ -231,7 +232,7 @@ func _show_words(words: Array) -> void:
             panel.custom_minimum_size = Vector2(560, 0)
             panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
             panel.add_theme_stylebox_override("panel", _box_style(Color("020617", 0.9), color, 3, 10, Vector2(28, 22)))
-            var label := _label(word, 61, color)
+            var label := _label(word, 55, color)
             panel.add_child(label)
             grid.add_child(panel)
             _slam(panel)})
@@ -251,12 +252,12 @@ func _show_title() -> void:
     chip.add_child(_label("NASA SPACE APPS CHALLENGE • PITCH INTRO", 35, C_BLUE, _mono))
     box.add_child(chip)
 
-    var title := _label("MISSION ISMA", 104, C_WHITE)
+    var title := _label("MISSION ISMA", 94, C_WHITE)
     title.add_theme_color_override("font_shadow_color", Color("0284c7"))
     title.add_theme_constant_override("shadow_offset_x", 0)
     title.add_theme_constant_override("shadow_offset_y", 5)
     box.add_child(title)
-    box.add_child(_label("PACK THE ROCKET. BRING EVERYONE HOME.", 48, C_AMBER))
+    box.add_child(_label("PACK THE ROCKET. BRING EVERYONE HOME.", 43, C_AMBER))
 
     var buttons := HBoxContainer.new()
     buttons.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -271,6 +272,7 @@ func _show_title() -> void:
     var replay := _arcade_button("↺  REPLAY TEASER", Color("1e293b"), Color("475569"), Color("e2e8f0"))
     replay.pressed.connect(func():
         _set_paused(false)
+        Music.restart()
         play_beat(0))
     buttons.add_child(replay)
     _slam(box)
@@ -457,7 +459,7 @@ func _arcade_button(text: String, bg_color: Color, border: Color, font_color: Co
     var button := Button.new()
     button.text = text
     button.focus_mode = Control.FOCUS_ALL
-    button.add_theme_font_size_override("font_size", 51)
+    button.add_theme_font_size_override("font_size", 46)
     for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
         button.add_theme_color_override(state, font_color)
     var normal := _box_style(bg_color, border, 3, 10, Vector2(36, 20))

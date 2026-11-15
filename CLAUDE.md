@@ -51,6 +51,7 @@ Data passes between scenes through the **`TransitionData`** autoload (`scenes/si
 - the final cargo slot counts
 
 Background music is the **`Music`** autoload (`scenes/singletons/music.gd`). Each scene calls `Music.play(&"track")` in `_ready()`. Asking for the track that is already playing does nothing, and other tracks crossfade. Tracks:
+- `intro`: the teaser (`intro.mp3`, restarted by its replay button)
 - `menu`: mission select
 - `phase_1`: plan phase, launch report and launch
 - `phase_2`: mission

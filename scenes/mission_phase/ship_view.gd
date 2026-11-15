@@ -181,7 +181,7 @@ func _room_view_rect(room: String) -> Rect2:
 
 func _draw_tag(text: String, bottom_center: Vector2) -> void:
     var font := get_theme_default_font()
-    var font_size := 30
+    var font_size := 27
     var text_size := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size)
     var box := Rect2(bottom_center - Vector2(text_size.x * 0.5 + 10, text_size.y + 8), text_size + Vector2(20, 8))
     draw_rect(box, Color(0.04, 0.06, 0.1, 0.92))
